@@ -22,11 +22,11 @@ gross exposure       = C × L
 matched exposure     = min(E_L, E_S)
 unmatched long       = E_L - matched exposure
 unmatched short      = E_S - matched exposure
-long maker funding   = unmatched long × (L - 1) / L
-short loss collateral= unmatched short × maximum funded down-move per epoch
+long maker funding   = full long exposure × (L - 1) / L
+short loss collateral= full short exposure × maximum funded down-move per epoch
 ```
 
-The two sides retain distinct market, reserve and maker-collateral accounts. Matching is a contractual PnL transfer inside the clearing venue, not authority to seize another market's vault. A side cannot create an unfunded claim against the other side.
+The two sides retain distinct market, reserve and maker-collateral accounts. Matching reduces active hedge usage, but does not reduce required escrow: either side may close first, so the remaining side must be independently fundable. Matching is a contractual PnL transfer inside the clearing venue, not authority to seize another market's vault. A side cannot create an unfunded claim against the other side.
 
 ## Admission state machine
 

@@ -178,22 +178,23 @@ pub fn quote_pair_open(
     let unmatched_long_exposure = long_exposure.checked_sub(matched_exposure).ok_or(Error::ArithmeticOverflow)?;
     let unmatched_short_exposure = short_exposure.checked_sub(matched_exposure).ok_or(Error::ArithmeticOverflow)?;
 
-    // A funded spot route needs the extra unit of capital only for unmatched
-    // long exposure. At 2x this is half of residual gross exposure.
+    // Matching reduces active hedge usage but not escrow. Either side can close
+    // first, so the remaining long must be fundable without depending on the
+    // opposite holder staying in the vault. At 2x this is half of gross exposure.
     let additional_leverage_bps = u64::from(config.leverage_bps)
         .checked_sub(BPS)
         .ok_or(Error::InvalidConfiguration)?;
     let required_long_maker_funding = mul_div_ceil(
-        unmatched_long_exposure,
+        long_exposure,
         additional_leverage_bps,
         u64::from(config.leverage_bps),
     )?;
 
-    // The short residual is admissible only inside a disclosed, bounded epoch.
-    // Its maximum payout is escrowed before minting; gaps outside this bound
-    // must fail closed into Standby rather than create an unfunded liability.
+    // The full short side is collateralized for the funded epoch even while it
+    // is matched. This preserves independent redemption if the long side exits.
+    // Gaps outside the bound fail closed instead of creating an unfunded claim.
     let required_short_loss_collateral = mul_div_ceil(
-        unmatched_short_exposure,
+        short_exposure,
         u64::from(config.maximum_down_move_bps),
         BPS,
     )?;
@@ -231,8 +232,16 @@ fn quote_is_funded(state: &RiskVaultState, quote: &CapacityQuote) -> bool {
         && state.short_maker_loss_collateral >= quote.required_short_loss_collateral
         && state.long_reserve >= quote.required_long_reserve
         && state.short_reserve >= quote.required_short_reserve
-        && state.long_unwind_capacity >= quote.unmatched_long_exposure
-        && state.short_unwind_capacity >= quote.unmatched_short_exposure
+        && state.long_unwind_capacity
+            >= quote
+                .matched_exposure
+                .checked_add(quote.unmatched_long_exposure)
+                .unwrap_or(u64::MAX)
+        && state.short_unwind_capacity
+            >= quote
+                .matched_exposure
+                .checked_add(quote.unmatched_short_exposure)
+                .unwrap_or(u64::MAX)
 }
 
 pub fn admit_risk_vault(config: &RiskVaultConfig, state: RiskVaultState, current_slot: u64) -> Result<RiskVaultState> {
@@ -359,13 +368,13 @@ mod tests {
     }
 
     #[test]
-    fn equal_pair_has_no_external_directional_exposure() {
+    fn equal_pair_has_no_active_residual_but_retains_exit_escrow() {
         let quote = quote_pair_open(&config(), &active(), 100_000_000, 100_000_000, 200).expect("paired quote");
         assert_eq!(quote.matched_exposure, 200_000_000);
         assert_eq!(quote.unmatched_long_exposure, 0);
         assert_eq!(quote.unmatched_short_exposure, 0);
-        assert_eq!(quote.required_long_maker_funding, 0);
-        assert_eq!(quote.required_short_loss_collateral, 0);
+        assert_eq!(quote.required_long_maker_funding, 100_000_000);
+        assert_eq!(quote.required_short_loss_collateral, 100_000_000);
     }
 
     #[test]
