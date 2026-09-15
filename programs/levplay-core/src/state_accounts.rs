@@ -257,7 +257,8 @@ mod tests {
     }
 
     fn write_address(bytes: &mut [u8], offset: usize, value: u8) {
-        bytes[offset..offset + 32].copy_from_slice(&address(value));
+        let end = offset.saturating_add(32);
+        bytes[offset..end].copy_from_slice(&address(value));
     }
 
     fn config_bytes() -> [u8; CONFIG_STATE_LEN] {
