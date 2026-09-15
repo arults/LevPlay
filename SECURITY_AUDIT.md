@@ -14,12 +14,12 @@ Deterministic checks were rerun on 2026-09-15 against the production build. Brow
 |---|---|
 | Protocol-model invariants | 18/18 passed, including fee-on-top, Max-balance safety and opposite-signed 2× long/short outcomes |
 | Standby risk-engine vectors | Integer-only funded-floor model passed deterministic cases plus 588 adversarial long/short intervals; unfunded floors are reported insolvent |
-| Rust protocol kernel | Pinned Rust 1.85 `no_std` core passed 11 unit/adversarial tests, zero-warning Clippy with arithmetic-side-effect denial, and rustfmt |
+| Rust protocol kernel | Pinned Rust 1.85 `no_std` core passed 30 unit/adversarial tests, including independent/asymmetric closes, queued claims, escrow-release guards and 128 deterministic open/close sequences; zero-warning Clippy with arithmetic-side-effect denial and rustfmt |
 | Backing admission vectors | 11 fixed admission cases and 256 capacity-boundary vectors passed; no production venue is inferred or admitted |
-| Curated xStocks assets | 35 exact pinned Solana mints: 15 US stocks, 15 Hong Kong stocks and 5 commodity ETFs; live verification is enforced by CI |
-| Token program and extensions | 20/20 Token-2022 mints verified, including scaled UI, pause state and transfer-hook guard |
-| Stock oracle registry | 10/10 stock markets expose both Pyth and Chainlink entries |
-| Commodity launch gate | 5/5 remain blocked until equivalent oracle/backing evidence exists |
+| Candidate product catalog | 136 definitions: 15 Ondo stocks and 5 commodity-linked ETFs at 2×/3×/5× L/S, plus 8 PreStocks references at 2× L/S; every market remains separately fail-closed pending admission |
+| Source-token verification | Read-only registry checks are modeled; no catalog count or issuer API response is treated as settlement, solvency or production admission evidence |
+| Oracle registry | Candidate feed mappings exist, but every value-moving market remains blocked until both accounts, owners, freshness, confidence and deviation are enforced by the SBF instruction |
+| Commodity and Pre-IPO launch gate | All candidates remain blocked until exact source mints, dual settlement sources, wrapper permission and independently proven backing/unwind evidence exist |
 | Source security assertions | 72 fail-closed checks passed |
 | UI lifecycle assertions | 44 lifecycle, catalog, Standby-disclosure and responsive checks passed |
 | Audit-package assertions | Scope, evidence index, schema and invariant checks passed |
@@ -51,15 +51,16 @@ These results prove the interface, read paths, deterministic Rust kernel and mod
 | ECON-03 | Critical | Short exposure could be presented without a separately proven borrow/perpetual route and isolated solvency boundary. | Audit scope is frozen to isolated `AAPL2L` and `AAPL2S`; short execution remains locked until its fixed adapter, capacity, funding bounds and buy-to-cover path are independently proven. |
 | ECON-04 | Critical | A cosmetic minimum token price could be described as a never-zero guarantee without real assets funding it. | The reference risk engine permits Standby only at a collateralized floor, removes exposure in Standby, records reserve draw once, and labels an unfunded gap `Insolvent`. Oracle recovery alone cannot manufacture NAV or restart exposure. |
 | RELEASE-04 | Critical | A market manifest could omit or reuse the reserve supposedly protecting residual NAV. | Every market now requires a unique canonical-USDC reserve vault controlled by its market PDA, a bounded 1–500 bps Standby floor and a release-bound reserve solvency attestation. |
+| ECON-05 | Critical | Maker collateral could be released after holder capital was removed from active totals while an illiquid exit was still owed. | The Rust core now records queued claims as explicit liabilities; independent closes remain available after pause/expiry, remaining-side obligations are recomputed, and maker escrow is releasable only in WindDown after both capital counters and queued liabilities reach zero. |
 
 ## Implemented protections
 
 | Risk | Control |
 |---|---|
-| Wrong xStock mint | Curated mint addresses are pinned from the xStocks API and checked against the live API response and Solana account metadata. |
+| Wrong source-token mint | Every admitted market must pin the exact issuer mint in the frozen manifest and revalidate its Solana owner, authorities and extensions; the catalog alone never unlocks execution. |
 | Wrong token program | Mints must be owned by the canonical Token-2022 program. |
-| Corporate-action balance errors | Scaled-UI extension is mandatory; transaction amounts remain raw; interactions pause around multiplier activation. |
-| Issuer halt or pause ignored | xStocks trading halt and Token-2022 pause block the market. |
+| Corporate-action balance errors | Transaction amounts remain raw; any source-token scaling/rebase mechanism must be explicitly parsed and interactions pause around activation. |
+| Issuer halt or pause ignored | Any admitted Ondo/PreStocks issuer halt, freeze, redemption stop or supported token pause must block new risk and trigger close-only handling. |
 | Price API used for settlement | API quotes are reference-only. The protocol specification requires fresh Pyth and Chainlink data onchain. |
 | Oracle manipulation | Both feeds are mandatory, with age, confidence, publisher and 100-bps deviation checks. |
 | Malicious transfer hook | Any unexpected Token-2022 transfer-hook program blocks the mint. |
@@ -74,12 +75,12 @@ These results prove the interface, read paths, deterministic Rust kernel and mod
 | Hidden fee destination | Review shows the complete configured fee token account and treasury owner or `Not configured`; two RPCs must verify its canonical USDC mint and ownership. |
 | Misstated paper P/L | Both realized and unrealized results include the 0.5% entry fee; paper cash is debited on entry and credited with sale proceeds. |
 | Unsupported browser UUID | Paper records use a runtime-compatible local identifier after browser QA exposed missing `crypto.randomUUID()` support. |
-| Deployment-manifest substitution | Every configured xStock mint must equal the curated mint for the product ticker; leverage must match the product ID; vault and product-mint accounts must be distinct and unique. |
+| Deployment-manifest substitution | Every configured source mint must equal the separately admitted mint for the product ticker; leverage must match the product ID; vault and product-mint accounts must be distinct and unique. |
 | Fake residual NAV | Each market pins a unique PDA-controlled USDC reserve and bounded Standby floor; excess decimals, displayed dust and reverse splits are never counted as collateral. |
 
-## xStocks trust boundary
+## Source-token trust boundary
 
-The live AAPLx mint exposes mint, freeze, pause and permanent-delegate authorities. These are issuer controls, not LevPlay controls, and remain a material external trust dependency. xStocks is also a regulated tokenized-security product with geographic restrictions. LevPlay must screen eligibility before enabling any public mainnet flow.
+Ondo and PreStocks issuer controls, redemption availability, legal eligibility, market data and production permissions are outside LevPlay's control and remain material trust dependencies. LevPlay must verify the exact mint and authorities, obtain written wrapper/integration permission, and implement jurisdiction and eligibility controls before enabling any public mainnet market. xStocks and Hong Kong products remain shelved.
 
 ## Open critical blockers
 
@@ -88,7 +89,7 @@ The live AAPLx mint exposes mint, freeze, pause and permanent-delegate authoriti
 3. No independent audit, fuzz suite, local-validator integration suite or mainnet-fork economic stress test has completed.
 4. No governance multisig, guardian multisig or fee treasury has been supplied.
 5. No production RPC quorum, monitoring, incident response or permissionless keeper set is live.
-6. Securities-law and xStocks jurisdiction controls are not integrated.
+6. Securities/derivatives-law and Ondo/PreStocks jurisdiction controls are not integrated.
 7. A 5× product requires dependable leverage liquidity and faster emergency deleveraging; it must not launch merely because the UI can model it.
 8. Clean GitHub CI has the pinned Rust compiler, but the current local environment has no Solana/Anchor toolchain, deployer authority or funded deployment wallet; no reproducible SBF binary can yet be built or deployed here.
 9. The owner has created the private `arults/LevPlay` GitHub repository; the verified source snapshot must be synchronized after every release.
