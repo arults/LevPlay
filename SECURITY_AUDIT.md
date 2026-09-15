@@ -14,7 +14,7 @@ Deterministic checks were rerun on 2026-09-15 against the production build. Brow
 |---|---|
 | Protocol-model invariants | 18/18 passed, including fee-on-top, Max-balance safety and opposite-signed 2× long/short outcomes |
 | Standby risk-engine vectors | Integer-only funded-floor model passed deterministic cases plus 588 adversarial long/short intervals; unfunded floors are reported insolvent |
-| Rust protocol kernel | Pinned Rust 1.85 `no_std` core passed 31 unit/adversarial tests, including independent/asymmetric closes, FIFO queued claims, escrow-release guards and 128 deterministic open/close sequences; zero-warning Clippy with arithmetic-side-effect denial and rustfmt |
+| Rust protocol kernel | Pinned Rust 1.85 `no_std` core passed 39 unit/adversarial tests, including independent/asymmetric closes, FIFO claims, strict decoding/account layouts, transaction composition, replay guards and 128 deterministic open/close sequences; zero-warning Clippy with arithmetic-side-effect denial and rustfmt |
 | Backing admission vectors | 11 fixed admission cases and 256 capacity-boundary vectors passed; no production venue is inferred or admitted |
 | Candidate product catalog | 136 definitions: 15 Ondo stocks and 5 commodity-linked ETFs at 2×/3×/5× L/S, plus 8 PreStocks references at 2× L/S; every market remains separately fail-closed pending admission |
 | Source-token verification | Read-only registry checks are modeled; no catalog count or issuer API response is treated as settlement, solvency or production admission evidence |
@@ -52,6 +52,7 @@ These results prove the interface, read paths, deterministic Rust kernel and mod
 | ECON-04 | Critical | A cosmetic minimum token price could be described as a never-zero guarantee without real assets funding it. | The reference risk engine permits Standby only at a collateralized floor, removes exposure in Standby, records reserve draw once, and labels an unfunded gap `Insolvent`. Oracle recovery alone cannot manufacture NAV or restart exposure. |
 | RELEASE-04 | Critical | A market manifest could omit or reuse the reserve supposedly protecting residual NAV. | Every market now requires a unique canonical-USDC reserve vault controlled by its market PDA, a bounded 1–500 bps Standby floor and a release-bound reserve solvency attestation. |
 | ECON-05 | Critical | Maker collateral could be released after holder capital was removed from active totals while an illiquid exit was still owed. | The Rust core now records owner-bound, monotonically sequenced FIFO claims as explicit liabilities; later claims cannot skip a partially paid head claim. Independent closes remain available after pause/expiry, remaining-side obligations are recomputed, and maker escrow is releasable only in WindDown after both capital counters and queued liabilities reach zero. |
+| PROGRAM-01 | Critical | A future SBF wrapper could accept ambiguous instruction bytes, reordered/aliased accounts, privilege changes, extra transaction instructions or replayed nonces. | The allocation-free core now freezes a versioned length-bounded ABI, exact open-account count/order/key/owner/flags, duplicate rejection, Compute-Budget-only prefixes with a terminal LevPlay instruction, and checked single-use nonces. The wrapper must source bindings from program state and remains unimplemented. |
 
 ## Implemented protections
 
