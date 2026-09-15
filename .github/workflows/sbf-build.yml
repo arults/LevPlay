@@ -1,0 +1,72 @@
+name: sbf-build
+
+on:
+  push:
+    branches:
+      - mainnet-sbf-shell
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - rust-toolchain.toml
+      - programs/levplay-core/**
+      - programs/levplay-sbf/**
+      - .github/workflows/sbf-build.yml
+  pull_request:
+    paths:
+      - Cargo.toml
+      - Cargo.lock
+      - rust-toolchain.toml
+      - programs/levplay-core/**
+      - programs/levplay-sbf/**
+      - .github/workflows/sbf-build.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AGAVE_VERSION: v4.2.1
+  AGAVE_ARCHIVE_SHA256: 7f35f92c15861263bc540c001466678d2da228149a107b51d5b65ce497603074
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: dtolnay/rust-toolchain@3230091d7ef9483f601620abacc570c22cf44d22
+        with:
+          toolchain: 1.85.0
+      - name: Verify locked native workspace
+        run: cargo test --workspace --locked
+      - name: Install checksum-pinned Agave build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="${RUNNER_TEMP}/solana-release.tar.bz2"
+          install_dir="${RUNNER_TEMP}/agave"
+          url="https://github.com/anza-xyz/agave/releases/download/${AGAVE_VERSION}/solana-release-x86_64-unknown-linux-gnu.tar.bz2"
+          curl --proto '=https' --tlsv1.2 --fail --location --retry 3 --output "${archive}" "${url}"
+          echo "${AGAVE_ARCHIVE_SHA256}  ${archive}" | sha256sum --check --strict
+          mkdir -p "${install_dir}"
+          tar --extract --bzip2 --file "${archive}" --directory "${install_dir}"
+          tool="$(find "${install_dir}" -type f -name cargo-build-sbf -print -quit)"
+          test -n "${tool}"
+          echo "$(dirname "${tool}")" >> "${GITHUB_PATH}"
+      - name: Build locked SBF artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo build-sbf --manifest-path programs/levplay-sbf/Cargo.toml --locked
+          find target/deploy -maxdepth 1 -type f -name '*-keypair.json' -delete
+          test -s target/deploy/levplay_sbf.so
+          sha256sum target/deploy/levplay_sbf.so | tee target/deploy/levplay_sbf.so.sha256
+      - name: Upload non-secret SBF evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: levplay-sbf-${{ github.sha }}
+          path: |
+            target/deploy/levplay_sbf.so
+            target/deploy/levplay_sbf.so.sha256
+          if-no-files-found: error
+          retention-days: 30
