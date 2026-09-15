@@ -9,6 +9,9 @@
 // by CI and the dependency-free economic core forbids unsafe code.
 #![allow(unexpected_cfgs)]
 
+mod account_validation;
+pub use account_validation::*;
+
 use levplay_core::{decode_instruction, Error};
 use solana_program::{
     account_info::AccountInfo, entrypoint, entrypoint::ProgramResult, program_error::ProgramError,
