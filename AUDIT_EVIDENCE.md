@@ -5,7 +5,7 @@ Every row must link to immutable evidence for the same release commit. `Missing`
 | Evidence | Current artifact | State |
 |---|---|---|
 | Product/economic specification | [`PROTOCOL_SPEC.md`](./PROTOCOL_SPEC.md) | Present |
-| Instruction/account contract | [`programs/levplay/INTERFACE.md`](./programs/levplay/INTERFACE.md) | Present |
+| Instruction/account contract | [`programs/levplay/INTERFACE.md`](./programs/levplay/INTERFACE.md), [`PROGRAM_BOUNDARY.md`](./PROGRAM_BOUNDARY.md) | Present; wire format and open-account boundary frozen at core level |
 | Threat model | [`programs/levplay/THREAT_MODEL.md`](./programs/levplay/THREAT_MODEL.md) | Present |
 | Security invariants | [`SECURITY_INVARIANTS.md`](./SECURITY_INVARIANTS.md) | Present |
 | Audit scope | [`AUDIT_SCOPE.md`](./AUDIT_SCOPE.md) | Present |
@@ -20,7 +20,7 @@ Every row must link to immutable evidence for the same release commit. `Missing`
 | Pinned Rust workspace/toolchain | [`Cargo.toml`](./Cargo.toml), [`Cargo.lock`](./Cargo.lock), [`rust-toolchain.toml`](./rust-toolchain.toml) | Present |
 | Checked `no_std` Rust protocol core | [`programs/levplay-core/src/lib.rs`](./programs/levplay-core/src/lib.rs) | Present; not an SBF program |
 | Fully collateralized risk-vault core | [`programs/levplay-core/src/risk_vault.rs`](./programs/levplay-core/src/risk_vault.rs), [`RISK_VAULT_V1.md`](./RISK_VAULT_V1.md) | Present; two-sided admission, capacity, settlement, independent close, FIFO queued-claim and wind-down accounting; not an SBF program |
-| Rust core unit/adversarial tests | In-crate test module; CI runs test, Clippy and rustfmt | Present; 31 deterministic tests include asymmetric exits, over-redemption, FIFO queued claims, escrow release and 128 open/close sequences; instruction tests still missing |
+| Rust core unit/adversarial tests | In-crate test module; CI runs test, Clippy and rustfmt | Present; 39 deterministic tests include asymmetric exits, FIFO claims, strict instruction decoding, exact open-account layouts, transaction composition, nonces and 128 open/close sequences; SBF instruction tests still missing |
 | Solana Rust program source | — | **Missing** |
 | Fixed long adapter source | — | **Missing** |
 | Fixed short adapter source | — | **Missing** |
