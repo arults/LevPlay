@@ -1,7 +1,7 @@
 //! SBF-specific ownership, privilege and canonical-PDA validation.
 
 use levplay_core::{
-    decode_config_state, decode_market_state, ConfigState, MarketState, Side, CONFIG_STATE_LEN,
+    decode_config_state, decode_market_state, ConfigState, MarketState, CONFIG_STATE_LEN,
     MARKET_STATE_LEN,
 };
 use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
@@ -88,7 +88,9 @@ pub fn load_market_account(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use levplay_core::{VaultMode, ACCOUNT_VERSION, ENTRY_FEE_BPS, PILOT_LEVERAGE_BPS};
+    use levplay_core::{
+        Side, VaultMode, ACCOUNT_VERSION, ENTRY_FEE_BPS, PILOT_LEVERAGE_BPS,
+    };
 
     fn write_address(bytes: &mut [u8], offset: usize, value: u8) {
         let end = offset.saturating_add(32);
