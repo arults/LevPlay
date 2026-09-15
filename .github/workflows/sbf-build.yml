@@ -3,7 +3,7 @@ name: sbf-build
 on:
   push:
     branches:
-      - mainnet-sbf-shell
+      - main
     paths:
       - Cargo.toml
       - Cargo.lock
