@@ -131,6 +131,7 @@ mod tests {
         write_address(&mut data, 200, 15);
         write_address(&mut data, 232, 16);
         write_address(&mut data, 264, 17);
+        write_address(&mut data, 296, 18);
         data
     }
 

@@ -32,20 +32,21 @@ The SBF wrapper must construct the expected rules from program-owned configurati
 | Index | Role | Signer | Writable | Owner/executable rule |
 |---:|---|---:|---:|---|
 | 0 | User wallet | Yes | Yes | System program |
-| 1 | User USDC account | No | Yes | Pinned token program |
-| 2 | User product-token account | No | Yes | Pinned token program |
+| 1 | User USDC account | No | Yes | Pinned USDC token program |
+| 2 | User product-token account | No | Yes | Pinned product token program |
 | 3 | Protocol configuration | No | No | LevPlay program |
 | 4 | Isolated market state | No | Yes | LevPlay program |
-| 5 | Product mint | No | Yes | Pinned token program |
-| 6 | Clearing vault | No | Yes | Pinned token program |
-| 7 | Fee vault | No | Yes | Pinned token program |
-| 8 | Standby reserve vault | No | No | Pinned token program |
+| 5 | Product mint | No | Yes | Pinned product token program |
+| 6 | Clearing vault | No | Yes | Pinned USDC token program |
+| 7 | Fee vault | No | Yes | Pinned USDC token program |
+| 8 | Standby reserve vault | No | No | Pinned USDC token program |
 | 9 | Primary oracle | No | No | Pinned primary-oracle program |
 | 10 | Secondary oracle | No | No | Pinned secondary-oracle program |
 | 11 | Backing adapter program | No | No | Executable; pinned loader |
 | 12 | Backing adapter market | No | Yes | Pinned adapter program |
-| 13 | Token program | No | No | Executable; pinned loader |
-| 14 | Instructions sysvar | No | No | Pinned sysvar owner |
+| 13 | USDC token program | No | No | Executable; pinned loader |
+| 14 | Product token program | No | No | Executable; pinned loader |
+| 15 | Instructions sysvar | No | No | Pinned sysvar owner |
 
 Account count, order, keys, owners, signer flags, writable flags and executable flags must match exactly. Zero keys, duplicated keys, extra accounts, omitted accounts, reordered accounts and privilege changes fail closed.
 

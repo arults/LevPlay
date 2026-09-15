@@ -100,7 +100,9 @@ for (const primitive of ["checked_add", "checked_sub", "checked_mul", "checked_d
 
 const stateSource = files.find(([path]) => path === "programs/levplay-core/src/state_accounts.rs")[1];
 assert.match(stateSource, /CONFIG_STATE_LEN: usize = 208/);
-assert.match(stateSource, /MARKET_STATE_LEN: usize = 296/);
+assert.match(stateSource, /MARKET_STATE_LEN: usize = 328/);
+assert.match(stateSource, /usdc_token_program/);
+assert.match(stateSource, /product_token_program/);
 assert.match(stateSource, /reader\.zeroes/);
 assert.match(stateSource, /validate_addresses/);
 
@@ -115,6 +117,9 @@ assert.match(accountValidation, /account\.owner != program_id/);
 assert.match(accountValidation, /canonical_config_address/);
 assert.match(accountValidation, /canonical_market_address/);
 assert.match(accountValidation, /account\.is_writable != writable/);
+const boundarySource = files.find(([path]) => path === "programs/levplay-core/src/program_boundary.rs")[1];
+assert.match(boundarySource, /usdc_token_program/);
+assert.match(boundarySource, /product_token_program/);
 const sbfWorkflow = files.find(([path]) => path === ".github/workflows/sbf-build.yml")[1];
 assert.match(sbfWorkflow, /AGAVE_VERSION: v4\.2\.1/);
 assert.match(sbfWorkflow, /AGAVE_ARCHIVE_SHA256: [a-f0-9]{64}/);

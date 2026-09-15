@@ -176,7 +176,8 @@ pub struct OpenAccountBindings {
     pub secondary_oracle_program: Address,
     pub adapter_program: Address,
     pub adapter_market: Address,
-    pub token_program: Address,
+    pub usdc_token_program: Address,
+    pub product_token_program: Address,
     pub instructions_sysvar: Address,
 }
 
@@ -234,14 +235,14 @@ pub fn validate_open_accounts(
         rule(bindings.user, bindings.system_program, true, true, false),
         rule(
             bindings.user_usdc,
-            bindings.token_program,
+            bindings.usdc_token_program,
             false,
             true,
             false,
         ),
         rule(
             bindings.user_product,
-            bindings.token_program,
+            bindings.product_token_program,
             false,
             true,
             false,
@@ -250,28 +251,28 @@ pub fn validate_open_accounts(
         rule(bindings.market, bindings.program_id, false, true, false),
         rule(
             bindings.product_mint,
-            bindings.token_program,
+            bindings.product_token_program,
             false,
             true,
             false,
         ),
         rule(
             bindings.clearing_vault,
-            bindings.token_program,
+            bindings.usdc_token_program,
             false,
             true,
             false,
         ),
         rule(
             bindings.fee_vault,
-            bindings.token_program,
+            bindings.usdc_token_program,
             false,
             true,
             false,
         ),
         rule(
             bindings.reserve_vault,
-            bindings.token_program,
+            bindings.usdc_token_program,
             false,
             false,
             false,
@@ -305,7 +306,14 @@ pub fn validate_open_accounts(
             false,
         ),
         rule(
-            bindings.token_program,
+            bindings.usdc_token_program,
+            bindings.bpf_loader,
+            false,
+            false,
+            true,
+        ),
+        rule(
+            bindings.product_token_program,
             bindings.bpf_loader,
             false,
             false,
@@ -397,12 +405,13 @@ mod tests {
             secondary_oracle_program: address(17),
             adapter_program: address(18),
             adapter_market: address(19),
-            token_program: address(20),
-            instructions_sysvar: address(21),
+            usdc_token_program: address(20),
+            product_token_program: address(21),
+            instructions_sysvar: address(22),
         }
     }
 
-    fn accounts(value: &OpenAccountBindings) -> [AccountDescriptor; 15] {
+    fn accounts(value: &OpenAccountBindings) -> [AccountDescriptor; 16] {
         [
             AccountDescriptor {
                 key: value.user,
@@ -413,14 +422,14 @@ mod tests {
             },
             AccountDescriptor {
                 key: value.user_usdc,
-                owner: value.token_program,
+                owner: value.usdc_token_program,
                 is_signer: false,
                 is_writable: true,
                 executable: false,
             },
             AccountDescriptor {
                 key: value.user_product,
-                owner: value.token_program,
+                owner: value.product_token_program,
                 is_signer: false,
                 is_writable: true,
                 executable: false,
@@ -441,28 +450,28 @@ mod tests {
             },
             AccountDescriptor {
                 key: value.product_mint,
-                owner: value.token_program,
+                owner: value.product_token_program,
                 is_signer: false,
                 is_writable: true,
                 executable: false,
             },
             AccountDescriptor {
                 key: value.clearing_vault,
-                owner: value.token_program,
+                owner: value.usdc_token_program,
                 is_signer: false,
                 is_writable: true,
                 executable: false,
             },
             AccountDescriptor {
                 key: value.fee_vault,
-                owner: value.token_program,
+                owner: value.usdc_token_program,
                 is_signer: false,
                 is_writable: true,
                 executable: false,
             },
             AccountDescriptor {
                 key: value.reserve_vault,
-                owner: value.token_program,
+                owner: value.usdc_token_program,
                 is_signer: false,
                 is_writable: false,
                 executable: false,
@@ -496,7 +505,14 @@ mod tests {
                 executable: false,
             },
             AccountDescriptor {
-                key: value.token_program,
+                key: value.usdc_token_program,
+                owner: value.bpf_loader,
+                is_signer: false,
+                is_writable: false,
+                executable: true,
+            },
+            AccountDescriptor {
+                key: value.product_token_program,
                 owner: value.bpf_loader,
                 is_signer: false,
                 is_writable: false,
@@ -566,7 +582,7 @@ mod tests {
         let bindings = bindings();
         let actual = accounts(&bindings);
         assert_eq!(
-            validate_open_accounts(&bindings, &actual[..14]),
+            validate_open_accounts(&bindings, &actual[..15]),
             Err(Error::InvalidAccounts)
         );
         let mut reordered = actual;
