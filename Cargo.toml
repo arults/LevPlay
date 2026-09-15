@@ -1,5 +1,5 @@
 [workspace]
-members = ["programs/levplay-core"]
+members = ["programs/levplay-core", "programs/levplay-sbf"]
 resolver = "2"
 
 [workspace.package]
