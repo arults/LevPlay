@@ -9,10 +9,7 @@ use solana_program::{account_info::AccountInfo, program_error::ProgramError, pub
 pub const CONFIG_SEED: &[u8] = b"config";
 pub const MARKET_SEED: &[u8] = b"market";
 
-pub fn canonical_config_address(
-    program_id: &Pubkey,
-    bump: u8,
-) -> Result<Pubkey, ProgramError> {
+pub fn canonical_config_address(program_id: &Pubkey, bump: u8) -> Result<Pubkey, ProgramError> {
     let bump_seed = [bump];
     Pubkey::create_program_address(&[CONFIG_SEED, &bump_seed], program_id)
         .map_err(|_| ProgramError::InvalidSeeds)
@@ -88,9 +85,7 @@ pub fn load_market_account(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use levplay_core::{
-        Side, VaultMode, ACCOUNT_VERSION, ENTRY_FEE_BPS, PILOT_LEVERAGE_BPS,
-    };
+    use levplay_core::{Side, VaultMode, ACCOUNT_VERSION, ENTRY_FEE_BPS, PILOT_LEVERAGE_BPS};
 
     fn write_address(bytes: &mut [u8], offset: usize, value: u8) {
         let end = offset.saturating_add(32);
@@ -156,7 +151,10 @@ mod tests {
             false,
             0,
         );
-        assert_eq!(load_config_account(&program_id, &account).map(|v| v.bump), Ok(bump));
+        assert_eq!(
+            load_config_account(&program_id, &account).map(|v| v.bump),
+            Ok(bump)
+        );
     }
 
     #[test]
