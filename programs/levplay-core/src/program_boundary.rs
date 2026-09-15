@@ -344,9 +344,7 @@ pub fn validate_transaction_shape(
         if top_level_programs[index] != compute_budget_program {
             return Err(Error::InvalidTransaction);
         }
-        index = index
-            .checked_add(1)
-            .ok_or(Error::ArithmeticOverflow)?;
+        index = index.checked_add(1).ok_or(Error::ArithmeticOverflow)?;
     }
     Ok(())
 }
