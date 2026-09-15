@@ -1,6 +1,6 @@
 # LevPlay Ondo + PreStocks infrastructure layer
 
-Status date: 2026-09-15. This is the frozen architecture for the 134-product audit candidate. It does not claim that the SBF implementation, provider permissions or collateral currently exist.
+Status date: 2026-09-15. This is the frozen architecture for the 136-product audit candidate. It does not claim that the SBF implementation, provider permissions or collateral currently exist.
 
 ## Exposure model
 
@@ -21,7 +21,7 @@ The configured minimum NAV is real only when an isolated Standby reserve funds i
 
 ## No-single-point-of-failure boundary
 
-Admission requires three independent RPC domains, at least three keeper authorities plus permissionless rebalance, separate governance and pause-only guardian multisigs, a 48-hour upgrade delay, distinct primary/emergency exit operators, two independent oracle accounts and independently funded exit liquidity. Keepers, the web app and backend never have custody authority.
+Admission requires three RPC endpoints spanning three named providers, at least three keeper authorities spanning three named operators plus permissionless rebalance, separate governance and pause-only guardian multisigs with disjoint signer sets and safe thresholds, a 48-hour upgrade delay, distinct primary/emergency exit authorities controlled by distinct operators, two oracle accounts operated by distinct providers and independently funded exit liquidity. Keepers, the web app and backend never have custody authority.
 
 Ondo and PreStocks remain external issuer/provider trust boundaries. LevPlay cannot remove their legal, mint, freeze, redemption or operational powers. The protocol contains this risk by isolating products, blocking new mints on any source change or outage, retaining an independent exit reserve and preserving permissionless closes. “No single point of failure” therefore applies to LevPlay-controlled operation and holder exit paths, not to an assertion that an external issuer is decentralized.
 
