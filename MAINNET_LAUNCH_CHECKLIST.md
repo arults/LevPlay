@@ -20,7 +20,7 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 136 
 | Wallet-direct fee-on-top flow | Critical | UI/model: $500 capital + $2.50 fee = $502.50 debit; Max reserves fee | Passed at model/UI level |
 | Funded Standby model | Critical | Integer reference engine plus 588 adversarial long/short intervals; fake dust fails insolvent | Passed at model level |
 | Backing admission model | Critical | Fixed-account admission checks plus the Rust LevPlay Risk Vault v1 core for paired exposure, contingency escrow, expiry, caps, settlement, independent close, FIFO queued claims and orderly wind-down | Passed at economic-core level; no onchain instance admitted |
-| Rust protocol kernel | Critical | Pinned Rust 1.85 `no_std` core; 39 unit/adversarial tests, Clippy arithmetic denial and rustfmt in CI | Passed at core level; not an SBF program |
+| Rust protocol kernel | Critical | Pinned Rust 1.85 `no_std` core; 45 unit/adversarial tests, Clippy arithmetic denial and rustfmt in CI | Passed at core level; not an SBF program |
 | Read-only market and wallet verification | High | Frozen 15-stock, 5-commodity and 8-PreStocks catalog; pinned known mints, Token-2022 checks, dual-feed registry and mainnet genesis | Passed at read-only level |
 | Executable Solana program | Critical | Pinned Rust entrypoint and reproducible SBF shell exist; all valid instructions intentionally return the execution-lock error and cannot move funds | In progress; value-moving handlers and deployment pending |
 | Leverage backing venue | Critical | Ondo and PreStocks source routes researched; no audited long adapter or separately proven prepaid short route/capacity | Pending |
@@ -61,7 +61,8 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 136 
 - [x] Freeze and test the versioned wire format, exact open-account layout, top-level transaction composition and nonce rules in the dependency-free core.
 - [x] Compile the frozen ABI decoder behind a pinned Solana entrypoint that remains deliberately execution-locked.
 - [ ] Implement the frozen [instruction interface](./programs/levplay/INTERFACE.md) with program-owned state and value-moving handlers.
-- [ ] Isolate each market in separate state, backing and accounting PDAs.
+- [x] Freeze exact versioned config and market byte layouts with strict initialization, reserved-byte, bounds and address-isolation checks.
+- [ ] Enforce canonical config/market PDA seeds, ownership and bumps in the SBF processor; isolate backing and accounting PDAs.
 - [ ] Use checked integer arithmetic and explicit decimal/exponent normalization; no floats.
 - [ ] Enforce capital, fee, wallet, transaction, TVL, daily mint and daily redemption caps onchain.
 - [ ] Pin every mint, token program, oracle, fee recipient, treasury owner, adapter program, adapter market and writable account.
