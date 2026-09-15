@@ -29,6 +29,10 @@ assert.match(markets, /pause\?\.paused !== true/, "Token-2022 pause must block a
 assert.match(markets, /!hook\?\.programId/, "unexpected transfer hooks must block a market");
 assert.match(markets, /provider === "Pyth"/, "Pyth registry entry must be required");
 assert.match(markets, /provider === "Chainlink"/, "Chainlink registry entry must be required");
+assert.match(markets, /api\.dexscreener\.com\/latest\/dex\/tokens/, "pre-IPO display references must use a pinned HTTPS market-data endpoint");
+assert.match(markets, /pair\.chainId === "solana"/, "pre-IPO references must reject pairs from other chains");
+assert.match(markets, /pair\.baseToken\?\.address === mint/, "pre-IPO references must match the pinned mint exactly");
+assert.match(markets, /verified: false/, "DEX display references must never be promoted to settlement verification");
 
 assert.match(wallet, /getGenesisHash/, "wallet reads must verify Solana mainnet");
 assert.match(wallet, /knownMints\.has\(mint\)/, "wallet API must return only allowlisted assets");

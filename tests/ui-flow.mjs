@@ -33,10 +33,16 @@ assert.match(app, /available \/ \(1 \+ protocol\.feeBps \/ 10_000\)/, "max amoun
 assert.ok(app.includes("Total wallet debit") && app.includes("Fee recipient") && app.includes("Treasury owner"), "review must disclose the full wallet debit and treasury routing");
 assert.ok(app.includes("One atomic, wallet-funded") && app.includes("Sign atomic Solana transaction"), "wallet-direct atomic execution must be explicit");
 assert.match(app, /setTimeout\(\(\) => setNotice\(null\), 3_000\)/, "feedback must disappear after three seconds");
+assert.match(app, /getWallets\(\)/, "wallet discovery must use the Wallet Standard registry");
+for (const wallet of ["Phantom", "Backpack", "Jupiter", "Rabby", "OKX Wallet", "Search with WalletConnect"]) assert.ok(app.includes(wallet), `${wallet} must appear in wallet discovery`);
+assert.match(app, /Detected on this device/, "installed wallets must be visibly distinguished");
+assert.match(app, /Connecting does not approve a trade or move funds/, "wallet selector must explain connection permissions");
+assert.match(app, /function AssetLogo/, "market rows and position views must use real asset logos with a safe fallback");
+assert.ok(app.includes("Live Solana DEX") && app.includes("Reference offline"), "pre-IPO reference state must distinguish a live display price from an outage");
 assert.match(css, /@media\(max-width:800px\)/, "mobile breakpoint must exist");
 assert.match(css, /\.app-nav\{position:fixed;left:0;right:0;bottom:0/, "mobile app navigation must remain thumb-accessible");
 assert.match(css, /\.position-card\{grid-template-columns:1fr 1fr/, "positions must collapse to a mobile grid");
 assert.match(css, /\.history-head\{display:none\}/, "dense table headers must be removed on mobile");
 assert.match(css, /\.workspace-tabs\{width:100%\}/, "mobile activity tabs must use the available width");
 
-console.log("LevPlay UI flow: 33 lifecycle, catalog, Standby disclosure and responsive assertions passed");
+console.log("LevPlay UI flow: 42 lifecycle, wallet, branding, catalog, Standby disclosure and responsive assertions passed");

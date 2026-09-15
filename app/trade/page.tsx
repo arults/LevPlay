@@ -2,14 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Activity, ArrowUpRight, BookOpen, BriefcaseBusiness, Check, ChevronRight, CircleAlert, Code2, ExternalLink, Gem, History as HistoryIcon, Info, Landmark, Layers3, LoaderCircle, LockKeyhole, LogOut, PlayCircle, RefreshCw, Scale, Search, ShieldCheck, Sparkles, TrendingDown, TrendingUp, Wallet, Zap } from "lucide-react";
+import Image from "next/image";
+import { getWallets } from "@wallet-standard/app";
+import type { Wallet as StandardWallet } from "@wallet-standard/base";
+import { Activity, ArrowUpRight, BookOpen, BriefcaseBusiness, Check, ChevronRight, CircleAlert, Code2, ExternalLink, Eye, Gem, History as HistoryIcon, Info, Landmark, Layers3, LoaderCircle, LockKeyhole, LogOut, PlayCircle, RefreshCw, RotateCw, Scale, Search, ShieldCheck, Sparkles, TrendingDown, TrendingUp, Wallet, Zap } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ALL_MARKETS, SOLANA_USDC_MINT, type MarketCategory } from "@/lib/markets";
 
 type Oracle = { provider: string; feedId: string; minPublishers: number };
-type LiveMarket = (typeof ALL_MARKETS)[number] & { provider?: string; price?: number; mint?: string; atomic?: boolean; halted?: boolean; marketOpen?: boolean; period?: string; multiplier?: number; pendingMultiplier?: number; multiplierActivation?: number; oracles?: Oracle[]; verified: boolean; unavailable?: boolean; verificationNote?: string };
+type LiveMarket = (typeof ALL_MARKETS)[number] & { provider?: string; price?: number; logo?: string; liquidityUsd?: number; mint?: string; atomic?: boolean; halted?: boolean; marketOpen?: boolean; period?: string; multiplier?: number; pendingMultiplier?: number; multiplierActivation?: number; oracles?: Oracle[]; verified: boolean; unavailable?: boolean; verificationNote?: string };
 type ProtocolCheck = { id: string; label: string; passed: boolean };
 type Protocol = { executionEnabled: boolean; feeBps: number; maxPilotUsd: number; feeRecipient: string | null; treasuryAuthority: string | null; rpcQuorum: number; configuredMarkets: string[]; checks: ProtocolCheck[]; blockers: string[] };
 type MarketResponse = { markets: LiveMarket[]; checkedAt?: string | null };
@@ -21,7 +24,7 @@ type SolanaProvider = { isConnected?: boolean; publicKey?: { toString(): string 
 type ModelTool = { name: string; title: string; description: string; inputSchema: object; annotations: { readOnlyHint: boolean; untrustedContentHint: boolean }; execute(input: unknown): unknown };
 
 declare global {
-  interface Window { solana?: SolanaProvider; phantom?: { solana?: SolanaProvider }; backpack?: SolanaProvider }
+  interface Window { solana?: SolanaProvider; phantom?: { solana?: SolanaProvider }; backpack?: SolanaProvider & { solana?: SolanaProvider }; jupiter?: { solana?: SolanaProvider }; rabby?: SolanaProvider & { solana?: SolanaProvider }; okxwallet?: { solana?: SolanaProvider } }
   interface Document { modelContext?: { registerTool(tool: ModelTool, options?: { signal?: AbortSignal }): void | Promise<void> } }
 }
 
@@ -29,6 +32,36 @@ const formatUsd = (value: number) => new Intl.NumberFormat("en-US", { style: "cu
 const short = (value: string) => value ? `${value.slice(0, 4)}…${value.slice(-4)}` : "";
 const marketId = (market: LiveMarket, leverage: number, direction: Direction) => `${market.ticker}${leverage}${direction === "Long" ? "L" : "S"}`;
 const paperId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 11)}`;
+
+const WALLET_OPTIONS = [
+  { id: "phantom", name: "Phantom", aliases: ["phantom"], domain: "phantom.com", install: "https://phantom.com/download" },
+  { id: "backpack", name: "Backpack", aliases: ["backpack"], domain: "backpack.app", install: "https://backpack.app/download" },
+  { id: "jupiter", name: "Jupiter", aliases: ["jupiter"], domain: "jup.ag", install: "https://jup.ag/mobile" },
+  { id: "rabby", name: "Rabby", aliases: ["rabby"], domain: "rabby.io", install: "https://rabby.io/" },
+  { id: "okx", name: "OKX Wallet", aliases: ["okx"], domain: "okx.com", install: "https://www.okx.com/web3" },
+] as const;
+
+const BRAND_DOMAINS: Record<string, string> = {
+  AAPL: "apple.com", MSFT: "microsoft.com", NVDA: "nvidia.com", GOOGL: "google.com", AMZN: "amazon.com", META: "meta.com", TSLA: "tesla.com", MSTR: "strategy.com", COIN: "coinbase.com", HOOD: "robinhood.com", NFLX: "netflix.com", AMD: "amd.com", AVGO: "broadcom.com", JPM: "jpmorganchase.com", PLTR: "palantir.com",
+  ANTH: "anthropic.com", OPENAI: "openai.com", ANDURIL: "anduril.com", NEURAL: "neuralink.com", KALSHI: "kalshi.com", POLY: "polymarket.com", SPACEX: "spacex.com",
+};
+
+const favicon = (domain: string) => `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+
+function AssetLogo({ market, size = 42 }: { market: LiveMarket; size?: number }) {
+  const [failed, setFailed] = useState(false);
+  const source = market.logo || (BRAND_DOMAINS[market.ticker] ? favicon(BRAND_DOMAINS[market.ticker]) : "");
+  if (!source || failed) return <i className="asset-logo-fallback" style={{ background: market.tone, width: size, height: size }}>{market.ticker[0]}</i>;
+  return <span className="asset-logo" style={{ width: size, height: size }}><Image src={source} alt={`${market.name} logo`} width={size} height={size} unoptimized onError={() => setFailed(true)}/></span>;
+}
+
+function WalletLogo({ name, icon, domain }: { name: string; icon?: string; domain: string }) {
+  return <span className="wallet-logo"><Image src={icon || favicon(domain)} alt={`${name} logo`} width={38} height={38} unoptimized/></span>;
+}
+
+function PartnerLogo({ name, domain }: { name: string; domain: string }) {
+  return <Image className="partner-logo" src={favicon(domain)} alt={`${name} logo`} width={18} height={18} unoptimized/>;
+}
 
 function LogoMark() { return <span className="logo-mark" aria-hidden="true"><i/><b/></span>; }
 
@@ -51,6 +84,8 @@ export default function TradingApp() {
   const [amount, setAmount] = useState(50);
   const [walletAddress, setWalletAddress] = useState("");
   const [walletBusy, setWalletBusy] = useState(false);
+  const [walletOpen, setWalletOpen] = useState(false);
+  const [installedWallets, setInstalledWallets] = useState<readonly StandardWallet[]>([]);
   const [balance, setBalance] = useState<{ sol: number; usdc: number; rpc?: string } | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -112,19 +147,60 @@ export default function TradingApp() {
     } catch { setBalance(null); setNotice("Wallet connected, but balance providers did not respond."); }
   }, []);
 
-  const connect = useCallback(async () => {
-    const provider = window.phantom?.solana || window.backpack || window.solana;
-    if (!provider) { setNotice("No Solana wallet detected. Install Phantom or Backpack."); return; }
+  const injectedProvider = useCallback((id: string): SolanaProvider | undefined => {
+    if (typeof window === "undefined") return undefined;
+    if (id === "phantom") return window.phantom?.solana;
+    if (id === "backpack") return window.backpack?.solana || window.backpack;
+    if (id === "jupiter") return window.jupiter?.solana;
+    if (id === "rabby") return window.rabby?.solana || window.rabby;
+    if (id === "okx") return window.okxwallet?.solana;
+    return undefined;
+  }, []);
+
+  const standardWalletFor = useCallback((aliases: readonly string[]) => installedWallets.find((wallet) => aliases.some((alias) => wallet.name.toLowerCase().includes(alias))), [installedWallets]);
+
+  const connectWallet = useCallback(async (option: (typeof WALLET_OPTIONS)[number]) => {
+    const standardWallet = standardWalletFor(option.aliases);
+    const provider = injectedProvider(option.id);
+    if (!standardWallet && !provider) { window.open(option.install, "_blank", "noopener,noreferrer"); setNotice(`${option.name} was not detected. Its official setup page is open.`); return; }
     setWalletBusy(true);
-    try { const result = await provider.connect(); const address = result.publicKey.toString(); setWalletAddress(address); await readWallet(address); }
-    catch { setNotice("Wallet connection was cancelled."); }
+    try {
+      let address = "";
+      if (standardWallet) {
+        const feature = standardWallet.features["standard:connect"] as { connect(input?: { silent?: boolean }): Promise<{ accounts: readonly { address: string; chains?: readonly string[] }[] }> } | undefined;
+        if (!feature) throw new Error("Wallet does not expose the standard connect feature");
+        const result = await feature.connect();
+        const account = result.accounts.find((item) => !item.chains || item.chains.some((chain) => chain.startsWith("solana:"))) || result.accounts[0];
+        address = account?.address || "";
+      } else if (provider) {
+        const result = await provider.connect();
+        address = result.publicKey?.toString() || provider.publicKey?.toString() || "";
+      }
+      if (!address) throw new Error("Wallet returned no Solana account");
+      setWalletAddress(address);
+      setWalletOpen(false);
+      await readWallet(address);
+    } catch { setNotice("Wallet connection was cancelled or no Solana account was returned."); }
     finally { setWalletBusy(false); }
-  }, [readWallet]);
+  }, [injectedProvider, readWallet, standardWalletFor]);
+
+  const rescanWallets = useCallback(() => {
+    setInstalledWallets([...getWallets().get()]);
+    setNotice("Wallets rescanned.");
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => { void refresh(); }, 0);
     return () => window.clearTimeout(timer);
   }, [refresh]);
+  useEffect(() => {
+    const wallets = getWallets();
+    const sync = () => setInstalledWallets([...wallets.get()]);
+    sync();
+    const offRegister = wallets.on("register", sync);
+    const offUnregister = wallets.on("unregister", sync);
+    return () => { offRegister(); offUnregister(); };
+  }, []);
   useEffect(() => {
     if (!notice) return;
     const timer = window.setTimeout(() => setNotice(null), 3_000);
@@ -155,6 +231,7 @@ export default function TradingApp() {
   }, []);
 
   const visible = useMemo(() => markets.filter((market) => market.category === category && `${market.ticker} ${market.name}`.toLowerCase().includes(query.toLowerCase())), [markets, category, query]);
+  const categoryCounts = useMemo(() => ({ Stocks: markets.filter((market) => market.category === "Stocks").length, "Pre-IPO": markets.filter((market) => market.category === "Pre-IPO").length, Commodities: markets.filter((market) => market.category === "Commodities").length }), [markets]);
   const verifiedCount = markets.filter((market) => market.verified).length;
   const oracles = selected.oracles || [];
   const review = () => {
@@ -196,7 +273,7 @@ export default function TradingApp() {
     <header className="topbar">
       <Link className="brand" href="/"><LogoMark/><span>LevPlay</span></Link>
       <nav className="app-nav" aria-label="Application"><button className={view === "trade" ? "active" : ""} onClick={() => setView("trade")}><Activity/>Trade</button><button className={view === "portfolio" ? "active" : ""} onClick={() => setView("portfolio")}><BriefcaseBusiness/>Portfolio{positions.length > 0 && <i>{positions.length}</i>}</button><button className={view === "history" ? "active" : ""} onClick={() => setView("history")}><HistoryIcon/>History</button></nav>
-      <div className="header-actions"><div className="network-state"><i/><span>{paperMode ? "Paper preview" : "Solana mainnet"}</span></div>{paperMode ? <button className="demo-button active" onClick={stopPaper}><LogOut size={16}/>Exit preview</button> : !walletAddress && <button className="demo-button" onClick={startPaper}><PlayCircle size={16}/>Try demo</button>}<button className={walletAddress ? "wallet-button connected" : "wallet-button"} onClick={() => void connect()} disabled={walletBusy || paperMode}>{walletBusy ? <LoaderCircle className="spin" size={17}/> : <Wallet size={17}/>} {paperMode ? "Preview wallet" : walletAddress ? <><span>{short(walletAddress)}</span><b>{balance ? `${balance.usdc.toFixed(2)} USDC` : "Connected"}</b></> : "Connect wallet"}</button></div>
+      <div className="header-actions"><div className="network-state"><i/><span>{paperMode ? "Paper preview" : "Solana mainnet"}</span></div>{paperMode ? <button className="demo-button active" onClick={stopPaper}><LogOut size={16}/>Exit preview</button> : !walletAddress && <button className="demo-button" onClick={startPaper}><PlayCircle size={16}/>Try demo</button>}<button className={walletAddress ? "wallet-button connected" : "wallet-button"} onClick={() => setWalletOpen(true)} disabled={walletBusy || paperMode}>{walletBusy ? <LoaderCircle className="spin" size={17}/> : <Wallet size={17}/>} {paperMode ? "Preview wallet" : walletAddress ? <><span>{short(walletAddress)}</span><b>{balance ? `${balance.usdc.toFixed(2)} USDC` : "Connected"}</b></> : "Connect wallet"}</button></div>
     </header>
 
     {notice && <div className="notice" role="status" aria-live="polite"><CircleAlert size={17}/><span>{notice}</span><button onClick={() => setNotice(null)} aria-label="Dismiss message">×</button></div>}
@@ -209,21 +286,21 @@ export default function TradingApp() {
     <section className="trading-grid">
       <div className="market-panel">
         <div className="panel-tools">
-          <Tabs value={category} onValueChange={(value) => setCategory(value as MarketCategory)}><TabsList className="category-tabs"><TabsTrigger value="Stocks"><Landmark size={15}/>Stocks <span>15</span></TabsTrigger><TabsTrigger value="Pre-IPO"><Sparkles size={15}/>Pre-IPO <span>9</span></TabsTrigger><TabsTrigger value="Commodities"><Gem size={15}/>Commodities <span>5</span></TabsTrigger></TabsList></Tabs>
+          <Tabs value={category} onValueChange={(value) => setCategory(value as MarketCategory)}><TabsList className="category-tabs"><TabsTrigger value="Stocks"><Landmark size={15}/>Stocks <span>{categoryCounts.Stocks}</span></TabsTrigger><TabsTrigger value="Pre-IPO"><Sparkles size={15}/>Pre-IPO <span>{categoryCounts["Pre-IPO"]}</span></TabsTrigger><TabsTrigger value="Commodities"><Gem size={15}/>Commodities <span>{categoryCounts.Commodities}</span></TabsTrigger></TabsList></Tabs>
           <label className="search"><Search size={16}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search" aria-label="Search markets"/></label>
           <button className="refresh" onClick={() => void refresh()} aria-label="Refresh verified market data"><RefreshCw className={loadingMarkets ? "spin" : ""} size={16}/></button>
         </div>
         <div className="table-head"><span>Market</span><span>Reference</span><span>Session</span><span>Feeds</span></div>
         <div className="market-list">
-          {visible.map((market) => <button key={market.symbol} className={market.symbol === selectedSymbol ? "market-row selected" : "market-row"} onClick={() => setSelectedSymbol(market.symbol)}><span className="asset"><i style={{ background: market.tone }}>{market.ticker[0]}</i><span><strong>{market.ticker}</strong><small>{market.name}</small></span></span><strong className="price">{market.price ? formatUsd(market.price) : loadingMarkets ? "Checking…" : "Unavailable"}</strong><span className={market.marketOpen ? "session open" : "session"}>{market.marketOpen ? "Open" : market.period || "—"}</span><span className={market.verified ? "feed verified" : "feed blocked"}>{market.verified ? <><Check size={13}/>2/2</> : <><LockKeyhole size={13}/>Block</>}</span></button>)}
+          {visible.map((market) => <button key={market.symbol} className={market.symbol === selectedSymbol ? "market-row selected" : "market-row"} onClick={() => setSelectedSymbol(market.symbol)}><span className="asset"><AssetLogo market={market}/><span><strong>{market.ticker}</strong><small>{market.name}</small></span></span><strong className="price">{market.price ? formatUsd(market.price) : loadingMarkets ? "Checking…" : "Reference offline"}</strong><span className={market.marketOpen ? "session open" : "session"}>{market.marketOpen ? "Open" : market.period || "—"}</span><span className={market.verified ? "feed verified" : market.category === "Pre-IPO" && market.price ? "feed display" : "feed blocked"}>{market.verified ? <><Check size={13}/>2/2</> : market.category === "Pre-IPO" && market.price ? <><Eye size={13}/>DEX</> : <><LockKeyhole size={13}/>Block</>}</span></button>)}
           {visible.length === 0 && <div className="empty">No matching markets.</div>}
         </div>
-        <div className="source-line"><span>{checkedAt ? `Checked ${new Date(checkedAt).toLocaleTimeString()}` : "Checking reference providers"}</span><span><a href="https://docs.xstocks.fi/developers" target="_blank" rel="noreferrer">xStocks</a> · <a href="https://prestocks.com/products" target="_blank" rel="noreferrer">PreStocks <ExternalLink size={12}/></a></span></div>
+        <div className="source-line"><span>{checkedAt ? `Checked ${new Date(checkedAt).toLocaleTimeString()}` : "Checking reference providers"}</span><span><a href="https://docs.xstocks.fi/developers" target="_blank" rel="noreferrer"><PartnerLogo name="xStocks" domain="xstocks.fi"/>xStocks</a><a href="https://prestocks.com/products" target="_blank" rel="noreferrer"><PartnerLogo name="PreStocks" domain="prestocks.com"/>PreStocks <ExternalLink size={12}/></a></span></div>
       </div>
 
       <div className="detail-panel">
-        <div className="detail-top"><div className="selected-asset"><span style={{ background: selected.tone }}>{selected.ticker[0]}</span><div><small>LevPlay · {selected.category}</small><h2>{selected.ticker}<em>{leverage}{direction === "Long" ? "L" : "S"}</em></h2><p>Liquidation-free holder structure</p></div></div><div className="selected-price"><small>{selected.category === "Pre-IPO" ? "PreStocks reference" : "Underlying xStock reference"}</small><strong>{selected.price ? formatUsd(selected.price) : "—"}</strong><span>{selected.category === "Pre-IPO" ? "Research catalog · execution locked" : selected.marketOpen ? "Primary session open" : "24/7 secondary market"}</span></div></div>
-        <div className="oracle-strip"><span><ShieldCheck size={18}/><span><small>Settlement guard</small><strong>{selected.verified ? "Dual-source ready" : "Fail-closed"}</strong></span></span>{oracles.slice(0, 2).map((oracle) => <span key={oracle.provider}><i className={oracle.provider.toLowerCase()}/><span><small>{oracle.provider}</small><strong>{oracle.feedId ? short(oracle.feedId) : "Unavailable"}</strong></span></span>)}</div>
+        <div className="detail-top"><div className="selected-asset"><AssetLogo market={selected} size={58}/><div><small>LevPlay · {selected.category}</small><h2>{selected.ticker}<em>{leverage}{direction === "Long" ? "L" : "S"}</em></h2><p>Liquidation-free holder structure</p></div></div><div className="selected-price"><small>{selected.category === "Pre-IPO" ? "PreStocks market reference" : "Underlying xStock reference"}</small><strong>{selected.price ? formatUsd(selected.price) : "Reference offline"}</strong><span>{selected.category === "Pre-IPO" ? "Live DEX display · execution locked" : selected.marketOpen ? "Primary session open" : "24/7 secondary market"}</span></div></div>
+        <div className="oracle-strip"><span><ShieldCheck size={18}/><span><small>Settlement guard</small><strong>{selected.verified ? "Dual-source ready" : "Fail-closed"}</strong></span></span>{selected.category === "Pre-IPO" ? <span><Eye size={18}/><span><small>Display source</small><strong>{selected.price ? "Live Solana DEX" : "Temporarily offline"}</strong></span></span> : oracles.slice(0, 2).map((oracle) => <span key={oracle.provider}><i className={oracle.provider.toLowerCase()}/><span><small>{oracle.provider}</small><strong>{oracle.feedId ? short(oracle.feedId) : "Unavailable"}</strong></span></span>)}</div>
         <div className="curve-card"><div><span className="eyebrow">Outcome preview</span><h3>{leverage}× {direction.toLowerCase()} daily target</h3><p>The vault rebalances exposure; returns compound and will not equal {leverage}× over longer periods.</p></div><ExposureCurve leverage={leverage} direction={direction}/></div>
         <div className="mechanic-grid"><span><Activity size={17}/><small>Rebalance band</small><strong>±10% target drift</strong></span><span><Layers3 size={17}/><small>Underlying</small><strong>{selected.symbol} on Solana</strong></span><span><Zap size={17}/><small>Keeper model</small><strong>Permissionless calls</strong></span></div>
       </div>
@@ -249,7 +326,7 @@ export default function TradingApp() {
       <div className="portfolio-summary"><span><small>{paperMode ? "Paper equity" : "Open-position value"}</small><strong>{formatUsd(paperMode ? paperEquity : totalValue)}</strong></span><span><small>{paperMode ? "Available cash" : "Capital invested"}</small><strong>{formatUsd(paperMode ? paperCash : totalInvested)}</strong></span><span className={unrealizedPnl >= 0 ? "positive" : "negative"}><small>Unrealized P/L</small><strong>{unrealizedPnl >= 0 ? "+" : ""}{formatUsd(unrealizedPnl)}</strong></span><span className={realizedPnl >= 0 ? "positive" : "negative"}><small>Realized P/L</small><strong>{realizedPnl >= 0 ? "+" : ""}{formatUsd(realizedPnl)}</strong></span><span className={totalPnl >= 0 ? "positive" : "negative"}><small>Total P/L</small><strong>{totalPnl >= 0 ? "+" : ""}{formatUsd(totalPnl)}</strong></span></div>
       {paperMode && <div className="scenario-control"><span><small>Paper market scenario</small><strong>One-period price test · not a multi-day return forecast</strong></span><div>{[-500, 0, 500].map((value) => <button key={value} className={scenarioBps === value ? "active" : ""} onClick={() => setScenarioBps(value)}>{value < 0 ? "−5%" : value > 0 ? "+5%" : "Current"}</button>)}</div></div>}
       <div className="position-list">
-        {positions.map((position) => { const value = positionValue(position); const pnl = value - position.costBasis; const pnlPercent = position.costBasis > 0 ? pnl / position.costBasis * 100 : 0; const currentPrice = referenceFor(position) * (1 + scenarioBps / 10_000); return <article className="position-card" key={position.id}><div className="position-identity"><i style={{ background: markets.find((market) => market.symbol === position.symbol)?.tone }}>{position.ticker[0]}</i><span><small>{position.name}</small><strong>{position.ticker}{position.leverage}{position.direction === "Long" ? "L" : "S"}</strong><em>{position.leverage}× {position.direction}</em></span></div><div><small>Entry / current</small><strong>{formatUsd(position.entryPrice)} <i>→</i> {formatUsd(currentPrice)}</strong></div><div><small>Nominal value</small><strong>{formatUsd(value)}</strong></div><div className={pnl >= 0 ? "position-pnl positive" : "position-pnl negative"}>{pnl >= 0 ? <TrendingUp/> : <TrendingDown/>}<span><small>Unrealized P/L</small><strong>{pnl >= 0 ? "+" : ""}{formatUsd(pnl)} <em>({pnlPercent >= 0 ? "+" : ""}{pnlPercent.toFixed(2)}%)</em></strong></span></div><button onClick={() => paperMode ? setExitPosition(position) : startPaper()}>{paperMode ? "Close" : "Resume preview"}</button></article>; })}
+        {positions.map((position) => { const value = positionValue(position); const pnl = value - position.costBasis; const pnlPercent = position.costBasis > 0 ? pnl / position.costBasis * 100 : 0; const currentPrice = referenceFor(position) * (1 + scenarioBps / 10_000); const positionMarket = markets.find((market) => market.symbol === position.symbol) || selected; return <article className="position-card" key={position.id}><div className="position-identity"><AssetLogo market={positionMarket}/><span><small>{position.name}</small><strong>{position.ticker}{position.leverage}{position.direction === "Long" ? "L" : "S"}</strong><em>{position.leverage}× {position.direction}</em></span></div><div><small>Entry / current</small><strong>{formatUsd(position.entryPrice)} <i>→</i> {formatUsd(currentPrice)}</strong></div><div><small>Nominal value</small><strong>{formatUsd(value)}</strong></div><div className={pnl >= 0 ? "position-pnl positive" : "position-pnl negative"}>{pnl >= 0 ? <TrendingUp/> : <TrendingDown/>}<span><small>Unrealized P/L</small><strong>{pnl >= 0 ? "+" : ""}{formatUsd(pnl)} <em>({pnlPercent >= 0 ? "+" : ""}{pnlPercent.toFixed(2)}%)</em></strong></span></div><button onClick={() => paperMode ? setExitPosition(position) : startPaper()}>{paperMode ? "Close" : "Resume preview"}</button></article>; })}
         {positions.length === 0 && <div className="workspace-empty"><BriefcaseBusiness/><h2>No open positions</h2><p>{paperMode ? "Open a paper position to test the complete buy-to-sell flow." : "Connect your wallet when audited LevPlay market tokens are deployed."}</p><button onClick={() => setView("trade")}>Browse markets</button>{!paperMode && !walletAddress && <button className="secondary" onClick={startPaper}>Try paper preview</button>}</div>}
       </div>
     </section>}
@@ -294,7 +371,8 @@ export default function TradingApp() {
       <div className="footer-legal"><span>© 2026 LevPlay</span><p>xStocks and PreStocks are tokenized economic exposures subject to issuer controls, liquidity risks and jurisdiction restrictions. PreStocks confer no equity ownership rights. Availability does not imply eligibility.</p></div>
     </footer>
 
-    <Dialog open={reviewOpen} onOpenChange={setReviewOpen}><DialogContent className="review-dialog"><DialogHeader><DialogTitle>Review {productId}</DialogTitle><DialogDescription>{paperMode ? "Paper preview only. No funds or transactions will move." : "One atomic, wallet-funded leveraged-token position on Solana."}</DialogDescription></DialogHeader><div className="review-asset"><span style={{ background: selected.tone }}>{selected.ticker[0]}</span><div><strong>{selected.name} {leverage}× {direction}</strong><small>{selected.symbol} · {selected.category === "Pre-IPO" ? "PreStocks research reference" : "xStocks Token-2022"}</small></div><b>{formatUsd(amount)}</b></div><div className="review-grid"><span><small>Position capital</small><strong>{formatUsd(amount)}</strong></span><span><small>Entry fee · 0.5%</small><strong>{formatUsd(fee)}</strong></span><span><small>Total wallet debit</small><strong>{formatUsd(totalDebit)}</strong></span><span><small>Target exposure</small><strong>{formatUsd(exposure)}</strong></span><span><small>Oracle guard</small><strong>{selected.verified ? "Pyth + Chainlink" : "Unavailable"}</strong></span><span><small>Pilot limit</small><strong>$100 / wallet</strong></span></div><div className="recipient-row"><small>Fee recipient</small><code>{protocol.feeRecipient || "Not configured"}</code><small>Treasury owner</small><code>{protocol.treasuryAuthority || "Not configured"}</code></div>{paperMode ? <div className="gate-box paper"><PlayCircle/><div><strong>Paper preview</strong><p>This records a local practice position and never submits a Solana transaction.</p></div></div> : <><div className={canExecute ? "gate-box ready" : "gate-box"}>{canExecute ? <ShieldCheck/> : <LockKeyhole/>}<div><strong>{canExecute ? "All release gates passed" : "Transaction signing is disabled"}</strong><p>{canExecute ? `Two RPCs verified the program, treasury and ${productId} deployment.` : (protocol.blockers[0] || (!oracleReady ? "Dual-oracle verification failed." : `${productId} is not an audited deployment.`))}</p></div></div>{!canExecute && <div className="gate-list">{protocol.blockers.slice(0, 5).map((blocker) => <span key={blocker}><i/>{blocker}</span>)}</div>}<Progress value={canExecute ? 100 : Math.max(12, 100 - protocol.blockers.length * 13)} /></>}<button className="review-button" onClick={paperMode ? openPaperPosition : undefined} disabled={!paperMode && !canExecute}>{paperMode ? "Open paper position" : canExecute ? "Sign atomic Solana transaction" : "Mainnet safety lock active"}</button><p className="dialog-note">Liquidation-free describes the holder experience, not risk-free returns. Rebalancing, oracle, liquidity, custody and smart-contract risks remain.</p></DialogContent></Dialog>
+    <Dialog open={walletOpen} onOpenChange={setWalletOpen}><DialogContent className="wallet-dialog"><DialogHeader><DialogTitle>Connect a Solana wallet</DialogTitle><DialogDescription>Detected wallets appear first. LevPlay requests your public account only; never enter a seed phrase.</DialogDescription></DialogHeader><div className="wallet-options">{WALLET_OPTIONS.map((option) => { const wallet = standardWalletFor(option.aliases); const detected = Boolean(wallet || injectedProvider(option.id)); return <button key={option.id} className="wallet-option" onClick={() => void connectWallet(option)} disabled={walletBusy}><WalletLogo name={option.name} icon={wallet?.icon} domain={option.domain}/><span><strong>{option.name}</strong><small>{detected ? "Detected on this device" : "Not detected · open official setup"}</small></span><em className={detected ? "detected" : ""}>{detected ? "Connect" : "Get"}</em></button>; })}</div><a className="walletconnect-option" href="https://explorer.walletconnect.com/?type=wallet&chains=solana%3A5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp" target="_blank" rel="noreferrer"><WalletLogo name="WalletConnect" domain="walletconnect.network"/><span><strong>Search with WalletConnect</strong><small>Browse compatible wallets, then return and rescan.</small></span><ExternalLink size={16}/></a><button className="rescan-wallets" onClick={rescanWallets}><RotateCw size={15}/>Rescan installed wallets</button><p className="wallet-safety"><ShieldCheck size={14}/>Connecting does not approve a trade or move funds.</p></DialogContent></Dialog>
+    <Dialog open={reviewOpen} onOpenChange={setReviewOpen}><DialogContent className="review-dialog"><DialogHeader><DialogTitle>Review {productId}</DialogTitle><DialogDescription>{paperMode ? "Paper preview only. No funds or transactions will move." : "One atomic, wallet-funded leveraged-token position on Solana."}</DialogDescription></DialogHeader><div className="review-asset"><AssetLogo market={selected}/><div><strong>{selected.name} {leverage}× {direction}</strong><small>{selected.symbol} · {selected.category === "Pre-IPO" ? "PreStocks research reference" : "xStocks Token-2022"}</small></div><b>{formatUsd(amount)}</b></div><div className="review-grid"><span><small>Position capital</small><strong>{formatUsd(amount)}</strong></span><span><small>Entry fee · 0.5%</small><strong>{formatUsd(fee)}</strong></span><span><small>Total wallet debit</small><strong>{formatUsd(totalDebit)}</strong></span><span><small>Target exposure</small><strong>{formatUsd(exposure)}</strong></span><span><small>Oracle guard</small><strong>{selected.verified ? "Pyth + Chainlink" : "Unavailable"}</strong></span><span><small>Pilot limit</small><strong>$100 / wallet</strong></span></div><div className="recipient-row"><small>Fee recipient</small><code>{protocol.feeRecipient || "Not configured"}</code><small>Treasury owner</small><code>{protocol.treasuryAuthority || "Not configured"}</code></div>{paperMode ? <div className="gate-box paper"><PlayCircle/><div><strong>Paper preview</strong><p>This records a local practice position and never submits a Solana transaction.</p></div></div> : <><div className={canExecute ? "gate-box ready" : "gate-box"}>{canExecute ? <ShieldCheck/> : <LockKeyhole/>}<div><strong>{canExecute ? "All release gates passed" : "Transaction signing is disabled"}</strong><p>{canExecute ? `Two RPCs verified the program, treasury and ${productId} deployment.` : (protocol.blockers[0] || (!oracleReady ? "Dual-oracle verification failed." : `${productId} is not an audited deployment.`))}</p></div></div>{!canExecute && <div className="gate-list">{protocol.blockers.slice(0, 5).map((blocker) => <span key={blocker}><i/>{blocker}</span>)}</div>}<Progress value={canExecute ? 100 : Math.max(12, 100 - protocol.blockers.length * 13)} /></>}<button className="review-button" onClick={paperMode ? openPaperPosition : undefined} disabled={!paperMode && !canExecute}>{paperMode ? "Open paper position" : canExecute ? "Sign atomic Solana transaction" : "Mainnet safety lock active"}</button><p className="dialog-note">Liquidation-free describes the holder experience, not risk-free returns. Rebalancing, oracle, liquidity, custody and smart-contract risks remain.</p></DialogContent></Dialog>
     <Dialog open={Boolean(exitPosition)} onOpenChange={(open) => { if (!open) setExitPosition(null); }}><DialogContent className="review-dialog"><DialogHeader><DialogTitle>Sell {exitPosition ? `${exitPosition.ticker}${exitPosition.leverage}${exitPosition.direction === "Long" ? "L" : "S"}` : "position"}</DialogTitle><DialogDescription>Burn the paper position and return simulated USDC to the same wallet.</DialogDescription></DialogHeader>{exitPosition && <><div className="review-grid"><span><small>Total cost paid</small><strong>{formatUsd(exitPosition.costBasis)}</strong></span><span><small>Estimated proceeds</small><strong>{formatUsd(positionValue(exitPosition))}</strong></span><span><small>Entry reference</small><strong>{formatUsd(exitPosition.entryPrice)}</strong></span><span><small>Realized P/L</small><strong className={positionValue(exitPosition) - exitPosition.costBasis >= 0 ? "positive" : "negative"}>{positionValue(exitPosition) - exitPosition.costBasis >= 0 ? "+" : ""}{formatUsd(positionValue(exitPosition) - exitPosition.costBasis)}</strong></span></div><button className="review-button" onClick={sellPaperPosition}>Confirm paper sale</button></>}</DialogContent></Dialog>
   </main>;
 }

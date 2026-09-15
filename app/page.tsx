@@ -1,13 +1,16 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, BarChart3, Boxes, Check, CircleAlert, Coins, ExternalLink, Layers3, LockKeyhole, RefreshCw, ShieldCheck, Sparkles, Wallet } from "lucide-react";
 
 function LogoMark() { return <span className="logo-mark" aria-hidden="true"><i/><b/></span>; }
 
 const products = [
-  { token: "AAPL2L", name: "Apple 2×", tone: "#ff8a3d", move: "+2× daily" },
-  { token: "AAPL2S", name: "Apple inverse 2×", tone: "#9b4c1c", move: "−2× daily" },
-  { token: "OPENAI3L", name: "OpenAI pre-IPO model", tone: "#10a37f", move: "+3× paper" },
+  { token: "AAPL2L", name: "Apple 2×", tone: "#ff8a3d", move: "+2× daily", domain: "apple.com" },
+  { token: "AAPL2S", name: "Apple inverse 2×", tone: "#9b4c1c", move: "−2× daily", domain: "apple.com" },
+  { token: "OPENAI3L", name: "OpenAI pre-IPO model", tone: "#10a37f", move: "+3× paper", domain: "openai.com" },
 ];
+
+function BrandIcon({ name, domain, size = 26 }: { name: string; domain: string; size?: number }) { return <Image src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`} alt={`${name} logo`} width={size} height={size} unoptimized/>; }
 
 export default function LandingPage() {
   return <main className="landing-shell">
@@ -27,12 +30,12 @@ export default function LandingPage() {
       </div>
       <div className="token-stage" aria-label="Example LevPlay tokens">
         <div className="orbit orbit-one"/><div className="orbit orbit-two"/>
-        {products.map((product, index) => <article key={product.token} className={`token-card token-${index + 1}`}><i style={{ background: product.tone }}>{product.token[0]}</i><span><small>LevPlay token</small><strong>{product.token}</strong><em>{product.name}</em></span><b>{product.move}</b></article>)}
+        {products.map((product, index) => <article key={product.token} className={`token-card token-${index + 1}`}><i style={{ background: product.tone }}><BrandIcon name={product.name} domain={product.domain}/></i><span><small>LevPlay token</small><strong>{product.token}</strong><em>{product.name}</em></span><b>{product.move}</b></article>)}
         <div className="stage-core"><LogoMark/><span>One token.<br/><strong>Managed leverage.</strong></span></div>
       </div>
     </section>
 
-    <section className="ticker-band" aria-label="Product facts"><span>15 public stocks</span><i/><span>9 pre-IPO research markets</span><i/><span>2× and 3× · Long and short</span><i/><span>0.5% disclosed entry fee</span></section>
+    <section className="ticker-band" aria-label="Product facts"><span>15 public stocks</span><i/><span>7 live-priced pre-IPO references</span><i/><span>2× and 3× · Long and short</span><i/><span>0.5% disclosed entry fee</span></section>
 
     <section className="landing-section" id="why">
       <div className="section-heading"><span className="eyebrow">Why LevPlay</span><h2>Leverage without managing margin.</h2><p>LevPlay turns a managed leverage strategy into a token you can hold in your Solana wallet.</p></div>
@@ -64,12 +67,12 @@ export default function LandingPage() {
     </section>
 
     <section className="landing-section preipo-section">
-      <div><span className="eyebrow">Private markets, explicit limits</span><h2>Pre-IPO leverage—researched, not presumed.</h2><p>LevPlay now includes paper models for Anthropic, OpenAI, Anduril, Neuralink, Figure AI, Kalshi, Polymarket, SpaceX and xAI using pinned PreStocks Solana references.</p></div>
+      <div><span className="eyebrow">Private markets, explicit limits</span><h2>Pre-IPO leverage—researched, not presumed.</h2><p>LevPlay includes paper models for currently priced Anthropic, OpenAI, Anduril, Neuralink, Kalshi, Polymarket and SpaceX PreStocks references. Unpriced catalog entries stay hidden instead of displaying a misleading market.</p></div>
       <div className="preipo-proof"><strong>Why execution is locked</strong><p>PreStocks provide bearer tokens tracking private-company economic exposure, not company shares or ownership rights. They may have no guaranteed secondary liquidity and retain administrative controls. A LevPlay market remains blocked until two independent settlement feeds, an audited 2×/3× long route, a separately funded short route, capacity and deterministic unwind are proven.</p><span><LockKeyhole size={15}/>Paper preview available · real-money signing disabled</span></div>
     </section>
 
     <section className="risk-banner" id="risk"><div><span className="eyebrow">Know the boundary</span><h2>Liquidation-free.<br/><em>Not loss-free.</em></h2></div><p>Daily leverage compounds. Standby preserves value only to the extent its isolated reserve is genuinely funded. Overnight gaps, volatility drag, oracle failures, backing liquidity, issuer controls and smart-contract bugs remain material risks. Real-money signing stays locked until deployed programs and independent audit evidence pass every release gate.</p><Link className="enter-app light" href="/trade">Try the paper flow <ArrowRight size={17}/></Link></section>
 
-    <footer className="landing-footer"><div><span className="footer-logo"><LogoMark/>LevPlay</span><p>Liquidation-free leveraged public-stock and pre-IPO reference tokens on Solana.</p></div><nav><strong>Product</strong><a href="#why">Why LevPlay</a><a href="#mechanics">How it works</a><a href="#risk">Risks</a><Link href="/trade">Enter app</Link></nav><nav><strong>Protocol</strong><Link href="/trade#docs">How it works</Link><Link href="/trade#oracles">Oracle policy</Link><Link href="/trade#security">Security gates</Link><Link href="/trade#treasury">Fee treasury</Link></nav><nav><strong>Resources</strong><a href="https://docs.xstocks.fi/docs" target="_blank" rel="noreferrer">xStocks docs <ExternalLink size={11}/></a><a href="https://prestocks.com/products" target="_blank" rel="noreferrer">PreStocks products <ExternalLink size={11}/></a><a href="https://solana.com/docs" target="_blank" rel="noreferrer">Solana docs <ExternalLink size={11}/></a><a href="https://hackathons.solana.com/hackathons/stocklana" target="_blank" rel="noreferrer">Stocklana <ExternalLink size={11}/></a></nav><div className="landing-legal"><span>© 2026 LevPlay</span><p>Experimental software. Not investment advice. Tokenized securities are subject to issuer terms and jurisdiction restrictions.</p></div></footer>
+    <footer className="landing-footer"><div><span className="footer-logo"><LogoMark/>LevPlay</span><p>Liquidation-free leveraged public-stock and pre-IPO reference tokens on Solana.</p></div><nav><strong>Product</strong><a href="#why">Why LevPlay</a><a href="#mechanics">How it works</a><a href="#risk">Risks</a><Link href="/trade">Enter app</Link></nav><nav><strong>Protocol</strong><Link href="/trade#docs">How it works</Link><Link href="/trade#oracles">Oracle policy</Link><Link href="/trade#security">Security gates</Link><Link href="/trade#treasury">Fee treasury</Link></nav><nav className="brand-links"><strong>Resources</strong><a href="https://docs.xstocks.fi/docs" target="_blank" rel="noreferrer"><BrandIcon name="xStocks" domain="xstocks.fi" size={18}/>xStocks docs <ExternalLink size={11}/></a><a href="https://prestocks.com/products" target="_blank" rel="noreferrer"><BrandIcon name="PreStocks" domain="prestocks.com" size={18}/>PreStocks products <ExternalLink size={11}/></a><a href="https://solana.com/docs" target="_blank" rel="noreferrer"><BrandIcon name="Solana" domain="solana.com" size={18}/>Solana docs <ExternalLink size={11}/></a><a href="https://hackathons.solana.com/hackathons/stocklana" target="_blank" rel="noreferrer">Stocklana <ExternalLink size={11}/></a></nav><div className="landing-legal"><span>© 2026 LevPlay</span><p>Experimental software. Not investment advice. Tokenized securities are subject to issuer terms and jurisdiction restrictions.</p></div></footer>
   </main>;
 }

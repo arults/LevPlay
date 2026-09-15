@@ -10,7 +10,7 @@ Each reference has four candidate LevPlay products: `2L`, `2S`, `3L` and `3S`, f
 
 ## Pre-IPO references
 
-Nine Solana PreStocks mints observed on 2026-09-15 are pinned: Anthropic, OpenAI, Anduril, Neuralink, Figure AI, Kalshi, Polymarket, SpaceX and xAI.
+Seven currently live-priced Solana PreStocks mints observed on 2026-09-15 are pinned: Anthropic, OpenAI, Anduril, Neuralink, Kalshi, Polymarket and SpaceX. Catalog entries without a verifiable live Solana DEX reference remain hidden until they can be pinned and validated.
 
 The interface exposes the same `2L`, `2S`, `3L` and `3S` paper models, for 36 pre-IPO research candidates. Every one remains execution-blocked because the current evidence does not establish:
 

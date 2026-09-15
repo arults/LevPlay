@@ -4,7 +4,7 @@ LevPlay is a Solana-first interface and fail-closed protocol design for long, da
 
 ## Product boundary
 
-- 15 curated public stocks and 5 commodity ETFs backed by pinned xStocks mints, plus 9 pinned PreStocks pre-IPO research references.
+- 15 curated public stocks and 5 commodity ETFs backed by pinned xStocks mints, plus 7 pinned, live-priced PreStocks pre-IPO research references.
 - Paper models for 2x and 3x long/short exposure; every real-money product remains independently gated. The first external-audit canary remains isolated `AAPL2L` and `AAPL2S`.
 - Wallet-direct entry with no LevPlay deposit balance: position capital moves to the isolated vault and the 0.5% fee is charged on top in one atomic transaction.
 - $100-per-wallet canary cap. A $500 future order means $500 capital + $2.50 fee = $502.50 total wallet debit.

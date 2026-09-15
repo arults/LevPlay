@@ -4,12 +4,38 @@ import { isSafeRpcUrl } from "@/lib/protocol";
 export const runtime = "edge";
 
 type Json = Record<string, unknown>;
+type DexPair = {
+  chainId?: string;
+  pairAddress?: string;
+  priceUsd?: string;
+  liquidity?: { usd?: number };
+  baseToken?: { address?: string };
+  info?: { imageUrl?: string };
+};
 
 async function getJson(path: string) {
   const response = await fetch(`${XSTOCKS_API}${path}`, { signal: AbortSignal.timeout(10_000) });
   if (!response.ok) throw new Error(`xStocks ${response.status}`);
   if (Number(response.headers.get("content-length") || 0) > 1_000_000) throw new Error("Oversized xStocks response");
   return (await response.json()) as Json;
+}
+
+async function getPreIpoReferences() {
+  const requested = new Set(PREIPO_MARKETS.map((market) => market.mint));
+  const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${[...requested].join(",")}`, {
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) throw new Error(`DEX reference ${response.status}`);
+  if (Number(response.headers.get("content-length") || 0) > 2_000_000) throw new Error("Oversized DEX reference response");
+  const payload = await response.json() as { pairs?: DexPair[] };
+  const pairs = Array.isArray(payload.pairs) ? payload.pairs : [];
+  return Object.fromEntries([...requested].map((mint) => {
+    const candidates = pairs.filter((pair) => pair.chainId === "solana" && pair.baseToken?.address === mint && Number(pair.priceUsd) > 0);
+    const pair = candidates.sort((a, b) => Number(b.liquidity?.usd || 0) - Number(a.liquidity?.usd || 0))[0];
+    const logo = pair?.info?.imageUrl?.startsWith("https://cdn.dexscreener.com/") ? pair.info.imageUrl : undefined;
+    return [mint, pair ? { price: Number(pair.priceUsd), liquidityUsd: Number(pair.liquidity?.usd || 0), pairAddress: pair.pairAddress || "", logo } : null];
+  }));
 }
 
 async function verifyMints() {
@@ -43,6 +69,7 @@ async function verifyMints() {
 export async function GET() {
   const oracleRequest = getJson("/public/oracles?pageSize=100&network=Solana").catch(() => ({ nodes: [] }));
   const mintChecks = verifyMints().catch(() => ({} as Record<string, { valid: boolean; paused: boolean; hasPermanentDelegate: boolean; multiplier: string }>));
+  const preIpoRequest = getPreIpoReferences().catch(() => ({} as Record<string, { price: number; liquidityUsd: number; pairAddress: string; logo?: string } | null>));
   const rows = await Promise.all(CURATED_MARKETS.map(async (market) => {
     try {
       const [asset, price, multiplier, oraclePayload, liveMints] = await Promise.all([
@@ -77,6 +104,7 @@ export async function GET() {
         multiplier: Number(multiplier.currentMultiplier || 1),
         pendingMultiplier: Number(multiplier.newMultiplier || 0),
         multiplierActivation: Number(multiplier.activationDateTime || 0),
+        logo: typeof asset.logo === "string" && asset.logo.startsWith("https://xstocks-metadata.backed.fi/") ? asset.logo : undefined,
         oracles,
         issuerControls: mintState?.hasPermanentDelegate ? ["mint", "freeze", "pause", "permanent delegate"] : [],
         verified: Boolean(mintState?.valid && solana.supportsAtomicSwaps === true && dualOracle && !insideCorporateActionWindow && !halted),
@@ -85,7 +113,25 @@ export async function GET() {
       return { ...market, unavailable: true, verified: false };
     }
   }));
-  const preIpo = PREIPO_MARKETS.map((market) => ({ ...market, provider: "PreStocks", period: "24/7 secondary", marketOpen: true, verified: false, unavailable: true, verificationNote: "Catalog verified; execution blocked until independent oracle and leverage backing are audited" }));
+  const preIpoReferences = await preIpoRequest;
+  const preIpo = PREIPO_MARKETS.map((market) => {
+    const reference = preIpoReferences[market.mint];
+    return {
+      ...market,
+      provider: "PreStocks · DEX reference",
+      price: reference?.price,
+      logo: reference?.logo,
+      liquidityUsd: reference?.liquidityUsd,
+      pairAddress: reference?.pairAddress,
+      period: "24/7 secondary",
+      marketOpen: true,
+      verified: false,
+      unavailable: !reference,
+      verificationNote: reference
+        ? "Live DEX reference available; execution remains blocked until independent settlement oracles and leverage backing are audited"
+        : "Reference provider unavailable; execution remains blocked",
+    };
+  });
   return Response.json({ markets: [...rows, ...preIpo], checkedAt: new Date().toISOString(), source: "xStocks public API v2 + pinned PreStocks catalog" }, {
     headers: { "cache-control": "public, max-age=30, s-maxage=60, stale-while-revalidate=120" },
   });
