@@ -72,6 +72,17 @@ pub struct CapacityQuote {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct CloseQuote {
+    pub long_capital_after: u64,
+    pub short_capital_after: u64,
+    pub matched_exposure: u64,
+    pub unmatched_long_exposure: u64,
+    pub unmatched_short_exposure: u64,
+    pub remaining_long_maker_funding: u64,
+    pub remaining_short_loss_collateral: u64,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PairSettlement {
     pub long: Settlement,
     pub short: Settlement,
@@ -154,6 +165,54 @@ fn reserve_requirement(config: &RiskVaultConfig, capital: u64) -> Result<u64> {
     Ok(variable.max(config.minimum_reserve_per_side))
 }
 
+fn capacity_quote_for_totals(
+    config: &RiskVaultConfig,
+    long_capital_after: u64,
+    short_capital_after: u64,
+) -> Result<CapacityQuote> {
+    let aggregate = long_capital_after
+        .checked_add(short_capital_after)
+        .ok_or(Error::ArithmeticOverflow)?;
+    if long_capital_after > config.side_capital_cap
+        || short_capital_after > config.side_capital_cap
+        || aggregate > config.aggregate_capital_cap
+    {
+        return Err(Error::CapExceeded);
+    }
+
+    let long_exposure = exposure(long_capital_after, config.leverage_bps)?;
+    let short_exposure = exposure(short_capital_after, config.leverage_bps)?;
+    let matched_exposure = long_exposure.min(short_exposure);
+    let unmatched_long_exposure = long_exposure
+        .checked_sub(matched_exposure)
+        .ok_or(Error::ArithmeticOverflow)?;
+    let unmatched_short_exposure = short_exposure
+        .checked_sub(matched_exposure)
+        .ok_or(Error::ArithmeticOverflow)?;
+    let additional_leverage_bps = u64::from(config.leverage_bps)
+        .checked_sub(BPS)
+        .ok_or(Error::InvalidConfiguration)?;
+    let required_long_maker_funding = mul_div_ceil(
+        long_exposure,
+        additional_leverage_bps,
+        u64::from(config.leverage_bps),
+    )?;
+    let required_short_loss_collateral =
+        mul_div_ceil(short_exposure, u64::from(config.maximum_down_move_bps), BPS)?;
+
+    Ok(CapacityQuote {
+        long_capital_after,
+        short_capital_after,
+        matched_exposure,
+        unmatched_long_exposure,
+        unmatched_short_exposure,
+        required_long_maker_funding,
+        required_short_loss_collateral,
+        required_long_reserve: reserve_requirement(config, long_capital_after)?,
+        required_short_reserve: reserve_requirement(config, short_capital_after)?,
+    })
+}
+
 pub fn quote_pair_open(
     config: &RiskVaultConfig,
     state: &RiskVaultState,
@@ -177,57 +236,7 @@ pub fn quote_pair_open(
         .short_capital
         .checked_add(short_capital_delta)
         .ok_or(Error::ArithmeticOverflow)?;
-    let aggregate = long_capital_after
-        .checked_add(short_capital_after)
-        .ok_or(Error::ArithmeticOverflow)?;
-    if long_capital_after > config.side_capital_cap
-        || short_capital_after > config.side_capital_cap
-        || aggregate > config.aggregate_capital_cap
-    {
-        return Err(Error::CapExceeded);
-    }
-
-    let long_exposure = exposure(long_capital_after, config.leverage_bps)?;
-    let short_exposure = exposure(short_capital_after, config.leverage_bps)?;
-    let matched_exposure = long_exposure.min(short_exposure);
-    let unmatched_long_exposure = long_exposure
-        .checked_sub(matched_exposure)
-        .ok_or(Error::ArithmeticOverflow)?;
-    let unmatched_short_exposure = short_exposure
-        .checked_sub(matched_exposure)
-        .ok_or(Error::ArithmeticOverflow)?;
-
-    // Matching reduces active hedge usage but not escrow. Either side can close
-    // first, so the remaining long must be fundable without depending on the
-    // opposite holder staying in the vault. At 2x this is half of gross exposure.
-    let additional_leverage_bps = u64::from(config.leverage_bps)
-        .checked_sub(BPS)
-        .ok_or(Error::InvalidConfiguration)?;
-    let required_long_maker_funding = mul_div_ceil(
-        long_exposure,
-        additional_leverage_bps,
-        u64::from(config.leverage_bps),
-    )?;
-
-    // The full short side is collateralized for the funded epoch even while it
-    // is matched. This preserves independent redemption if the long side exits.
-    // Gaps outside the bound fail closed instead of creating an unfunded claim.
-    let required_short_loss_collateral =
-        mul_div_ceil(short_exposure, u64::from(config.maximum_down_move_bps), BPS)?;
-    let required_long_reserve = reserve_requirement(config, long_capital_after)?;
-    let required_short_reserve = reserve_requirement(config, short_capital_after)?;
-
-    Ok(CapacityQuote {
-        long_capital_after,
-        short_capital_after,
-        matched_exposure,
-        unmatched_long_exposure,
-        unmatched_short_exposure,
-        required_long_maker_funding,
-        required_short_loss_collateral,
-        required_long_reserve,
-        required_short_reserve,
-    })
+    capacity_quote_for_totals(config, long_capital_after, short_capital_after)
 }
 
 pub fn quote_open(
@@ -321,6 +330,84 @@ pub fn apply_open(
         Side::Long => apply_pair_open(config, state, capital, 0, current_slot),
         Side::Short => apply_pair_open(config, state, 0, capital, current_slot),
     }
+}
+
+pub fn quote_pair_close(
+    config: &RiskVaultConfig,
+    state: &RiskVaultState,
+    long_capital_delta: u64,
+    short_capital_delta: u64,
+) -> Result<CloseQuote> {
+    validate_risk_vault_config(config)?;
+    if state.mode == RiskVenueMode::Locked
+        || (long_capital_delta == 0 && short_capital_delta == 0)
+        || long_capital_delta > state.long_capital
+        || short_capital_delta > state.short_capital
+    {
+        return Err(Error::InvalidState);
+    }
+    let long_capital_after = state
+        .long_capital
+        .checked_sub(long_capital_delta)
+        .ok_or(Error::ArithmeticOverflow)?;
+    let short_capital_after = state
+        .short_capital
+        .checked_sub(short_capital_delta)
+        .ok_or(Error::ArithmeticOverflow)?;
+    let remaining = capacity_quote_for_totals(config, long_capital_after, short_capital_after)?;
+    Ok(CloseQuote {
+        long_capital_after,
+        short_capital_after,
+        matched_exposure: remaining.matched_exposure,
+        unmatched_long_exposure: remaining.unmatched_long_exposure,
+        unmatched_short_exposure: remaining.unmatched_short_exposure,
+        remaining_long_maker_funding: remaining.required_long_maker_funding,
+        remaining_short_loss_collateral: remaining.required_short_loss_collateral,
+    })
+}
+
+pub fn apply_pair_close(
+    config: &RiskVaultConfig,
+    state: RiskVaultState,
+    long_capital_delta: u64,
+    short_capital_delta: u64,
+) -> Result<RiskVaultState> {
+    let quote = quote_pair_close(config, &state, long_capital_delta, short_capital_delta)?;
+    Ok(RiskVaultState {
+        long_capital: quote.long_capital_after,
+        short_capital: quote.short_capital_after,
+        epoch: state.epoch.checked_add(1).ok_or(Error::ArithmeticOverflow)?,
+        ..state
+    })
+}
+
+pub fn apply_close(
+    config: &RiskVaultConfig,
+    state: RiskVaultState,
+    side: Side,
+    capital: u64,
+) -> Result<RiskVaultState> {
+    match side {
+        Side::Long => apply_pair_close(config, state, capital, 0),
+        Side::Short => apply_pair_close(config, state, 0, capital),
+    }
+}
+
+pub fn begin_wind_down(state: RiskVaultState) -> Result<RiskVaultState> {
+    if state.mode == RiskVenueMode::Locked || state.mode == RiskVenueMode::WindDown {
+        return Err(Error::InvalidState);
+    }
+    Ok(RiskVaultState {
+        mode: RiskVenueMode::WindDown,
+        epoch: state.epoch.checked_add(1).ok_or(Error::ArithmeticOverflow)?,
+        ..state
+    })
+}
+
+pub fn maker_escrow_releasable(state: &RiskVaultState) -> bool {
+    state.mode == RiskVenueMode::WindDown
+        && state.long_capital == 0
+        && state.short_capital == 0
 }
 
 fn signed_abs(value: i128) -> Result<u128> {
@@ -669,5 +756,68 @@ mod tests {
             ),
             Err(Error::InvalidOracle)
         );
+    }
+
+    #[test]
+    fn exits_remain_available_after_commitment_expiry_and_pause() {
+        let mut state = active();
+        state.long_capital = 100_000_000;
+        state.short_capital = 100_000_000;
+        state.mode = RiskVenueMode::Paused;
+        let after = apply_close(&config(), state, Side::Long, 25_000_000)
+            .expect("pause must not block exits");
+        assert_eq!(after.long_capital, 75_000_000);
+        assert_eq!(after.short_capital, 100_000_000);
+        assert_eq!(after.epoch, 1);
+    }
+
+    #[test]
+    fn close_rejects_over_redemption_without_mutating_state() {
+        let mut state = active();
+        state.long_capital = 10;
+        assert_eq!(
+            apply_close(&config(), state, Side::Long, 11),
+            Err(Error::InvalidState)
+        );
+    }
+
+    #[test]
+    fn asymmetric_exit_preserves_remaining_side_obligations() {
+        let mut state = active();
+        state.long_capital = 100_000_000;
+        state.short_capital = 100_000_000;
+        let quote = quote_pair_close(&config(), &state, 100_000_000, 0)
+            .expect("long side can exit independently");
+        assert_eq!(quote.matched_exposure, 0);
+        assert_eq!(quote.unmatched_short_exposure, 200_000_000);
+        assert_eq!(quote.remaining_short_loss_collateral, 200_000_000);
+    }
+
+    #[test]
+    fn maker_escrow_stays_locked_until_orderly_wind_down_is_empty() {
+        let mut state = active();
+        state.long_capital = 1;
+        assert!(!maker_escrow_releasable(&state));
+        let winding = begin_wind_down(state).expect("wind-down transition");
+        assert!(!maker_escrow_releasable(&winding));
+        let empty = apply_close(&config(), winding, Side::Long, 1).expect("final exit");
+        assert!(maker_escrow_releasable(&empty));
+    }
+
+    #[test]
+    fn randomized_open_close_sequence_conserves_capital_counters() {
+        for seed in 1_u64..=128 {
+            let mut state = active();
+            let long = seed.saturating_mul(10_000);
+            let short = seed.saturating_mul(7_000);
+            state = apply_pair_open(&config(), state, long, short, 200)
+                .expect("funded bounded open");
+            state = apply_close(&config(), state, Side::Long, long)
+                .expect("independent long exit");
+            state = apply_close(&config(), state, Side::Short, short)
+                .expect("independent short exit");
+            assert_eq!(state.long_capital, 0);
+            assert_eq!(state.short_capital, 0);
+        }
     }
 }
