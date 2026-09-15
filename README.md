@@ -1,6 +1,6 @@
 # LevPlay
 
-LevPlay is a Solana-first interface and fail-closed protocol design for long, daily-target leveraged stock tokens backed by allowlisted xStocks. The current release is a Stocklana hackathon preview: live market, oracle-registry, mint and wallet reads work; transaction construction and signing remain disabled until every production gate is independently proven.
+LevPlay is a Solana-first interface and fail-closed protocol design for daily-target leveraged stock tokens. Ondo Stocks on Solana is the selected candidate spot route for the AAPL2L pilot; xStocks and PreStocks remain Coming soon. Transaction construction and signing remain disabled until every production gate is independently proven.
 
 ## Product boundary
 
@@ -64,6 +64,7 @@ Production signing requires all of the following:
 - `LEVPLAY_SVM_MANIFEST_HASH`
 - `LEVPLAY_SVM_PROGRAM_FROZEN=true`
 - `LEVPLAY_SVM_MARKETS_JSON` with audited deployments and oracle identifiers
+- `LEVPLAY_SVM_VENUE_MANIFEST_JSON` with the exact Ondo programs, AAPLon mint, solver allowlist, eligibility policy, approval/audit hashes, funded collateral and independent exit domains
 - `LEVPLAY_SVM_EXECUTION_ENABLED=true`
 
 These gates are necessary, not sufficient: the supplied addresses and hashes must be verified independently before enabling real-money use.

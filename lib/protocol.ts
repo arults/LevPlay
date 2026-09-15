@@ -1,4 +1,5 @@
 import { ALL_MARKETS, SOLANA_USDC_MINT, TOKEN_2022_PROGRAM, TOKEN_PROGRAM } from "@/lib/markets";
+import { venueStatusFromEnvironment } from "@/lib/venue-registry";
 
 const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const HASH = /^[a-fA-F0-9]{64}$/;
@@ -237,6 +238,7 @@ function adapterAllowlist() {
 }
 
 export async function protocolStatus() {
+  const venue = venueStatusFromEnvironment();
   const programId = process.env.LEVPLAY_SVM_PROGRAM_ID || "";
   const feeRecipient = process.env.LEVPLAY_SVM_FEE_RECIPIENT || "";
   const treasuryAuthority = process.env.LEVPLAY_SVM_FEE_TREASURY_AUTHORITY || "";
@@ -262,6 +264,7 @@ export async function protocolStatus() {
   const marketsLive = live && Object.keys(markets).length > 0 && observations.every((value) => Object.keys(markets).every((key) => value.markets[key] === true));
 
   const checks = [
+    { id: "venue", label: "Ondo pilot venue admitted", passed: venue.admitted, failure: venue.reasons[0] || "Ondo pilot venue is not admitted" },
     { id: "program", label: "Program verified by RPC quorum", passed: live, failure: "Two independent mainnet RPCs have not verified the program and authorities" },
     { id: "treasury", label: "Pinned USDC fee treasury", passed: live && observations.every((value) => value.treasury), failure: "The fee account is not a quorum-verified USDC account owned by the treasury multisig" },
     { id: "multisigs", label: "Independent multisigs", passed: live && observations.every((value) => value.multisigs), failure: "Governance and guardian are not independent quorum-verified multisig accounts" },
@@ -278,6 +281,8 @@ export async function protocolStatus() {
 
   return {
     executionEnabled: blockers.length === 0,
+    venueId: venue.venueId,
+    venueBlockers: venue.reasons,
     feeBps: 50,
     maxPilotUsd: 100,
     programId: isSolanaAddress(programId) ? programId : null,

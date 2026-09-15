@@ -1,12 +1,13 @@
 # LevPlay backing venue decision record
 
-Status date: 2026-09-15. Decision state: **LevPlay Risk Vault v1 is the selected venue architecture. No production backing route is admitted.** The checked Rust core is a candidate, not onchain capacity or a completed launch gate.
+Status date: 2026-09-15. Decision state: **LevPlay Risk Vault v1 is the selected venue architecture and Ondo Stocks on Solana is the candidate AAPL2L spot route. No production backing route is admitted.** The checked Rust core and pinned Ondo identifiers are candidates, not onchain capacity or a completed launch gate. xStocks and PreStocks are Coming soon.
 
 ## Verified market boundary
 
 | Candidate | Verifiable capability | Admission decision |
 |---|---|---|
 | LevPlay Risk Vault v1 | Checked-integer paired exposure, segregated maker escrow, independent-exit capacity, funded reserves, expiry and settlement reconciliation | Selected architecture; implementation is an economic core only until the SBF wrapper, exact accounts, funded escrows, audit and legal evidence pass |
+| Ondo Stocks on Solana | Published AAPLon Token-2022 mint, GM program, solver allowlist, API attestations, direct/JIT liquidity, onboarding and jurisdiction documentation | Selected candidate spot route for AAPL2L; not admitted until Ondo approves the wrapper, the exact transaction graph is audited and the emergency inventory exit is funded |
 | xStocks on Solana | 1:1-backed, transferable spot tokenized equities; xStocks describes the assets as redeemable for cash value or underlying and subject to jurisdiction restrictions | Eligible as a pinned `AAPLx` spot asset only; it does not create the second unit of long exposure or any short exposure |
 | Jupiter Perps | The official current product route identifies SOL, BTC and ETH perpetuals | Rejected for the Apple pilot: no fixed `AAPL` market or production capacity evidence |
 | Drift | The official site describes leveraged perpetual markets and a liquidation engine; Drift's June 2026 recovery update says the protocol is being rebuilt for relaunch after user losses | Rejected for the Apple pilot: no verified `AAPL` market, fixed adapter terms, isolated non-recourse capacity or deterministic exit evidence; a margin-liquidated backing account would not satisfy this design |

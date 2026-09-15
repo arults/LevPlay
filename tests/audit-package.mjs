@@ -9,13 +9,16 @@ const required = [
   "SECURITY.md",
   "PROTOCOL_SPEC.md",
   "BACKING_VENUE_DECISION.md",
+  "ONDO_ADAPTER_SPEC.md",
   "Cargo.toml",
   "Cargo.lock",
   "rust-toolchain.toml",
   "programs/levplay-core/Cargo.toml",
   "programs/levplay-core/src/lib.rs",
   "lib/backing-engine.ts",
+  "lib/venue-registry.ts",
   "tests/backing-engine.mjs",
+  "tests/venue-registry.mjs",
   "lib/risk-engine.ts",
   "tests/risk-engine.mjs",
   "programs/levplay/INTERFACE.md",
@@ -51,6 +54,12 @@ const venueDecision = files.find(([path]) => path === "BACKING_VENUE_DECISION.md
 assert.match(venueDecision, /No production backing route is admitted/);
 assert.match(venueDecision, /AAPL2S.*bounded-loss derivative/s);
 assert.match(venueDecision, /independent emergency exit route/);
+assert.match(venueDecision, /Ondo Stocks on Solana/);
+
+const ondoAdapter = files.find(([path]) => path === "ONDO_ADAPTER_SPEC.md")[1];
+assert.match(ondoAdapter, /123mYEnRLM2LLYsJW3K6oyYh8uP1fngj732iG638ondo/);
+assert.match(ondoAdapter, /must never accept an arbitrary Ondo program/);
+assert.match(ondoAdapter, /Close and pro-rata wind-down remain permissionless/);
 
 const rustCore = files.find(([path]) => path === "programs/levplay-core/src/lib.rs")[1];
 assert.match(rustCore, /#!\[no_std\]/, "Rust core must remain SBF-compatible at the language boundary");
