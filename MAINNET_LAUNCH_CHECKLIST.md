@@ -19,8 +19,8 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 136 
 |---|---:|---|---|
 | Wallet-direct fee-on-top flow | Critical | UI/model: $500 capital + $2.50 fee = $502.50 debit; Max reserves fee | Passed at model/UI level |
 | Funded Standby model | Critical | Integer reference engine plus 588 adversarial long/short intervals; fake dust fails insolvent | Passed at model level |
-| Backing admission model | Critical | Fixed-account admission checks plus the Rust LevPlay Risk Vault v1 core for paired exposure, contingency escrow, expiry, caps, settlement, independent close, queued claims and orderly wind-down | Passed at economic-core level; no onchain instance admitted |
-| Rust protocol kernel | Critical | Pinned Rust 1.85 `no_std` core; 30 unit/adversarial tests, Clippy arithmetic denial and rustfmt in CI | Passed at core level; not an SBF program |
+| Backing admission model | Critical | Fixed-account admission checks plus the Rust LevPlay Risk Vault v1 core for paired exposure, contingency escrow, expiry, caps, settlement, independent close, FIFO queued claims and orderly wind-down | Passed at economic-core level; no onchain instance admitted |
+| Rust protocol kernel | Critical | Pinned Rust 1.85 `no_std` core; 31 unit/adversarial tests, Clippy arithmetic denial and rustfmt in CI | Passed at core level; not an SBF program |
 | Read-only market and wallet verification | High | Frozen 15-stock, 5-commodity and 8-PreStocks catalog; pinned known mints, Token-2022 checks, dual-feed registry and mainnet genesis | Passed at read-only level |
 | Executable Solana program | Critical | Interface and threat model only; no Rust/SBF artifact | Pending |
 | Leverage backing venue | Critical | Ondo and PreStocks source routes researched; no audited long adapter or separately proven prepaid short route/capacity | Pending |
@@ -41,7 +41,7 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 136 
 - [x] Add a fail-closed venue-manifest gate covering legal eligibility, explicit wrapper approval, audit/retest, collateral, expiry and independent exits.
 - [x] Define 136 independently admitted candidates: 15 Ondo stocks and 5 commodity-linked ETFs at 2x/3x/5x L/S, plus 8 launch-approved PreStocks at 2x L/S; explicitly exclude xAI; shelf xStocks and HK products.
 - [x] Encode leverage-specific long capital, bounded short payout collateral, real Standby floor, maximum redemption liability and independent exit liquidity.
-- [x] Encode independent long/short closes, explicit queued-claim liabilities and maker-escrow release only after empty, fully paid wind-down.
+- [x] Encode independent long/short closes, owner-bound FIFO queued-claim liabilities and maker-escrow release only after empty, fully paid wind-down.
 - [x] Require three RPC domains, three keepers plus permissionless rebalance, distinct multisigs and exit operators, 48-hour upgrades and close-only pro-rata source-outage mode.
 - [ ] Implement and admit the exact SBF risk-vault program, accounts and fixed hedge adapters for the canary market.
 - [x] Encode fail-closed venue admission rules for pinned accounts, non-recourse funding, committed capacity, bounded short loss and an independent emergency exit.
