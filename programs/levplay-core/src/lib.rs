@@ -124,8 +124,16 @@ pub fn mul_div_ceil(a: u64, b: u64, denominator: u64) -> Result<u64> {
     if denominator == 0 {
         return Err(Error::DivisionByZero);
     }
-    let product = u128::from(a).checked_mul(u128::from(b)).ok_or(Error::ArithmeticOverflow)?;
-    let adjusted = product.checked_add(u128::from(denominator).checked_sub(1).ok_or(Error::ArithmeticOverflow)?).ok_or(Error::ArithmeticOverflow)?;
+    let product = u128::from(a)
+        .checked_mul(u128::from(b))
+        .ok_or(Error::ArithmeticOverflow)?;
+    let adjusted = product
+        .checked_add(
+            u128::from(denominator)
+                .checked_sub(1)
+                .ok_or(Error::ArithmeticOverflow)?,
+        )
+        .ok_or(Error::ArithmeticOverflow)?;
     checked_u64(
         adjusted
             .checked_div(u128::from(denominator))
@@ -202,8 +210,20 @@ pub fn validate_isolation(long: &MarketConfig, short: &MarketConfig) -> Result<(
     if long.side != Side::Long || short.side != Side::Short {
         return Err(Error::NotIsolated);
     }
-    let long_accounts = [long.market, long.product_mint, long.backing_vault, long.reserve_vault, long.adapter_market];
-    let short_accounts = [short.market, short.product_mint, short.backing_vault, short.reserve_vault, short.adapter_market];
+    let long_accounts = [
+        long.market,
+        long.product_mint,
+        long.backing_vault,
+        long.reserve_vault,
+        long.adapter_market,
+    ];
+    let short_accounts = [
+        short.market,
+        short.product_mint,
+        short.backing_vault,
+        short.reserve_vault,
+        short.adapter_market,
+    ];
     for left in long_accounts {
         if short_accounts.contains(&left) {
             return Err(Error::NotIsolated);
@@ -212,7 +232,11 @@ pub fn validate_isolation(long: &MarketConfig, short: &MarketConfig) -> Result<(
     Ok(())
 }
 
-pub fn preflight_open(config: &MarketConfig, context: &OpenContext, computed_shares: u64) -> Result<u64> {
+pub fn preflight_open(
+    config: &MarketConfig,
+    context: &OpenContext,
+    computed_shares: u64,
+) -> Result<u64> {
     validate_market(config)?;
     if context.capital == 0 || computed_shares < context.minimum_shares_out {
         return Err(Error::SlippageExceeded);
@@ -220,9 +244,18 @@ pub fn preflight_open(config: &MarketConfig, context: &OpenContext, computed_sha
     if context.current_slot > context.quote_expiry_slot {
         return Err(Error::QuoteExpired);
     }
-    let wallet_after = context.wallet_open_capital.checked_add(context.capital).ok_or(Error::ArithmeticOverflow)?;
-    let tvl_after = context.market_tvl.checked_add(context.capital).ok_or(Error::ArithmeticOverflow)?;
-    let daily_after = context.daily_minted.checked_add(context.capital).ok_or(Error::ArithmeticOverflow)?;
+    let wallet_after = context
+        .wallet_open_capital
+        .checked_add(context.capital)
+        .ok_or(Error::ArithmeticOverflow)?;
+    let tvl_after = context
+        .market_tvl
+        .checked_add(context.capital)
+        .ok_or(Error::ArithmeticOverflow)?;
+    let daily_after = context
+        .daily_minted
+        .checked_add(context.capital)
+        .ok_or(Error::ArithmeticOverflow)?;
     if context.capital > config.transaction_cap
         || wallet_after > config.wallet_cap
         || tvl_after > config.tvl_cap
@@ -231,7 +264,10 @@ pub fn preflight_open(config: &MarketConfig, context: &OpenContext, computed_sha
     {
         return Err(Error::CapExceeded);
     }
-    context.capital.checked_add(entry_fee(context.capital, config.fee_bps)?).ok_or(Error::ArithmeticOverflow)
+    context
+        .capital
+        .checked_add(entry_fee(context.capital, config.fee_bps)?)
+        .ok_or(Error::ArithmeticOverflow)
 }
 
 pub fn oracle_agrees(
@@ -263,40 +299,86 @@ pub fn oracle_agrees(
 
 pub fn settle_interval(current: VaultState, move_bps: i32) -> Result<Settlement> {
     if current.mode != VaultMode::Active {
-        return Ok(Settlement { state: current, pnl: 0, reserve_draw: 0, uncovered_deficit: 0 });
+        return Ok(Settlement {
+            state: current,
+            pnl: 0,
+            reserve_draw: 0,
+            uncovered_deficit: 0,
+        });
     }
     if !(-10_000..=10_000).contains(&move_bps) {
         return Err(Error::InvalidAmount);
     }
-    let direction = if current.side == Side::Long { 1_i128 } else { -1_i128 };
+    let direction = if current.side == Side::Long {
+        1_i128
+    } else {
+        -1_i128
+    };
     let pnl = i128::from(current.exposure)
-        .checked_mul(i128::from(move_bps)).ok_or(Error::ArithmeticOverflow)?
-        .checked_mul(direction).ok_or(Error::ArithmeticOverflow)?
-        .checked_div(i128::from(BPS)).ok_or(Error::DivisionByZero)?;
-    let raw_nav = i128::from(current.nav).checked_add(pnl).ok_or(Error::ArithmeticOverflow)?;
+        .checked_mul(i128::from(move_bps))
+        .ok_or(Error::ArithmeticOverflow)?
+        .checked_mul(direction)
+        .ok_or(Error::ArithmeticOverflow)?
+        .checked_div(i128::from(BPS))
+        .ok_or(Error::DivisionByZero)?;
+    let raw_nav = i128::from(current.nav)
+        .checked_add(pnl)
+        .ok_or(Error::ArithmeticOverflow)?;
     let floor = mul_div_ceil(current.reference_nav, u64::from(current.standby_bps), BPS)?;
     let required = if raw_nav < i128::from(floor) {
-        u64::try_from(i128::from(floor).checked_sub(raw_nav).ok_or(Error::ArithmeticOverflow)?).map_err(|_| Error::ArithmeticOverflow)?
+        u64::try_from(
+            i128::from(floor)
+                .checked_sub(raw_nav)
+                .ok_or(Error::ArithmeticOverflow)?,
+        )
+        .map_err(|_| Error::ArithmeticOverflow)?
     } else {
         0
     };
     let reserve_draw = required.min(current.reserve);
-    let covered_nav = raw_nav.checked_add(i128::from(reserve_draw)).ok_or(Error::ArithmeticOverflow)?;
+    let covered_nav = raw_nav
+        .checked_add(i128::from(reserve_draw))
+        .ok_or(Error::ArithmeticOverflow)?;
     let uncovered_deficit = if covered_nav < i128::from(floor) {
-        u64::try_from(i128::from(floor).checked_sub(covered_nav).ok_or(Error::ArithmeticOverflow)?).map_err(|_| Error::ArithmeticOverflow)?
+        u64::try_from(
+            i128::from(floor)
+                .checked_sub(covered_nav)
+                .ok_or(Error::ArithmeticOverflow)?,
+        )
+        .map_err(|_| Error::ArithmeticOverflow)?
     } else {
         0
     };
-    let nav = if covered_nav <= 0 { 0 } else { u64::try_from(covered_nav).map_err(|_| Error::ArithmeticOverflow)? };
-    let mode = if nav < floor { VaultMode::Insolvent } else if raw_nav <= i128::from(floor) { VaultMode::Standby } else { VaultMode::Active };
-    let exposure = if mode == VaultMode::Active { mul_div_floor(nav, u64::from(current.leverage_bps), BPS)? } else { 0 };
+    let nav = if covered_nav <= 0 {
+        0
+    } else {
+        u64::try_from(covered_nav).map_err(|_| Error::ArithmeticOverflow)?
+    };
+    let mode = if nav < floor {
+        VaultMode::Insolvent
+    } else if raw_nav <= i128::from(floor) {
+        VaultMode::Standby
+    } else {
+        VaultMode::Active
+    };
+    let exposure = if mode == VaultMode::Active {
+        mul_div_floor(nav, u64::from(current.leverage_bps), BPS)?
+    } else {
+        0
+    };
     Ok(Settlement {
         state: VaultState {
             mode,
             nav,
             exposure,
-            reserve: current.reserve.checked_sub(reserve_draw).ok_or(Error::ArithmeticOverflow)?,
-            epoch: current.epoch.checked_add(1).ok_or(Error::ArithmeticOverflow)?,
+            reserve: current
+                .reserve
+                .checked_sub(reserve_draw)
+                .ok_or(Error::ArithmeticOverflow)?,
+            epoch: current
+                .epoch
+                .checked_add(1)
+                .ok_or(Error::ArithmeticOverflow)?,
             ..current
         },
         pnl,
@@ -309,19 +391,34 @@ pub fn resume_from_standby(current: VaultState, recapitalization: u64) -> Result
     if current.mode != VaultMode::Standby || recapitalization == 0 {
         return Err(Error::InvalidState);
     }
-    let nav = current.nav.checked_add(recapitalization).ok_or(Error::ArithmeticOverflow)?;
+    let nav = current
+        .nav
+        .checked_add(recapitalization)
+        .ok_or(Error::ArithmeticOverflow)?;
     Ok(VaultState {
         mode: VaultMode::Active,
         nav,
         reference_nav: nav,
         exposure: mul_div_floor(nav, u64::from(current.leverage_bps), BPS)?,
-        epoch: current.epoch.checked_add(1).ok_or(Error::ArithmeticOverflow)?,
+        epoch: current
+            .epoch
+            .checked_add(1)
+            .ok_or(Error::ArithmeticOverflow)?,
         ..current
     })
 }
 
-pub fn capacity_allows_mint(active_exposure: u64, requested_exposure: u64, primary_capacity: u64, unwind_capacity: u64) -> Result<bool> {
-    Ok(active_exposure.checked_add(requested_exposure).ok_or(Error::ArithmeticOverflow)? <= primary_capacity && active_exposure <= unwind_capacity)
+pub fn capacity_allows_mint(
+    active_exposure: u64,
+    requested_exposure: u64,
+    primary_capacity: u64,
+    unwind_capacity: u64,
+) -> Result<bool> {
+    Ok(active_exposure
+        .checked_add(requested_exposure)
+        .ok_or(Error::ArithmeticOverflow)?
+        <= primary_capacity
+        && active_exposure <= unwind_capacity)
 }
 
 #[cfg(test)]
@@ -357,7 +454,17 @@ mod tests {
     }
 
     fn vault(side: Side, reserve: u64) -> VaultState {
-        VaultState { mode: VaultMode::Active, side, leverage_bps: PILOT_LEVERAGE_BPS, nav: 100_000_000, reference_nav: 100_000_000, exposure: 200_000_000, reserve, standby_bps: 100, epoch: 0 }
+        VaultState {
+            mode: VaultMode::Active,
+            side,
+            leverage_bps: PILOT_LEVERAGE_BPS,
+            nav: 100_000_000,
+            reference_nav: 100_000_000,
+            exposure: 200_000_000,
+            reserve,
+            standby_bps: 100,
+            epoch: 0,
+        }
     }
 
     #[test]
@@ -396,25 +503,94 @@ mod tests {
     #[test]
     fn open_checks_expiry_slippage_caps_and_backing() {
         let config = market(Side::Long, 1);
-        let good = OpenContext { capital: 50_000_000, minimum_shares_out: 49_000_000, current_slot: 10, quote_expiry_slot: 11, wallet_open_capital: 0, market_tvl: 0, daily_minted: 0, available_backing_capital: 50_000_000 };
+        let good = OpenContext {
+            capital: 50_000_000,
+            minimum_shares_out: 49_000_000,
+            current_slot: 10,
+            quote_expiry_slot: 11,
+            wallet_open_capital: 0,
+            market_tvl: 0,
+            daily_minted: 0,
+            available_backing_capital: 50_000_000,
+        };
         assert_eq!(preflight_open(&config, &good, 50_000_000), Ok(50_250_000));
-        assert_eq!(preflight_open(&config, &OpenContext { current_slot: 12, ..good }, 50_000_000), Err(Error::QuoteExpired));
-        assert_eq!(preflight_open(&config, &OpenContext { available_backing_capital: 49_999_999, ..good }, 50_000_000), Err(Error::CapExceeded));
-        assert_eq!(preflight_open(&config, &good, 48_999_999), Err(Error::SlippageExceeded));
+        assert_eq!(
+            preflight_open(
+                &config,
+                &OpenContext {
+                    current_slot: 12,
+                    ..good
+                },
+                50_000_000,
+            ),
+            Err(Error::QuoteExpired)
+        );
+        assert_eq!(
+            preflight_open(
+                &config,
+                &OpenContext {
+                    available_backing_capital: 49_999_999,
+                    ..good
+                },
+                50_000_000,
+            ),
+            Err(Error::CapExceeded)
+        );
+        assert_eq!(
+            preflight_open(&config, &good, 48_999_999),
+            Err(Error::SlippageExceeded)
+        );
     }
 
     #[test]
     fn oracle_requires_two_fresh_agreeing_sources() {
-        let first = OracleObservation { price: 10_000, age_seconds: 5, confidence_bps: 20, publishers: 5 };
-        let second = OracleObservation { price: 10_050, age_seconds: 8, confidence_bps: 30, publishers: 5 };
+        let first = OracleObservation {
+            price: 10_000,
+            age_seconds: 5,
+            confidence_bps: 20,
+            publishers: 5,
+        };
+        let second = OracleObservation {
+            price: 10_050,
+            age_seconds: 8,
+            confidence_bps: 30,
+            publishers: 5,
+        };
         assert_eq!(oracle_agrees(first, second, 30, 100, 100, 3), Ok(()));
-        assert_eq!(oracle_agrees(first, OracleObservation { price: 10_500, ..second }, 30, 100, 100, 3), Err(Error::InvalidOracle));
-        assert_eq!(oracle_agrees(first, OracleObservation { age_seconds: 31, ..second }, 30, 100, 100, 3), Err(Error::InvalidOracle));
+        assert_eq!(
+            oracle_agrees(
+                first,
+                OracleObservation {
+                    price: 10_500,
+                    ..second
+                },
+                30,
+                100,
+                100,
+                3,
+            ),
+            Err(Error::InvalidOracle)
+        );
+        assert_eq!(
+            oracle_agrees(
+                first,
+                OracleObservation {
+                    age_seconds: 31,
+                    ..second
+                },
+                30,
+                100,
+                100,
+                3,
+            ),
+            Err(Error::InvalidOracle)
+        );
     }
 
     #[test]
     fn funded_floor_enters_zero_exposure_standby() {
-        let settled = settle_interval(vault(Side::Long, 1_000_000), -5_000).expect("valid settlement");
+        let settled =
+            settle_interval(vault(Side::Long, 1_000_000), -5_000).expect("valid settlement");
         assert_eq!(settled.state.mode, VaultMode::Standby);
         assert_eq!(settled.state.nav, 1_000_000);
         assert_eq!(settled.state.exposure, 0);
@@ -431,8 +607,15 @@ mod tests {
 
     #[test]
     fn standby_cannot_recover_from_price_only() {
-        let standby = settle_interval(vault(Side::Long, 1_000_000), -5_000).expect("valid settlement").state;
-        assert_eq!(settle_interval(standby, 5_000).expect("frozen settlement").state, standby);
+        let standby = settle_interval(vault(Side::Long, 1_000_000), -5_000)
+            .expect("valid settlement")
+            .state;
+        assert_eq!(
+            settle_interval(standby, 5_000)
+                .expect("frozen settlement")
+                .state,
+            standby
+        );
         let resumed = resume_from_standby(standby, 2_000_000).expect("funded resume");
         assert_eq!(resumed.nav, 3_000_000);
         assert_eq!(resumed.exposure, 6_000_000);
@@ -450,7 +633,8 @@ mod tests {
     fn adversarial_settlements_never_create_negative_balances() {
         for side in [Side::Long, Side::Short] {
             for movement in (-10_000..=10_000).step_by(137) {
-                let result = settle_interval(vault(side, 25_000_000), movement).expect("bounded settlement");
+                let result =
+                    settle_interval(vault(side, 25_000_000), movement).expect("bounded settlement");
                 assert!(result.reserve_draw <= 25_000_000);
                 if result.state.mode != VaultMode::Active {
                     assert_eq!(result.state.exposure, 0);
