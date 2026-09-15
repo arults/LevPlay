@@ -18,6 +18,10 @@ const required = [
   "programs/levplay-core/src/lib.rs",
   "programs/levplay-core/src/risk_vault.rs",
   "programs/levplay-core/src/program_boundary.rs",
+  "programs/levplay-sbf/Cargo.toml",
+  "programs/levplay-sbf/src/lib.rs",
+  "programs/levplay-sbf/README.md",
+  ".github/workflows/sbf-build.yml",
   "lib/backing-engine.ts",
   "lib/venue-registry.ts",
   "lib/product-registry.ts",
@@ -90,6 +94,18 @@ assert.match(rustCore, /#!\[no_std\]/, "Rust core must remain SBF-compatible at 
 assert.match(rustCore, /#!\[forbid\(unsafe_code\)\]/, "unsafe Rust is forbidden");
 assert.ok(!/\bf(32|64)\b/.test(rustCore), "protocol arithmetic must not use floating-point values");
 for (const primitive of ["checked_add", "checked_sub", "checked_mul", "checked_div"]) assert.ok(rustCore.includes(primitive), `${primitive} must remain explicit`);
+
+const sbfManifest = files.find(([path]) => path === "programs/levplay-sbf/Cargo.toml")[1];
+assert.match(sbfManifest, /solana-program = "=2\.2\.0"/, "Solana SDK must remain exactly pinned");
+const sbfSource = files.find(([path]) => path === "programs/levplay-sbf/src/lib.rs")[1];
+assert.match(sbfSource, /EXECUTION_LOCKED_ERROR/);
+assert.match(sbfSource, /decode_instruction\(instruction_data\)/);
+assert.ok(!sbfSource.includes("invoke("), "SBF shell must not gain an unaudited CPI path");
+const sbfWorkflow = files.find(([path]) => path === ".github/workflows/sbf-build.yml")[1];
+assert.match(sbfWorkflow, /AGAVE_VERSION: v4\.2\.1/);
+assert.match(sbfWorkflow, /AGAVE_ARCHIVE_SHA256: [a-f0-9]{64}/);
+assert.match(sbfWorkflow, /sha256sum --check --strict/);
+assert.match(sbfWorkflow, /-keypair\.json/);
 
 const marketSource = await read("lib/markets.ts");
 assert.equal([...marketSource.matchAll(/market\("[A-Z]+on"[^\n]+"Stocks"/g)].length, 15, "exactly 15 Ondo stock references must be selected");

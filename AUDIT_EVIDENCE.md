@@ -18,17 +18,17 @@ Every row must link to immutable evidence for the same release commit. `Missing`
 | Backing-venue decision record | [`BACKING_VENUE_DECISION.md`](./BACKING_VENUE_DECISION.md) | Present; no venue admitted |
 | Backing admission reference engine | [`lib/backing-engine.ts`](./lib/backing-engine.ts) | Present |
 | Backing admission/capacity tests | [`tests/backing-engine.mjs`](./tests/backing-engine.mjs) | Present |
-| Pinned Rust workspace/toolchain | [`Cargo.toml`](./Cargo.toml), [`Cargo.lock`](./Cargo.lock), [`rust-toolchain.toml`](./rust-toolchain.toml) | Present |
+| Pinned Rust/Solana workspace | [`Cargo.toml`](./Cargo.toml), [`Cargo.lock`](./Cargo.lock), [`rust-toolchain.toml`](./rust-toolchain.toml), [`programs/levplay-sbf/Cargo.toml`](./programs/levplay-sbf/Cargo.toml) | Present; Solana dependency is exactly pinned and locked |
 | Checked `no_std` Rust protocol core | [`programs/levplay-core/src/lib.rs`](./programs/levplay-core/src/lib.rs) | Present; not an SBF program |
 | Fully collateralized risk-vault core | [`programs/levplay-core/src/risk_vault.rs`](./programs/levplay-core/src/risk_vault.rs), [`RISK_VAULT_V1.md`](./RISK_VAULT_V1.md) | Present; two-sided admission, capacity, settlement, independent close, FIFO queued-claim and wind-down accounting; not an SBF program |
-| Rust core unit/adversarial tests | In-crate test module; CI runs test, Clippy and rustfmt | Present; 39 deterministic tests include asymmetric exits, FIFO claims, strict instruction decoding, exact open-account layouts, transaction composition, nonces and 128 open/close sequences; SBF instruction tests still missing |
-| Solana Rust program source | — | **Missing** |
+| Rust core and SBF-shell tests | In-crate test modules; CI runs test, Clippy and rustfmt | Present; 39 core tests plus 3 entrypoint fail-closed tests include asymmetric exits, FIFO claims, strict decoding/account layouts, transaction composition, nonces and 128 open/close sequences |
+| Solana Rust program source | [`programs/levplay-sbf/src/lib.rs`](./programs/levplay-sbf/src/lib.rs) | Present as executable fail-closed shell; value-moving handlers remain missing |
 | Fixed long adapter source | — | **Missing** |
 | Fixed short adapter source | — | **Missing** |
 | Signed venue capacity/production terms | — | **Missing** |
 | Independent emergency exit route | — | **Missing** |
-| Solana/Anchor dependency lockfiles | Workspace lock present; Solana program dependencies absent | **Incomplete** |
-| Reproducible SBF/IDL/SBOM | — | **Missing** |
+| Solana dependency lockfile | [`Cargo.lock`](./Cargo.lock) | Present; generated and retested by CI from exact `solana-program = 2.2.0` constraint |
+| Reproducible SBF/IDL/SBOM | [SBF workflow run `35005124622`](https://github.com/arults/LevPlay/actions/runs/35005124622), artifact digest `sha256:338c7f825f21679493bed893ec94cb37159722fa8e25f5e5212b09ab4438c22f`; binary SHA-256 `049111b10631459b6c8735e58bf70c73995a8f146ea1f2891da615a435534c27` | SBF shell present; IDL, SBOM, source archive and independent reproduction still missing |
 | Local-validator/property/fuzz evidence | — | **Missing** |
 | Devnet deployment and test ledger | — | **Missing** |
 | Independent security report/retest | — | **Missing** |
