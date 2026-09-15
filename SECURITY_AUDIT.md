@@ -39,6 +39,7 @@ These results prove the interface, read paths and modeled safety rules. They do 
 | RELEASE-02 | Critical | Syntactically valid environment variables could satisfy release checks without proving accounts existed on Solana mainnet. | Execution now also requires two distinct configured RPC hosts to verify mainnet genesis, the executable program, canonical-USDC fee account, pinned treasury owner and separately owned governance/guardian multisigs. |
 | ADAPTER-01 | Critical | A generic or client-selected backing adapter would permit arbitrary CPI/account substitution. | Each deployment must name an explicitly allowlisted adapter program and market; the instruction specification rejects unparsed remaining accounts. No adapter is configured until an independently audited venue is chosen. |
 | UX-03 | Medium | A wallet with enough position capital but not enough capital plus fee could pass review. | Balance checks and Max sizing now reserve the full fee; review discloses total wallet debit and exact treasury routing. |
+| SUPPLY-02 | High | GitHub `main` is unprotected and the connector-created sync commit is unsigned. | Open: repository administration must require reviewed pull requests, passing checks, signed commits, linear history and no force-push/deletion before a release tag is trusted. |
 
 ## Implemented protections
 
@@ -80,6 +81,7 @@ The live AAPLx mint exposes mint, freeze, pause and permanent-delegate authoriti
 8. The current environment has no Solana/Anchor toolchain, deployer authority or funded deployment wallet; no reproducible program binary can be built or deployed here.
 9. The owner has created the private `arults/LevPlay` GitHub repository; the verified source snapshot must be synchronized after every release.
 10. No dedicated Codex Security or Solana audit service is connected in this environment. Internal automated review and GitHub CI do not replace the required independent audit.
+11. GitHub branch protection and signed-commit enforcement are not enabled; the repository owner must apply the policy before mainnet release provenance can pass.
 
 ## Required sequence
 

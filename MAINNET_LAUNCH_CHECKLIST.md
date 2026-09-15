@@ -98,6 +98,7 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 - [x] Current release has no transaction submission path and fails closed when evidence is absent.
 - [ ] Add production wallet transaction construction/signing only after Sections A–F pass.
 - [ ] External frontend/wallet penetration test, domain/DNS monitoring, WAF/rate limits and signed release provenance pass.
+- [ ] Protect GitHub `main`: require pull requests, two independent reviewers, passing quality/security checks, signed commits, linear history, and block force-push/deletion.
 - [ ] Counsel approves tokenized-securities, derivatives, commodities and jurisdiction design.
 - [ ] Eligibility, sanctions, geofence, investor restrictions, market-data rights, terms, privacy and risk disclosures are implemented and tested.
 - [ ] 24/7 incident owners, support escalation, insurance and financial/operational runbooks are active.
