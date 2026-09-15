@@ -70,15 +70,30 @@ export async function GET() {
   const oracleRequest = getJson("/public/oracles?pageSize=100&network=Solana").catch(() => ({ nodes: [] }));
   const mintChecks = verifyMints().catch(() => ({} as Record<string, { valid: boolean; paused: boolean; hasPermanentDelegate: boolean; multiplier: string }>));
   const preIpoRequest = getPreIpoReferences().catch(() => ({} as Record<string, { price: number; liquidityUsd: number; pairAddress: string; logo?: string } | null>));
+  const hongKongCatalogRequest = getJson("/public/assets?listingCountry=HK&network=Solana&pageSize=100").catch(() => ({ nodes: [] }));
   const rows = await Promise.all(CURATED_MARKETS.map(async (market) => {
     try {
-      const [asset, price, multiplier, oraclePayload, liveMints] = await Promise.all([
-        getJson(`/public/assets/${market.symbol}`),
-        getJson(`/public/assets/${market.symbol}/price-data`),
-        getJson(`/public/assets/${market.symbol}/multiplier?network=Solana`),
+      const isHongKong = market.category === "Hong Kong";
+      const [asset, oraclePayload, liveMints] = await Promise.all([
+        isHongKong
+          ? hongKongCatalogRequest.then((catalog) => {
+              const nodes = Array.isArray(catalog.nodes) ? catalog.nodes as Json[] : [];
+              const match = nodes.find((item) => item.symbol === market.symbol);
+              if (!match) throw new Error("Hong Kong asset missing from issuer catalog");
+              return match;
+            })
+          : getJson(`/public/assets/${market.symbol}`),
         oracleRequest,
         mintChecks,
       ]);
+      const trading = asset.trading as Json | undefined;
+      const marketClosed = trading?.currentPeriod === "closed" && trading?.openNow !== true;
+      const [price, multiplier] = marketClosed
+        ? [{ quote: null } as Json, {} as Json]
+        : await Promise.all([
+            getJson(`/public/assets/${market.symbol}/price-data`),
+            getJson(`/public/assets/${market.symbol}/multiplier?network=Solana`),
+          ]);
       const deployments = Array.isArray(asset.deployments) ? asset.deployments as Json[] : [];
       const solana = deployments.find((item) => item.network === "Solana");
       const oracleNodes = Array.isArray(oraclePayload.nodes) ? oraclePayload.nodes as Json[] : [];
@@ -88,8 +103,6 @@ export async function GET() {
       });
       const quote = Number(price.quote);
       const mintState = liveMints[market.symbol];
-      const trading = asset.trading as Json | undefined;
-      const marketClosed = trading?.currentPeriod === "closed" && trading?.openNow !== true;
       const quoteAvailable = Number.isFinite(quote) && quote > 0;
       if (!solana || solana.address !== market.mint || (!quoteAvailable && !marketClosed)) throw new Error("Incomplete or mismatched market data");
       const activation = Number(multiplier.activationDateTime || 0);

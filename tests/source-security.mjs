@@ -32,6 +32,8 @@ assert.match(markets, /quoteAvailable && mintState\?\.valid/, "settlement readin
 assert.match(markets, /provider === "Pyth"/, "Pyth registry entry must be required");
 assert.match(markets, /provider === "Chainlink"/, "Chainlink registry entry must be required");
 assert.match(markets, /api\.dexscreener\.com\/latest\/dex\/tokens/, "pre-IPO display references must use a pinned HTTPS market-data endpoint");
+assert.match(markets, /listingCountry=HK&network=Solana&pageSize=100/, "Hong Kong metadata must use the issuer's country- and network-filtered catalog");
+assert.match(markets, /item\.symbol === market\.symbol/, "Hong Kong catalog results must match each pinned symbol exactly");
 assert.match(markets, /pair\.chainId === "solana"/, "pre-IPO references must reject pairs from other chains");
 assert.match(markets, /pair\.baseToken\?\.address === mint/, "pre-IPO references must match the pinned mint exactly");
 assert.match(markets, /verified: false/, "DEX display references must never be promoted to settlement verification");
@@ -97,4 +99,4 @@ for (const header of [
   "X-Frame-Options",
 ]) assert.ok(config.includes(header), `${header} must be configured`);
 
-console.log("LevPlay source security: 70 fail-closed assertions passed");
+console.log("LevPlay source security: 72 fail-closed assertions passed");
