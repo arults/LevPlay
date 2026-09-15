@@ -5,7 +5,7 @@ LevPlay is a Solana-first interface and fail-closed protocol design for long, da
 ## Product boundary
 
 - 15 curated markets: 10 stocks and 5 commodity ETFs.
-- 2x, 3x and 5x long exposure models; short products stay disabled.
+- Paper models for 2x, 3x and 5x long/short exposure; the external-audit and first-canary scope is only isolated `AAPL2L` and `AAPL2S` markets.
 - Wallet-direct entry with no LevPlay deposit balance: position capital moves to the isolated vault and the 0.5% fee is charged on top in one atomic transaction.
 - $100-per-wallet canary cap. A $500 future order means $500 capital + $2.50 fee = $502.50 total wallet debit.
 - Liquidation-free for the holder means no margin call, negative balance or wallet-level liquidation. A product share can still fall to zero.
@@ -33,6 +33,7 @@ LevPlay is a Solana-first interface and fail-closed protocol design for long, da
 - Independent security audit, fuzz/local-validator suite and economic stress campaign.
 - Governance and guardian multisigs, a pinned multisig-owned USDC fee account, production RPC quorum and incident monitoring.
 - A confirmed, audited backing adapter with sufficient leverage liquidity. xStocks spot issuance alone does not create leveraged exposure.
+- A separately proven short borrow/perpetual route and deterministic buy-to-cover path; the short cannot reuse the long vault.
 - Jurisdiction and eligibility controls required for tokenized securities.
 
 The application intentionally cannot be made live with environment values alone unless every required program, market, audit and release identifier is provided. See `PROTOCOL_SPEC.md`, `SECURITY_AUDIT.md`, `TREASURY_RUNBOOK.md` and `MAINNET_LAUNCH_CHECKLIST.md`.
@@ -45,6 +46,7 @@ pnpm test:protocol
 pnpm test:live
 pnpm test:security
 pnpm test:ui
+pnpm test:audit-package
 pnpm audit --prod --audit-level=low
 pnpm build
 ```
@@ -59,6 +61,7 @@ Production signing requires all of the following:
 - `LEVPLAY_SVM_GUARDIAN_MULTISIG`
 - `LEVPLAY_SVM_AUDIT_HASH`
 - `LEVPLAY_SVM_RELEASE_HASH`
+- `LEVPLAY_SVM_MANIFEST_HASH`
 - `LEVPLAY_SVM_PROGRAM_FROZEN=true`
 - `LEVPLAY_SVM_MARKETS_JSON` with audited deployments and oracle identifiers
 - `LEVPLAY_SVM_EXECUTION_ENABLED=true`

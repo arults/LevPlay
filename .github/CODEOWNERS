@@ -1,0 +1,8 @@
+# Security-sensitive protocol and release boundaries require explicit owner review.
+* @arults
+/programs/ @arults
+/lib/protocol.ts @arults
+/audit/ @arults
+/.github/workflows/ @arults
+/SECURITY_AUDIT.md @arults
+/MAINNET_LAUNCH_CHECKLIST.md @arults

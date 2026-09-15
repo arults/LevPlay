@@ -6,7 +6,7 @@ const MAX_PILOT_USDC = 100_000_000n;
 function fee(amount, feeBps = 50n) { return amount * feeBps / BPS; }
 function entry(amount, leverage, feeBps = 50n) { const entryFee = fee(amount, feeBps); return { capital: amount, fee: entryFee, debit: amount + entryFee, exposure: amount * leverage }; }
 function maxCapital(balance, feeBps = 50n) { return balance * BPS / (BPS + feeBps); }
-function cappedEquity(equity, leverage, underlyingMove) { return Math.max(0, equity * (1 + leverage * underlyingMove)); }
+function cappedEquity(equity, leverage, underlyingMove, side = "long") { const sign = side === "long" ? 1 : -1; return Math.max(0, equity * (1 + sign * leverage * underlyingMove)); }
 function guard({ primary, secondary, now, primaryAt, secondaryAt, maxAge = 30, maxDeviationBps = 100, halted = false, corporateActionAt = 0 }) {
   if (halted || primary <= 0 || secondary <= 0) return false;
   if (now - primaryAt > maxAge || now - secondaryAt > maxAge || primaryAt > now || secondaryAt > now) return false;
@@ -25,6 +25,9 @@ for (const leverage of [2, 3, 5]) {
   assert.equal(cappedEquity(100, leverage, -1), 0, "holder loss cannot exceed deposited equity");
   assert.equal(cappedEquity(100, leverage, .1), 100 + 10 * leverage, "single-period upside follows target leverage");
 }
+assert.equal(cappedEquity(100, 2, .1, "short"), 80, "2x short loses 20% when the reference rises 10%");
+assert.equal(cappedEquity(100, 2, -.1, "short"), 120, "2x short gains 20% when the reference falls 10%");
+assert.equal(cappedEquity(100, 2, 1, "short"), 0, "short holder equity floors at zero without creating wallet debt");
 const healthy = { primary: 100, secondary: 100.5, now: 1_000, primaryAt: 990, secondaryAt: 995 };
 assert.equal(guard(healthy), true, "two fresh agreeing feeds pass");
 assert.equal(guard({ ...healthy, primaryAt: 900 }), false, "stale primary fails closed");
@@ -33,4 +36,4 @@ assert.equal(guard({ ...healthy, halted: true }), false, "issuer halt fails clos
 assert.equal(guard({ ...healthy, corporateActionAt: 1_100 }), false, "corporate-action window fails closed");
 assert.equal(guard({ ...healthy, corporateActionAt: 2_000 }), true, "outside action window can pass");
 
-console.log("LevPlay protocol model: 15 invariant checks passed");
+console.log("LevPlay protocol model: 18 invariant checks passed");

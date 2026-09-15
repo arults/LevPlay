@@ -4,7 +4,7 @@ Status: specification only. No deployable program or IDL exists yet.
 
 ## `open_position`
 
-Inputs are integer USDC base units: `capital`, `min_shares_out`, `quote_expiry_slot`, and a single-use client nonce. `capital` is the requested position size; the entry fee is `floor(capital * 50 / 10_000)` and is paid on top.
+Inputs are integer USDC base units: `capital`, `min_shares_out`, `quote_expiry_slot`, and a single-use client nonce. `capital` is the requested position size; the entry fee is `floor(capital * 50 / 10_000)` and is paid on top. Side and leverage are immutable market-state fields, never caller arguments.
 
 Required accounts are explicit, typed, and ordered: user signer, user USDC ATA, user product-token ATA, global configuration PDA, market PDA, market USDC vault, product mint, canonical USDC mint, pinned fee-recipient token account, pinned treasury authority, two exact oracle accounts, backing-adapter program, backing market, SPL Token Program, Token-2022 Program, and system/sysvar accounts required by the audited adapter. No unparsed remaining accounts are accepted.
 
@@ -19,6 +19,10 @@ The instruction must atomically:
 7. Record capital, shares, fee, oracle observations, adapter deltas and nonce in an event.
 
 Any failed check aborts the whole Solana transaction. The program must never accept a fee recipient, mint, oracle, adapter, destination, writable account or executable program supplied only by the client.
+
+## Long/short isolation
+
+The audit pilot contains only `AAPL2L` and `AAPL2S`. They use separate market PDAs, product mints, vaults, adapter markets, nonce domains, caps and accounting. The short market must prove borrow/perpetual capacity and its buy-to-cover path before opening; it cannot reuse a long-market spot route or represent missing borrow as synthetic inventory.
 
 ## `close_position`
 

@@ -1,4 +1,4 @@
-import { CURATED_MARKETS, SOLANA_USDC_MINT, TOKEN_PROGRAM } from "@/lib/markets";
+import { CURATED_MARKETS, SOLANA_USDC_MINT, TOKEN_2022_PROGRAM, TOKEN_PROGRAM } from "@/lib/markets";
 
 const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const HASH = /^[a-fA-F0-9]{64}$/;
@@ -14,18 +14,34 @@ export function isSolanaAddress(value: unknown): value is string {
   return typeof value === "string" && BASE58.test(value);
 }
 
+export function isSafeRpcUrl(value: unknown): value is string {
+  if (typeof value !== "string" || !/^https:\/\/[^@\s]+$/.test(value)) return false;
+  try {
+    const parsed = new URL(value);
+    const host = parsed.hostname.toLowerCase();
+    return parsed.protocol === "https:" && !parsed.username && !parsed.password && !parsed.port &&
+      host !== "localhost" && !host.endsWith(".local") && !/^\d+\.\d+\.\d+\.\d+$/.test(host) && !host.includes(":");
+  } catch { return false; }
+}
+
 type Deployment = {
+  marketState: string;
   vault: string;
   productMint: string;
   xStockMint: string;
+  pythAccount: string;
+  pythOwner: string;
   pythFeedId: string;
+  chainlinkAccount: string;
+  chainlinkOwner: string;
   chainlinkFeedId: string;
   adapterProgram: string;
   adapterMarket: string;
   leverage: 2 | 3 | 5;
+  side: "long" | "short";
 };
 
-type RpcAccount = { executable?: boolean; owner?: string; data?: unknown };
+type RpcAccount = { executable?: boolean; owner?: string; data?: unknown; lamports?: number };
 type RpcResult = { result?: unknown; error?: { message?: string } };
 
 function hash(value: string) {
@@ -36,7 +52,7 @@ function configuredRpcs() {
   try {
     const value = JSON.parse(process.env.LEVPLAY_SVM_RPC_URLS_JSON || "[]") as unknown;
     if (!Array.isArray(value)) return [];
-    const valid = value.filter((url): url is string => typeof url === "string" && /^https:\/\/[^@\s]+$/.test(url));
+    const valid = value.filter(isSafeRpcUrl);
     return [...new Map(valid.map((url) => [new URL(url).hostname, url])).values()].slice(0, 4);
   } catch {
     return [];
@@ -50,6 +66,7 @@ async function rpc(url: string, method: string, params: unknown[]) {
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
     signal: AbortSignal.timeout(7_000),
   });
+  if (Number(response.headers.get("content-length") || 0) > 2_000_000) throw new Error("Oversized RPC response");
   const payload = await response.json() as RpcResult;
   if (!response.ok || payload.error || payload.result === undefined) throw new Error(payload.error?.message || "RPC error");
   return payload.result;
@@ -101,7 +118,45 @@ function tokenAccountEvidence(value: RpcAccount, treasuryAuthority: string) {
     parsed.parsed.info?.state === "initialized";
 }
 
-async function liveEvidence(url: string, values: { programId: string; feeRecipient: string; treasuryAuthority: string; governance: string; guardian: string; multisigProgram: string }) {
+function parsedInfo(value: RpcAccount) {
+  return (value.data as { parsed?: { type?: string; info?: Record<string, unknown> } })?.parsed;
+}
+
+function tokenVaultEvidence(value: RpcAccount, mint: string, authority: string) {
+  const parsed = parsedInfo(value);
+  return value.owner === TOKEN_2022_PROGRAM && parsed?.type === "account" &&
+    parsed.info?.mint === mint && parsed.info?.owner === authority && parsed.info?.state === "initialized";
+}
+
+function productMintEvidence(value: RpcAccount, authority: string) {
+  const parsed = parsedInfo(value);
+  return value.owner === TOKEN_2022_PROGRAM && parsed?.type === "mint" && parsed.info?.isInitialized === true &&
+    parsed.info?.mintAuthority === authority && parsed.info?.freezeAuthority == null;
+}
+
+async function marketEvidence(url: string, deployment: Deployment, programId: string) {
+  const [state, vault, productMint, xStockMint, pyth, chainlink, adapterProgram, adapterMarket] = await Promise.all([
+    account(url, deployment.marketState),
+    account(url, deployment.vault, "jsonParsed"),
+    account(url, deployment.productMint, "jsonParsed"),
+    account(url, deployment.xStockMint, "jsonParsed"),
+    account(url, deployment.pythAccount),
+    account(url, deployment.chainlinkAccount),
+    account(url, deployment.adapterProgram),
+    account(url, deployment.adapterMarket),
+  ]);
+  const xStockParsed = parsedInfo(xStockMint);
+  return state.owner === programId && state.executable !== true &&
+    tokenVaultEvidence(vault, deployment.xStockMint, deployment.marketState) &&
+    productMintEvidence(productMint, deployment.marketState) &&
+    xStockMint.owner === TOKEN_2022_PROGRAM && xStockParsed?.type === "mint" && xStockParsed.info?.isInitialized === true &&
+    pyth.owner === deployment.pythOwner && pyth.executable !== true &&
+    chainlink.owner === deployment.chainlinkOwner && chainlink.executable !== true &&
+    adapterProgram.executable === true && PROGRAM_LOADERS.has(String(adapterProgram.owner || "")) &&
+    adapterMarket.owner === deployment.adapterProgram && adapterMarket.executable !== true;
+}
+
+async function liveEvidence(url: string, values: { programId: string; feeRecipient: string; treasuryAuthority: string; governance: string; guardian: string; multisigProgram: string }, configuredMarkets: Record<string, Deployment>) {
   const [genesis, program, treasury, governance, guardian, multisigProgram] = await Promise.all([
     rpc(url, "getGenesisHash", []),
     account(url, values.programId),
@@ -112,12 +167,14 @@ async function liveEvidence(url: string, values: { programId: string; feeRecipie
   ]);
   if (genesis !== MAINNET_GENESIS) throw new Error("Wrong Solana cluster");
   const programLive = program.executable === true && PROGRAM_LOADERS.has(String(program.owner || ""));
+  const marketChecks = await Promise.all(Object.entries(configuredMarkets).map(async ([key, deployment]) => [key, await marketEvidence(url, deployment, values.programId)] as const));
   return {
     program: programLive,
     frozen: programLive && await programIsFrozen(url, program),
     treasury: tokenAccountEvidence(treasury, values.treasuryAuthority),
     multisigs: governance.owner === values.multisigProgram && guardian.owner === values.multisigProgram &&
       multisigProgram.executable === true && PROGRAM_LOADERS.has(String(multisigProgram.owner || "")),
+    markets: Object.fromEntries(marketChecks) as Record<string, boolean>,
   };
 }
 
@@ -128,12 +185,15 @@ function deployments(allowedAdapters: Set<string>): Record<string, Deployment> {
     const vaults = new Set<string>();
     const productMints = new Set<string>();
     for (const [key, item] of Object.entries(value)) {
-      const match = key.match(/^(AAPL|MSFT|NVDA|GOOGL|AMZN|META|TSLA|MSTR|COIN|HOOD|GLD|SLV|PPLT|GDX|COPX)(2|3|5)L$/);
+      const match = key.match(/^(AAPL|MSFT|NVDA|GOOGL|AMZN|META|TSLA|MSTR|COIN|HOOD|GLD|SLV|PPLT|GDX|COPX)(2|3|5)(L|S)$/);
       const expected = match ? CURATED_MARKETS.find((market) => market.ticker === match[1]) : undefined;
       const leverage = Number(match?.[2]);
-      if (!expected || item?.xStockMint !== expected.mint || item?.leverage !== leverage ||
-        !isSolanaAddress(item?.vault) || !isSolanaAddress(item?.productMint) ||
+      const side = match?.[3] === "S" ? "short" : "long";
+      if (!expected || item?.xStockMint !== expected.mint || item?.leverage !== leverage || item?.side !== side ||
+        !isSolanaAddress(item?.marketState) || !isSolanaAddress(item?.vault) || !isSolanaAddress(item?.productMint) ||
         !isSolanaAddress(item?.adapterProgram) || !allowedAdapters.has(item.adapterProgram) || !isSolanaAddress(item?.adapterMarket) ||
+        !isSolanaAddress(item?.pythAccount) || !isSolanaAddress(item?.pythOwner) ||
+        !isSolanaAddress(item?.chainlinkAccount) || !isSolanaAddress(item?.chainlinkOwner) ||
         item.vault === item.productMint || vaults.has(item.vault) || productMints.has(item.productMint) ||
         typeof item?.pythFeedId !== "string" || !/^[a-fA-F0-9]{64}$/.test(item.pythFeedId) ||
         typeof item?.chainlinkFeedId !== "string" || !/^0x[a-fA-F0-9]{64}$/.test(item.chainlinkFeedId)) continue;
@@ -145,6 +205,12 @@ function deployments(allowedAdapters: Set<string>): Record<string, Deployment> {
   } catch {
     return {};
   }
+}
+
+async function sha256(value: string) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function adapterAllowlist() {
@@ -166,14 +232,19 @@ export async function protocolStatus() {
   const auditHash = process.env.LEVPLAY_SVM_AUDIT_HASH || "";
   const releaseHash = process.env.LEVPLAY_SVM_RELEASE_HASH || "";
   const backingHash = process.env.LEVPLAY_SVM_BACKING_ATTESTATION_HASH || "";
+  const manifestHash = process.env.LEVPLAY_SVM_MANIFEST_HASH || "";
+  const adapterSource = process.env.LEVPLAY_SVM_ADAPTER_PROGRAMS_JSON || "[]";
+  const marketSource = process.env.LEVPLAY_SVM_MARKETS_JSON || "{}";
   const adapters = adapterAllowlist();
   const markets = deployments(adapters);
+  const manifestMatches = hash(manifestHash) && await sha256(`${adapterSource}\n${marketSource}`) === manifestHash.toLowerCase();
   const rpcs = configuredRpcs();
   const addressesReady = [programId, feeRecipient, treasuryAuthority, governance, guardian, multisigProgram].every(isSolanaAddress) && governance !== guardian;
   const observations = addressesReady && rpcs.length >= 2
-    ? (await Promise.allSettled(rpcs.map((url) => liveEvidence(url, { programId, feeRecipient, treasuryAuthority, governance, guardian, multisigProgram })))).flatMap((result) => result.status === "fulfilled" ? [result.value] : [])
+    ? (await Promise.allSettled(rpcs.map((url) => liveEvidence(url, { programId, feeRecipient, treasuryAuthority, governance, guardian, multisigProgram }, markets)))).flatMap((result) => result.status === "fulfilled" ? [result.value] : [])
     : [];
   const live = observations.length >= 2 && observations.every((value) => value.program && value.treasury && value.multisigs);
+  const marketsLive = live && Object.keys(markets).length > 0 && observations.every((value) => Object.keys(markets).every((key) => value.markets[key] === true));
 
   const checks = [
     { id: "program", label: "Program verified by RPC quorum", passed: live, failure: "Two independent mainnet RPCs have not verified the program and authorities" },
@@ -183,7 +254,8 @@ export async function protocolStatus() {
     { id: "release", label: "Frozen release hash", passed: hash(releaseHash), failure: "Frozen release hash is missing" },
     { id: "frozen", label: "Program authority frozen", passed: process.env.LEVPLAY_SVM_PROGRAM_FROZEN === "true" && live && observations.every((value) => value.frozen), failure: "Audited program release is not verifiably immutable onchain" },
     { id: "backing", label: "Backing venue attestation", passed: hash(backingHash) && adapters.size > 0, failure: "Audited backing venue and adapter evidence is missing" },
-    { id: "markets", label: "Audited vault deployment", passed: Object.keys(markets).length > 0, failure: "No audited vault deployment is configured" },
+    { id: "manifest", label: "Frozen deployment manifest", passed: manifestMatches, failure: "Deployment manifest does not match its frozen SHA-256 hash" },
+    { id: "markets", label: "Audited vault deployment", passed: manifestMatches && marketsLive, failure: "No market deployment passed quorum verification of its state, vault, mints, oracles and fixed adapter" },
     { id: "switch", label: "Multisig go-live vote", passed: process.env.LEVPLAY_SVM_EXECUTION_ENABLED === "true", failure: "Mainnet execution switch is off" },
   ];
   const blockers = checks.filter((check) => !check.passed).map((check) => check.failure);

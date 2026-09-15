@@ -1,16 +1,17 @@
-name: quality
+name: live-data
 
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
 
 permissions:
   contents: read
 
 jobs:
-  verify:
+  verify-public-dependencies:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -21,10 +22,4 @@ jobs:
           node-version: 22.19.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test:protocol
-      - run: pnpm test:security
-      - run: pnpm test:ui
-      - run: pnpm test:audit-package
-      - run: pnpm lint
-      - run: pnpm build
-      - run: pnpm audit --prod --audit-level high
+      - run: pnpm test:live

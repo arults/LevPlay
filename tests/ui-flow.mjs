@@ -15,6 +15,8 @@ assert.match(app, /setView\("history"\)/, "history must be directly navigable");
 assert.match(app, /Open positions \(\{positions\.length\}\)/, "portfolio and history must share a compact activity switcher");
 assert.match(app, /pnlPercent\.toFixed\(2\)/, "positions must show unrealized P\/L percentage");
 assert.match(app, /paperMode \? "Close"/, "positions must expose a direct close action");
+assert.match(app, /setDirection\("Short"\)/, "the audit scope must expose a short position flow");
+assert.match(app, /position\.direction === "Long" \? 1 : -1/, "long and short P&L must use opposite signed exposure");
 assert.match(app, /value - exitPosition\.costBasis/, "realized P\/L must include the entry fee");
 assert.match(app, /totalValue - totalInvested/, "unrealized P\/L must include the entry fee");
 assert.match(app, /const totalDebit = amount \+ fee/, "entry fee must be added on top of chosen position capital");
@@ -31,4 +33,4 @@ assert.match(css, /\.position-card\{grid-template-columns:1fr 1fr/, "positions m
 assert.match(css, /\.history-head\{display:none\}/, "dense table headers must be removed on mobile");
 assert.match(css, /\.workspace-tabs\{width:100%\}/, "mobile activity tabs must use the available width");
 
-console.log("LevPlay UI flow: 25 lifecycle and responsive assertions passed");
+console.log("LevPlay UI flow: 27 lifecycle and responsive assertions passed");

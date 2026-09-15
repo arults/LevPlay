@@ -4,7 +4,7 @@
 
 LevPlay issues transferable Token-2022 vault shares targeting 2×, 3× or 5× daily long exposure to one allowlisted xStock. “Liquidation-free” means the holder has no margin account, margin call, negative balance or wallet-level liquidation. It does **not** mean risk-free: a vault share can fall to zero and the backing venue, issuer, oracle, liquidity, program and keeper network can fail.
 
-Short products remain disabled until an audited xStock borrow or stock-perpetual adapter exists. A long-only launch is safer than disguising unsupported short exposure.
+The external-audit pilot is limited to two isolated Apple-referenced markets: `AAPL2L` and `AAPL2S`. The short product remains execution-disabled until a fixed audited borrow or stock-perpetual adapter proves capacity, funding bounds and deterministic buy-to-cover. A missing short backing route must never be disguised as synthetic inventory.
 
 ## Accounts and authorities
 
@@ -36,6 +36,7 @@ Short products remain disabled until an audited xStock borrow or stock-perpetual
 ## Economic controls
 
 - Pilot cap: $100 per wallet and one market at a time.
+- Aggregate canary cap: $1,000 across `AAPL2L` and `AAPL2S`; the two markets have separate vaults and solvency accounting.
 - Market TVL, one-transaction size, daily mint and daily redemption caps are enforced onchain.
 - Emergency deleveraging is permissionless and always reduces absolute exposure.
 - New deposits stop before redemptions when backing liquidity falls below its floor.

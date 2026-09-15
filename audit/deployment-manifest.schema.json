@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://levplay.example/audit/deployment-manifest.schema.json",
+  "title": "LevPlay AAPL 2x pilot deployment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["releaseCommit", "programId", "feeRecipient", "treasuryAuthority", "governance", "guardian", "multisigProgram", "markets"],
+  "properties": {
+    "releaseCommit": { "type": "string", "pattern": "^[a-fA-F0-9]{40}$" },
+    "programId": { "$ref": "#/$defs/address" },
+    "feeRecipient": { "$ref": "#/$defs/address" },
+    "treasuryAuthority": { "$ref": "#/$defs/address" },
+    "governance": { "$ref": "#/$defs/address" },
+    "guardian": { "$ref": "#/$defs/address" },
+    "multisigProgram": { "$ref": "#/$defs/address" },
+    "markets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["AAPL2L", "AAPL2S"],
+      "properties": {
+        "AAPL2L": { "$ref": "#/$defs/longMarket" },
+        "AAPL2S": { "$ref": "#/$defs/shortMarket" }
+      }
+    }
+  },
+  "$defs": {
+    "address": { "type": "string", "pattern": "^[1-9A-HJ-NP-Za-km-z]{32,44}$" },
+    "hash": { "type": "string", "pattern": "^(0x)?[a-fA-F0-9]{64}$" },
+    "baseMarket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["marketState", "vault", "productMint", "xStockMint", "pythAccount", "pythOwner", "pythFeedId", "chainlinkAccount", "chainlinkOwner", "chainlinkFeedId", "adapterProgram", "adapterMarket", "leverage", "side"],
+      "properties": {
+        "marketState": { "$ref": "#/$defs/address" },
+        "vault": { "$ref": "#/$defs/address" },
+        "productMint": { "$ref": "#/$defs/address" },
+        "xStockMint": { "const": "XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp" },
+        "pythAccount": { "$ref": "#/$defs/address" },
+        "pythOwner": { "$ref": "#/$defs/address" },
+        "pythFeedId": { "$ref": "#/$defs/hash" },
+        "chainlinkAccount": { "$ref": "#/$defs/address" },
+        "chainlinkOwner": { "$ref": "#/$defs/address" },
+        "chainlinkFeedId": { "$ref": "#/$defs/hash" },
+        "adapterProgram": { "$ref": "#/$defs/address" },
+        "adapterMarket": { "$ref": "#/$defs/address" },
+        "leverage": { "const": 2 },
+        "side": { "enum": ["long", "short"] }
+      }
+    },
+    "longMarket": { "allOf": [{ "$ref": "#/$defs/baseMarket" }, { "properties": { "side": { "const": "long" } } }] },
+    "shortMarket": { "allOf": [{ "$ref": "#/$defs/baseMarket" }, { "properties": { "side": { "const": "short" } } }] }
+  }
+}

@@ -1,4 +1,5 @@
 import { CURATED_MARKETS, TOKEN_2022_PROGRAM, XSTOCKS_API } from "@/lib/markets";
+import { isSafeRpcUrl } from "@/lib/protocol";
 
 export const runtime = "edge";
 
@@ -7,12 +8,13 @@ type Json = Record<string, unknown>;
 async function getJson(path: string) {
   const response = await fetch(`${XSTOCKS_API}${path}`, { signal: AbortSignal.timeout(10_000) });
   if (!response.ok) throw new Error(`xStocks ${response.status}`);
+  if (Number(response.headers.get("content-length") || 0) > 1_000_000) throw new Error("Oversized xStocks response");
   return (await response.json()) as Json;
 }
 
 async function verifyMints() {
   const configured = process.env.LEVPLAY_SVM_READ_RPC;
-  const rpcs = [...new Set([...(configured && /^https:\/\/[^@\s]+$/.test(configured) ? [configured] : []), "https://api.mainnet-beta.solana.com", "https://solana-rpc.publicnode.com"])];
+  const rpcs = [...new Set([...(isSafeRpcUrl(configured) ? [configured] : []), "https://api.mainnet-beta.solana.com", "https://solana-rpc.publicnode.com"])];
   let payload: Array<{ id: number; result?: { value?: { owner?: string; data?: { parsed?: { info?: { extensions?: Array<{ extension?: string; state?: Json }>; isInitialized?: boolean } } } } } }> | null = null;
   for (const rpc of rpcs) {
     try {

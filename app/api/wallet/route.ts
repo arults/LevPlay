@@ -1,5 +1,5 @@
 import { CURATED_MARKETS, SOLANA_USDC_MINT, TOKEN_2022_PROGRAM, TOKEN_PROGRAM } from "@/lib/markets";
-import { isSolanaAddress } from "@/lib/protocol";
+import { isSafeRpcUrl, isSolanaAddress } from "@/lib/protocol";
 
 export const runtime = "edge";
 
@@ -9,7 +9,7 @@ const DEFAULT_RPCS = ["https://api.mainnet-beta.solana.com", "https://solana-rpc
 function rpcUrls() {
   try {
     const configured = JSON.parse(process.env.LEVPLAY_SVM_RPC_URLS_JSON || "[]") as unknown;
-    const valid = Array.isArray(configured) ? configured.filter((url): url is string => typeof url === "string" && /^https:\/\/[^@\s]+$/.test(url)).slice(0, 4) : [];
+    const valid = Array.isArray(configured) ? configured.filter(isSafeRpcUrl).slice(0, 4) : [];
     return [...new Set([...valid, ...DEFAULT_RPCS])];
   } catch {
     return DEFAULT_RPCS;
@@ -23,6 +23,7 @@ async function callRpc(url: string, method: string, params: unknown[]) {
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
     signal: AbortSignal.timeout(7_000),
   });
+  if (Number(response.headers.get("content-length") || 0) > 2_000_000) throw new Error("Oversized RPC response");
   const payload = await response.json() as RpcResult;
   if (!response.ok || payload.error || payload.result === undefined) throw new Error(payload.error?.message || "RPC error");
   return payload.result;
@@ -58,6 +59,8 @@ async function readWallet(address: string) {
 }
 
 export async function POST(request: Request) {
+  if (Number(request.headers.get("content-length") || 0) > 1_024) return Response.json({ error: "Request too large" }, { status: 413 });
+  if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) return Response.json({ error: "JSON required" }, { status: 415 });
   let address = "";
   try { address = String(((await request.json()) as { address?: string }).address || ""); } catch { /* handled below */ }
   if (!isSolanaAddress(address)) return Response.json({ error: "Invalid Solana address" }, { status: 400 });

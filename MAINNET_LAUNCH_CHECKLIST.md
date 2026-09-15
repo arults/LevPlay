@@ -9,7 +9,7 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 | Wallet-direct fee-on-top flow | Critical | UI/model: $500 capital + $2.50 fee = $502.50 debit; Max reserves fee | Passed at model/UI level |
 | Read-only market and wallet verification | High | Pinned xStock mints, Token-2022 checks, dual-feed registry, mainnet genesis | Passed |
 | Executable Solana program | Critical | Interface and threat model only; no Rust/SBF artifact | Pending |
-| Leverage backing venue | Critical | xStocks spot/RFQ researched; no audited leverage adapter or contracted capacity | Pending |
+| Leverage backing venue | Critical | xStocks spot/RFQ researched; no audited long leverage adapter or separately proven short route/capacity | Pending |
 | Independent program audit and retest | Critical | Internal source review only | Pending |
 | Governance, guardian and fee multisigs | Critical | Runbook exists; addresses and signers not supplied | Pending |
 | Mainnet RPC/authority quorum | Critical | Fail-closed verifier implemented; production endpoints/accounts not configured | Pending |
@@ -20,9 +20,10 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 - [x] Define “liquidation-free” as no holder margin account, negative balance or seizure of other wallet assets; disclose that the token may lose 100%.
 - [x] Charge 50 basis points only on opening position capital and add it on top; no LevPlay deposit/withdrawal fee.
 - [x] Start with wallet USDC, one signature and no persistent LevPlay cash balance.
-- [x] Cap the canary at $100 per wallet, one market, 2× long; short, 3× and 5× remain disabled for the canary.
+- [x] Freeze the audit scope to isolated `AAPL2L` and `AAPL2S` markets, $100 per wallet and $1,000 aggregate; 3×, 5×, commodities and other tickers remain disabled.
 - [ ] Select a leverage/backing venue and exact fixed CPI adapter for the canary market.
 - [ ] Obtain written production access, limits, uptime terms and unwind procedures from that venue.
+- [ ] Prove short borrow/perpetual capacity, bounded funding and deterministic buy-to-cover without sharing the long vault or solvency pool.
 - [ ] Prove committed liquidity covers the TVL cap plus gap, borrow/funding and unwind stress buffers.
 - [ ] Define funding, borrow, spread, rebalance, corporate-action and bad-debt attribution in NAV.
 - [ ] Independent quantitative review signs off on gap, halt, volatility drag and insolvency scenarios.
@@ -105,7 +106,7 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 
 ## H. Capped mainnet progression — Critical
 
-- [ ] Internal $100 end-to-end canary on one 2× long market using the audited frozen program.
+- [ ] Internal aggregate $1,000 end-to-end canary across isolated `AAPL2L` and `AAPL2S` using the audited frozen program, with no wallet above $100.
 - [ ] Reconcile every instruction, share, backing asset, fee and redemption independently.
 - [ ] Complete seven incident-free days including at least one scheduled rebalance and one successful wind-down drill.
 - [ ] Multisig records an explicit GO vote referencing the program ID, release hash, audit hash, caps and rollback plan.

@@ -5,8 +5,7 @@ function LogoMark() { return <span className="logo-mark" aria-hidden="true"><i/>
 
 const products = [
   { token: "AAPL2L", name: "Apple 2×", tone: "#ff8a3d", move: "+2× daily" },
-  { token: "NVDA3L", name: "NVIDIA 3×", tone: "#9bd347", move: "+3× daily" },
-  { token: "GLD5L", name: "Gold 5×", tone: "#d8a73e", move: "+5× daily" },
+  { token: "AAPL2S", name: "Apple inverse 2×", tone: "#9b4c1c", move: "−2× daily" },
 ];
 
 export default function LandingPage() {
@@ -32,7 +31,7 @@ export default function LandingPage() {
       </div>
     </section>
 
-    <section className="ticker-band" aria-label="Product facts"><span>15 launch markets</span><i/><span>2× · 3× · 5× long</span><i/><span>0.5% disclosed entry fee</span><i/><span>Solana Token-2022</span></section>
+    <section className="ticker-band" aria-label="Product facts"><span>Audit pilot · AAPL2L + AAPL2S</span><i/><span>Isolated long and short vaults</span><i/><span>0.5% disclosed entry fee</span><i/><span>Solana Token-2022</span></section>
 
     <section className="landing-section" id="why">
       <div className="section-heading"><span className="eyebrow">Why LevPlay</span><h2>Leverage without managing margin.</h2><p>LevPlay turns a managed leverage strategy into a token you can hold in your Solana wallet.</p></div>

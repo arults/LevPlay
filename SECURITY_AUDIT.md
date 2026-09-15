@@ -8,18 +8,19 @@ This is an internal engineering review, not an independent smart-contract audit.
 
 ## Verified release evidence
 
-Validated on 2026-09-14 against the production build:
+Deterministic checks were rerun on 2026-09-15 against the production build. Browser and public-integration rows retain their most recent successful evidence date where noted:
 
 | Check | Result |
 |---|---|
-| Protocol-model invariants | 15/15 passed, including $500 + $2.50 fee-on-top and Max-balance safety |
+| Protocol-model invariants | 18/18 passed, including fee-on-top, Max-balance safety and opposite-signed 2× long/short outcomes |
 | Curated xStocks assets | 15/15 exact pinned Solana mints matched |
 | Token program and extensions | 15/15 Token-2022 mints verified, including scaled UI, pause state and transfer-hook guard |
 | Stock oracle registry | 10/10 stock markets expose both Pyth and Chainlink entries |
 | Commodity launch gate | 5/5 remain blocked until equivalent oracle/backing evidence exists |
-| Source security assertions | 45 fail-closed checks passed |
-| UI lifecycle assertions | 25 lifecycle and responsive checks passed |
-| Browser user-flow QA | Homepage → paper wallet → $100 capital + $0.50 fee → $100.50 debit → +5% scenario → $110 redemption → $9.50 realized P/L → history passed; notices cleared after 3 seconds |
+| Source security assertions | 64 fail-closed checks passed |
+| UI lifecycle assertions | 27 lifecycle and responsive checks passed |
+| Audit-package assertions | Scope, evidence index, schema and invariant checks passed |
+| Browser user-flow QA | Long flow retained; short flow verified as AAPL2S → $50 capital + $0.25 fee → +5% reference move → $45 proceeds → −$5.25 fee-inclusive P/L → close/history. No application console errors. |
 | Static analysis | ESLint passed |
 | Production build | Passed with all app and API routes emitted |
 | Production dependency scan | No known vulnerabilities reported by the package-manager advisory database |
@@ -40,6 +41,10 @@ These results prove the interface, read paths and modeled safety rules. They do 
 | ADAPTER-01 | Critical | A generic or client-selected backing adapter would permit arbitrary CPI/account substitution. | Each deployment must name an explicitly allowlisted adapter program and market; the instruction specification rejects unparsed remaining accounts. No adapter is configured until an independently audited venue is chosen. |
 | UX-03 | Medium | A wallet with enough position capital but not enough capital plus fee could pass review. | Balance checks and Max sizing now reserve the full fee; review discloses total wallet debit and exact treasury routing. |
 | SUPPLY-02 | High | GitHub `main` is unprotected and the connector-created sync commit is unsigned. | Open: repository administration must require reviewed pull requests, passing checks, signed commits, linear history and no force-push/deletion before a release tag is trusted. |
+| RELEASE-03 | Critical | A deployment could pass global program/treasury checks without proving that each live market state, vault, product mint, xStock mint, oracle account and adapter market matched the manifest. | Every configured market is now independently checked through the RPC quorum; state ownership, Token-2022 mint/authority relationships, oracle owners and fixed adapter ownership must all pass. |
+| CONFIG-02 | High | Deployment JSON was not bound to one explicit content hash. | The exact adapter and market JSON byte representation must match `LEVPLAY_SVM_MANIFEST_HASH`; this is audit provenance and defense-in-depth, not a substitute for onchain enforcement. |
+| RPC-01 | Medium | Configured RPC URLs accepted literal IP and local-network style destinations, and upstream response sizes were unbounded. | Shared HTTPS-only RPC validation rejects credentials, ports, IP literals, localhost and `.local`; RPC/xStocks response sizes and wallet request bodies are bounded. |
+| ECON-03 | Critical | Short exposure could be presented without a separately proven borrow/perpetual route and isolated solvency boundary. | Audit scope is frozen to isolated `AAPL2L` and `AAPL2S`; short execution remains locked until its fixed adapter, capacity, funding bounds and buy-to-cover path are independently proven. |
 
 ## Implemented protections
 
@@ -82,6 +87,7 @@ The live AAPLx mint exposes mint, freeze, pause and permanent-delegate authoriti
 9. The owner has created the private `arults/LevPlay` GitHub repository; the verified source snapshot must be synchronized after every release.
 10. No dedicated Codex Security or Solana audit service is connected in this environment. Internal automated review and GitHub CI do not replace the required independent audit.
 11. GitHub branch protection and signed-commit enforcement are not enabled; the repository owner must apply the policy before mainnet release provenance can pass.
+12. The fresh live-integration rerun on 2026-09-15 timed out in the restricted build environment; the earlier successful public-read evidence remains historical and must be rerun from CI or an unrestricted release runner before audit handoff.
 
 ## Required sequence
 
