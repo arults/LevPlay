@@ -22,7 +22,7 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 136 
 | Backing admission model | Critical | Fixed-account admission checks plus the Rust LevPlay Risk Vault v1 core for paired exposure, contingency escrow, expiry, caps, settlement, independent close, FIFO queued claims and orderly wind-down | Passed at economic-core level; no onchain instance admitted |
 | Rust protocol kernel | Critical | Pinned Rust 1.85 `no_std` core; 39 unit/adversarial tests, Clippy arithmetic denial and rustfmt in CI | Passed at core level; not an SBF program |
 | Read-only market and wallet verification | High | Frozen 15-stock, 5-commodity and 8-PreStocks catalog; pinned known mints, Token-2022 checks, dual-feed registry and mainnet genesis | Passed at read-only level |
-| Executable Solana program | Critical | Interface and threat model only; no Rust/SBF artifact | Pending |
+| Executable Solana program | Critical | Pinned Rust entrypoint and reproducible SBF shell exist; all valid instructions intentionally return the execution-lock error and cannot move funds | In progress; value-moving handlers and deployment pending |
 | Leverage backing venue | Critical | Ondo and PreStocks source routes researched; no audited long adapter or separately proven prepaid short route/capacity | Pending |
 | Independent program audit and retest | Critical | Internal source review only | Pending |
 | Governance, guardian and fee multisigs | Critical | Runbook exists; addresses and signers not supplied | Pending |
@@ -59,7 +59,8 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 136 
 
 - [x] Compile and test a dependency-free `no_std` Rust kernel for fees, shares, caps, oracle agreement, isolation, Standby, insolvency and capacity.
 - [x] Freeze and test the versioned wire format, exact open-account layout, top-level transaction composition and nonce rules in the dependency-free core.
-- [ ] Implement the frozen [instruction interface](./programs/levplay/INTERFACE.md) in a pinned Solana/Anchor toolchain.
+- [x] Compile the frozen ABI decoder behind a pinned Solana entrypoint that remains deliberately execution-locked.
+- [ ] Implement the frozen [instruction interface](./programs/levplay/INTERFACE.md) with program-owned state and value-moving handlers.
 - [ ] Isolate each market in separate state, backing and accounting PDAs.
 - [ ] Use checked integer arithmetic and explicit decimal/exponent normalization; no floats.
 - [ ] Enforce capital, fee, wallet, transaction, TVL, daily mint and daily redemption caps onchain.
@@ -70,7 +71,8 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 136 
 - [ ] Make rebalancing permissionless, deterministic and non-custodial; emergency action may only lower absolute exposure.
 - [ ] Implement `enter_standby` and `resume_from_standby`; prove Standby has zero exposure and cannot resume from an oracle-only price change.
 - [x] Require source/SBF/IDL/SBOM/toolchain hashes in the deployment schema and provide a fail-closed artifact hashing CLI.
-- [ ] Produce the actual reproducible SBF build, IDL, SBOM, source archive and independently matched binary hashes.
+- [x] Produce a checksum-pinned Agave v4.2.1 SBF shell build; CI run `35005124622` emitted binary SHA-256 `049111b10631459b6c8735e58bf70c73995a8f146ea1f2891da615a435534c27` without a keypair.
+- [ ] Produce the final value-moving SBF, IDL, SBOM, source archive and independently matched binary hashes.
 - [ ] Deploy and verify devnet, then mainnet program/account IDs; freeze the audited canary release or use an audited timelocked upgrade path.
 
 ## C. Atomic wallet execution — Critical
