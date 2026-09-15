@@ -10,7 +10,7 @@ pub const CONFIG_DISCRIMINATOR: [u8; 8] = *b"LVPCFG01";
 pub const MARKET_DISCRIMINATOR: [u8; 8] = *b"LVPMKT01";
 pub const ACCOUNT_VERSION: u8 = 1;
 pub const CONFIG_STATE_LEN: usize = 208;
-pub const MARKET_STATE_LEN: usize = 296;
+pub const MARKET_STATE_LEN: usize = 328;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ConfigState {
@@ -20,7 +20,7 @@ pub struct ConfigState {
     pub treasury_owner: Address,
     pub fee_vault: Address,
     pub usdc_mint: Address,
-    pub token_program: Address,
+    pub usdc_token_program: Address,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -38,6 +38,7 @@ pub struct MarketState {
     pub leverage_bps: u16,
     pub fee_bps: u16,
     pub product_mint: Address,
+    pub product_token_program: Address,
     pub clearing_vault: Address,
     pub reserve_vault: Address,
     pub adapter_program: Address,
@@ -143,7 +144,7 @@ pub fn decode_config_state(bytes: &[u8]) -> Result<ConfigState> {
         treasury_owner: reader.address()?,
         fee_vault: reader.address()?,
         usdc_mint: reader.address()?,
-        token_program: reader.address()?,
+        usdc_token_program: reader.address()?,
     };
     reader.finish()?;
     validate_addresses(&[
@@ -152,7 +153,7 @@ pub fn decode_config_state(bytes: &[u8]) -> Result<ConfigState> {
         state.treasury_owner,
         state.fee_vault,
         state.usdc_mint,
-        state.token_program,
+        state.usdc_token_program,
     ])?;
     Ok(state)
 }
@@ -201,6 +202,7 @@ pub fn decode_market_state(bytes: &[u8]) -> Result<MarketState> {
         leverage_bps,
         fee_bps,
         product_mint: reader.address()?,
+        product_token_program: reader.address()?,
         clearing_vault: reader.address()?,
         reserve_vault: reader.address()?,
         adapter_program: reader.address()?,
@@ -222,6 +224,7 @@ pub fn decode_market_state(bytes: &[u8]) -> Result<MarketState> {
     }
     validate_addresses(&[
         state.product_mint,
+        state.product_token_program,
         state.clearing_vault,
         state.reserve_vault,
         state.adapter_program,
@@ -286,6 +289,7 @@ mod tests {
         write_address(&mut bytes, 200, 15);
         write_address(&mut bytes, 232, 16);
         write_address(&mut bytes, 264, 17);
+        write_address(&mut bytes, 296, 18);
         bytes
     }
 
@@ -372,7 +376,7 @@ mod tests {
             Err(Error::InvalidConfiguration)
         );
         let mut bytes = market_bytes();
-        write_address(&mut bytes, 264, 11);
+        write_address(&mut bytes, 296, 11);
         assert_eq!(
             decode_market_state(&bytes),
             Err(Error::InvalidConfiguration)
