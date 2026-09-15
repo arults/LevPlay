@@ -66,7 +66,8 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 136 
 - [ ] Isolate backing, reserve, fee, position and claim accounting PDAs and bind their token-account authorities.
 - [ ] Use checked integer arithmetic and explicit decimal/exponent normalization; no floats.
 - [ ] Enforce capital, fee, wallet, transaction, TVL, daily mint and daily redemption caps onchain.
-- [ ] Pin every mint, token program, oracle, fee recipient, treasury owner, adapter program, adapter market and writable account.
+- [x] Separate and pin USDC settlement and product-token program identities in state and the exact open-account boundary.
+- [ ] Parse and pin every mint, token account/extension, oracle, fee recipient, treasury owner, adapter program, adapter market and writable account in SBF.
 - [ ] Reject arbitrary CPI data and remaining accounts; validate every CPI pre/post balance delta and minimum output.
 - [ ] Prevent duplicate initialization, replay, account substitution, reinitialization, PDA spoofing, type confusion and close-authority abuse.
 - [ ] Burn shares before redemption assets leave the vault; preserve FIFO claims when immediate liquidity is unavailable.
