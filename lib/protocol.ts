@@ -1,4 +1,4 @@
-import { CURATED_MARKETS, SOLANA_USDC_MINT, TOKEN_2022_PROGRAM, TOKEN_PROGRAM } from "@/lib/markets";
+import { ALL_MARKETS, SOLANA_USDC_MINT, TOKEN_2022_PROGRAM, TOKEN_PROGRAM } from "@/lib/markets";
 
 const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const HASH = /^[a-fA-F0-9]{64}$/;
@@ -185,8 +185,8 @@ function deployments(allowedAdapters: Set<string>): Record<string, Deployment> {
     const vaults = new Set<string>();
     const productMints = new Set<string>();
     for (const [key, item] of Object.entries(value)) {
-      const match = key.match(/^(AAPL|MSFT|NVDA|GOOGL|AMZN|META|TSLA|MSTR|COIN|HOOD|GLD|SLV|PPLT|GDX|COPX)(2|3|5)(L|S)$/);
-      const expected = match ? CURATED_MARKETS.find((market) => market.ticker === match[1]) : undefined;
+      const match = key.match(/^([A-Z]+)(2|3)(L|S)$/);
+      const expected = match ? ALL_MARKETS.find((market) => market.ticker === match[1]) : undefined;
       const leverage = Number(match?.[2]);
       const side = match?.[3] === "S" ? "short" : "long";
       if (!expected || item?.xStockMint !== expected.mint || item?.leverage !== leverage || item?.side !== side ||

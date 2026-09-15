@@ -13,12 +13,12 @@ Deterministic checks were rerun on 2026-09-15 against the production build. Brow
 | Check | Result |
 |---|---|
 | Protocol-model invariants | 18/18 passed, including fee-on-top, Max-balance safety and opposite-signed 2× long/short outcomes |
-| Curated xStocks assets | 15/15 exact pinned Solana mints matched |
-| Token program and extensions | 15/15 Token-2022 mints verified, including scaled UI, pause state and transfer-hook guard |
+| Curated xStocks assets | 20/20 exact pinned Solana mints matched: 15 stocks and 5 commodity ETFs |
+| Token program and extensions | 20/20 Token-2022 mints verified, including scaled UI, pause state and transfer-hook guard |
 | Stock oracle registry | 10/10 stock markets expose both Pyth and Chainlink entries |
 | Commodity launch gate | 5/5 remain blocked until equivalent oracle/backing evidence exists |
 | Source security assertions | 64 fail-closed checks passed |
-| UI lifecycle assertions | 27 lifecycle and responsive checks passed |
+| UI lifecycle assertions | 30 lifecycle, catalog and responsive checks passed |
 | Audit-package assertions | Scope, evidence index, schema and invariant checks passed |
 | Browser user-flow QA | Long flow retained; short flow verified as AAPL2S → $50 capital + $0.25 fee → +5% reference move → $45 proceeds → −$5.25 fee-inclusive P/L → close/history. No application console errors. |
 | Static analysis | ESLint passed |
@@ -44,6 +44,7 @@ These results prove the interface, read paths and modeled safety rules. They do 
 | RELEASE-03 | Critical | A deployment could pass global program/treasury checks without proving that each live market state, vault, product mint, xStock mint, oracle account and adapter market matched the manifest. | Every configured market is now independently checked through the RPC quorum; state ownership, Token-2022 mint/authority relationships, oracle owners and fixed adapter ownership must all pass. |
 | CONFIG-02 | High | Deployment JSON was not bound to one explicit content hash. | The exact adapter and market JSON byte representation must match `LEVPLAY_SVM_MANIFEST_HASH`; this is audit provenance and defense-in-depth, not a substitute for onchain enforcement. |
 | RPC-01 | Medium | Configured RPC URLs accepted literal IP and local-network style destinations, and upstream response sizes were unbounded. | Shared HTTPS-only RPC validation rejects credentials, ports, IP literals, localhost and `.local`; RPC/xStocks response sizes and wallet request bodies are bounded. |
+| PREIPO-01 | Critical | A PreStocks catalog entry could be mistaken for a launch-ready leveraged market. | Pre-IPO entries are pinned and labeled separately, expose no trusted price in LevPlay, always return `verified: false`, and cannot satisfy the execution gate without independent dual oracles plus audited long/short backing and unwind evidence. |
 | ECON-03 | Critical | Short exposure could be presented without a separately proven borrow/perpetual route and isolated solvency boundary. | Audit scope is frozen to isolated `AAPL2L` and `AAPL2S`; short execution remains locked until its fixed adapter, capacity, funding bounds and buy-to-cover path are independently proven. |
 
 ## Implemented protections

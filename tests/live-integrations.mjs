@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 
 const source = await readFile(new URL("../lib/markets.ts", import.meta.url), "utf8");
 const markets = [...source.matchAll(/symbol: "([A-Z]+x)"[^\n]+mint: "([1-9A-HJ-NP-Za-km-z]+)"/g)].map((match) => ({ symbol: match[1], mint: match[2] }));
-assert.equal(markets.length, 15, "exactly 15 curated markets must be pinned");
+assert.equal(markets.length, 20, "exactly 15 public stocks and 5 commodity references must be pinned");
 
 const assets = await Promise.all(markets.map(async (market) => {
   const response = await fetch(`https://api.xstocks.fi/api/v2/public/assets/${market.symbol}`, { signal: AbortSignal.timeout(20_000) });
@@ -47,4 +47,4 @@ for (const item of accounts) {
   assert.equal(extension("transferHook")?.programId, null, `${market.symbol} must not invoke an unknown transfer hook`);
 }
 
-console.log(`LevPlay live integrations: ${assets.length} xStocks, 10 dual-feed stock markets and ${accounts.length} Token-2022 mints verified`);
+console.log(`LevPlay live integrations: ${assets.length} xStocks, 10 dual-feed launch-gated stock markets and ${accounts.length} Token-2022 mints verified`);

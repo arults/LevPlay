@@ -31,4 +31,9 @@ assert.match(invariants, /share no vault, product mint, adapter market, nonce na
 assert.match(invariants, /No instruction accepts generic CPI bytes/);
 assert.match(invariants, /Short exposure additionally proves available borrow\/perpetual capacity/);
 
+const marketSource = await read("lib/markets.ts");
+assert.equal([...marketSource.matchAll(/category: "Stocks"/g)].length, 15, "exactly 15 public-stock references must be pinned");
+assert.equal([...marketSource.matchAll(/category: "Pre-IPO"/g)].length, 9, "the observed PreStocks catalog must contain nine pinned references");
+for (const name of ["Anthropic", "OpenAI", "Anduril", "Neuralink", "Figure AI", "Kalshi", "Polymarket", "SpaceX", "xAI"]) assert.ok(marketSource.includes(`name: "${name}"`), `${name} PreStocks reference must be pinned`);
+
 console.log("LevPlay audit package: scope, evidence index, schema and invariants passed");

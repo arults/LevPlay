@@ -21,10 +21,11 @@ assert.equal(maxCapital(500_000_000n), 497_512_437n, "max must reserve the fee i
 assert.ok(entry(maxCapital(500_000_000n), 2n).debit <= 500_000_000n, "max plus fee must not exceed wallet balance");
 assert.equal(fee(1n), 0n, "fees round down and never overcharge dust");
 assert.ok(MAX_PILOT_USDC === 100_000_000n, "pilot cap is exactly $100 USDC");
-for (const leverage of [2, 3, 5]) {
+for (const leverage of [2, 3]) {
   assert.equal(cappedEquity(100, leverage, -1), 0, "holder loss cannot exceed deposited equity");
   assert.equal(cappedEquity(100, leverage, .1), 100 + 10 * leverage, "single-period upside follows target leverage");
 }
+assert.equal(new Set([2, 3]).has(5), false, "5x is excluded from the current product catalog");
 assert.equal(cappedEquity(100, 2, .1, "short"), 80, "2x short loses 20% when the reference rises 10%");
 assert.equal(cappedEquity(100, 2, -.1, "short"), 120, "2x short gains 20% when the reference falls 10%");
 assert.equal(cappedEquity(100, 2, 1, "short"), 0, "short holder equity floors at zero without creating wallet debt");

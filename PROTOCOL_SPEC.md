@@ -2,7 +2,7 @@
 
 ## Product boundary
 
-LevPlay issues transferable Token-2022 vault shares targeting 2×, 3× or 5× daily long exposure to one allowlisted xStock. “Liquidation-free” means the holder has no margin account, margin call, negative balance or wallet-level liquidation. It does **not** mean risk-free: a vault share can fall to zero and the backing venue, issuer, oracle, liquidity, program and keeper network can fail.
+LevPlay is designed to issue transferable Token-2022 vault shares targeting 2× or 3× daily long or short exposure to one allowlisted reference. “Liquidation-free” means the holder has no margin account, margin call, negative balance or wallet-level liquidation. It does **not** mean risk-free: a vault share can fall to zero and the backing venue, issuer, oracle, liquidity, program and keeper network can fail.
 
 The external-audit pilot is limited to two isolated Apple-referenced markets: `AAPL2L` and `AAPL2S`. The short product remains execution-disabled until a fixed audited borrow or stock-perpetual adapter proves capacity, funding bounds and deterministic buy-to-cover. A missing short backing route must never be disguised as synthetic inventory.
 
@@ -49,4 +49,4 @@ The frontend enables signing only after two independent mainnet RPCs verify the 
 
 ## Backing boundary
 
-xStocks provide 1:1 spot stock/ETF exposure and an atomic RFQ flow; they do not provide 2×, 3× or 5× leverage. LevPlay therefore cannot launch from an xStocks API integration alone. Each market requires a separately audited source of additional or short exposure, enforceable liquidity limits, and deterministic deleveraging. The launch adapter must expose fixed program and market accounts, bounded slippage, exact pre/post balances and no arbitrary CPI targets.
+xStocks provide 1:1 spot stock/ETF exposure and an atomic RFQ flow; they do not provide 2× or 3× leverage. PreStocks provide bearer-token economic exposure to private companies but no equity ownership, guaranteed secondary liquidity, independent LevPlay settlement oracle, or leverage. LevPlay therefore cannot launch from either catalog integration alone. Each market requires a separately audited source of additional or short exposure, enforceable liquidity limits, and deterministic deleveraging. The launch adapter must expose fixed program and market accounts, bounded slippage, exact pre/post balances and no arbitrary CPI targets.

@@ -1,4 +1,4 @@
-import { CURATED_MARKETS, TOKEN_2022_PROGRAM, XSTOCKS_API } from "@/lib/markets";
+import { CURATED_MARKETS, PREIPO_MARKETS, TOKEN_2022_PROGRAM, XSTOCKS_API } from "@/lib/markets";
 import { isSafeRpcUrl } from "@/lib/protocol";
 
 export const runtime = "edge";
@@ -85,7 +85,8 @@ export async function GET() {
       return { ...market, unavailable: true, verified: false };
     }
   }));
-  return Response.json({ markets: rows, checkedAt: new Date().toISOString(), source: "xStocks public API v2" }, {
+  const preIpo = PREIPO_MARKETS.map((market) => ({ ...market, provider: "PreStocks", period: "24/7 secondary", marketOpen: true, verified: false, unavailable: true, verificationNote: "Catalog verified; execution blocked until independent oracle and leverage backing are audited" }));
+  return Response.json({ markets: [...rows, ...preIpo], checkedAt: new Date().toISOString(), source: "xStocks public API v2 + pinned PreStocks catalog" }, {
     headers: { "cache-control": "public, max-age=30, s-maxage=60, stale-while-revalidate=120" },
   });
 }
