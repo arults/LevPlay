@@ -52,7 +52,7 @@ Standby is zero directional exposure at a funded residual NAV. It cannot recover
 
 Closing remains available after a maker commitment expires and while the venue is paused, in Standby, insolvent or winding down; those states stop new risk rather than trapping holders. A close burns or queues the holder's capital claim and recomputes the collateral obligation for the side that remains. An asymmetric long or short exit therefore cannot release the other side's loss collateral.
 
-If immediate liquidity is unavailable, the close becomes an explicit `queued_claim_liability` rather than disappearing from accounting. Maker escrow is releasable only after an explicit transition to `WindDown`, both long and short capital are zero, and every queued claim has been paid. The core rejects zero claims, over-redemptions, overpayments and arithmetic overflow.
+If immediate liquidity is unavailable, the close becomes an owner-bound claim with a monotonically increasing sequence and contributes to explicit `queued_claim_liability` rather than disappearing from accounting. Only `next_payable_sequence` may receive payment; partial payment keeps that claim at the head, so a later claim cannot be favored or skipped. Maker escrow is releasable only after an explicit transition to `WindDown`, both long and short capital are zero, and every queued claim has been paid. The core rejects zero-owner or zero-value claims, over-redemptions, skips, overpayments and arithmetic overflow.
 
 These are deterministic economic-core rules. The SBF layer still must bind each transition to holder share burns, FIFO claim accounts, canonical-USDC custody and fixed accounts before they protect real funds.
 
