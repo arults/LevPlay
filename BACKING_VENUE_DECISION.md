@@ -1,6 +1,6 @@
 # LevPlay backing venue decision record
 
-Status date: 2026-09-15. Decision state: **LevPlay Risk Vault v1 is the selected venue architecture; no production instance is admitted.** The checked Rust core is a candidate, not onchain capacity or a completed launch gate.
+Status date: 2026-09-15. Decision state: **LevPlay Risk Vault v1 is the selected venue architecture. No production backing route is admitted.** The checked Rust core is a candidate, not onchain capacity or a completed launch gate.
 
 ## Verified market boundary
 
@@ -58,3 +58,4 @@ The live-capacity rule disables new mints before exits. Reduced capacity may per
 - Reproducible devnet stress ledger proving complete and partial exits with the primary venue unavailable.
 - Independent quantitative approval of gap size, capacity haircut, reserve size, volatility drag, market-hours and corporate-action behavior.
 - Legal approval for the eligible jurisdictions and program-controlled use of `AAPLx`.
+
