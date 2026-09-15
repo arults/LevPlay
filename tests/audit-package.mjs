@@ -66,7 +66,7 @@ assert.match(ondoAdapter, /Close and pro-rata wind-down remain permissionless/);
 
 const multiVenue = files.find(([path]) => path === "MULTI_VENUE_PRODUCT_LAYER.md")[1];
 assert.match(multiVenue, /136-product audit candidate/);
-assert.match(multiVenue, /three independent RPC domains/);
+assert.match(multiVenue, /three RPC endpoints spanning three named providers/);
 assert.match(multiVenue, /external issuer\/provider trust boundaries/);
 
 const rustCore = files.find(([path]) => path === "programs/levplay-core/src/lib.rs")[1];
@@ -80,6 +80,7 @@ assert.equal([...marketSource.matchAll(/market\("[A-Z]+on"[^\n]+"Stocks"/g)].len
 assert.equal([...marketSource.matchAll(/market\("[A-Z]+on"[^\n]+"Commodities"/g)].length, 5, "exactly five Ondo commodity-linked references must be selected");
 assert.equal([...marketSource.matchAll(/category: "Pre-IPO"/g)].length, 8, "the frozen PreStocks launch catalog must contain eight pinned references");
 assert.ok(!marketSource.includes("xStocks"), "xStocks must remain shelved from the active market source");
-for (const name of ["Anthropic", "OpenAI", "Anduril", "Neuralink", "Kalshi", "Polymarket", "SpaceX"]) assert.ok(marketSource.includes(`name: "${name}"`), `${name} PreStocks reference must be pinned`);
+assert.ok(!marketSource.includes('symbol: "XAI"'), "xAI must remain excluded from the launch catalog");
+for (const name of ["Anthropic", "OpenAI", "Anduril", "Neuralink", "Figure AI", "Kalshi", "Polymarket", "SpaceX"]) assert.ok(marketSource.includes(`name: "${name}"`), `${name} PreStocks reference must be pinned`);
 
 console.log("LevPlay audit package: scope, evidence index, schema and invariants passed");
