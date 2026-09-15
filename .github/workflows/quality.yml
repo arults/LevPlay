@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 22.19.0
           cache: pnpm
-      - uses: dtolnay/rust-toolchain@1.85.0
+      - uses: dtolnay/rust-toolchain@1.120.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:protocol
       - run: pnpm test:risk
