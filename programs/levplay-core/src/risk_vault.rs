@@ -55,6 +55,7 @@ pub struct RiskVaultState {
     pub short_maker_loss_collateral: u64,
     pub long_unwind_capacity: u64,
     pub short_unwind_capacity: u64,
+    pub queued_claim_liability: u64,
     pub epoch: u64,
 }
 
@@ -393,6 +394,45 @@ pub fn apply_close(
     }
 }
 
+pub fn apply_pair_queued_close(
+    config: &RiskVaultConfig,
+    state: RiskVaultState,
+    long_capital_delta: u64,
+    short_capital_delta: u64,
+    claim_liability: u64,
+) -> Result<RiskVaultState> {
+    if claim_liability == 0 {
+        return Err(Error::InvalidAmount);
+    }
+    let closed = apply_pair_close(
+        config,
+        state,
+        long_capital_delta,
+        short_capital_delta,
+    )?;
+    Ok(RiskVaultState {
+        queued_claim_liability: closed
+            .queued_claim_liability
+            .checked_add(claim_liability)
+            .ok_or(Error::ArithmeticOverflow)?,
+        ..closed
+    })
+}
+
+pub fn settle_queued_claim(state: RiskVaultState, paid_liability: u64) -> Result<RiskVaultState> {
+    if paid_liability == 0 || paid_liability > state.queued_claim_liability {
+        return Err(Error::InvalidAmount);
+    }
+    Ok(RiskVaultState {
+        queued_claim_liability: state
+            .queued_claim_liability
+            .checked_sub(paid_liability)
+            .ok_or(Error::ArithmeticOverflow)?,
+        epoch: state.epoch.checked_add(1).ok_or(Error::ArithmeticOverflow)?,
+        ..state
+    })
+}
+
 pub fn begin_wind_down(state: RiskVaultState) -> Result<RiskVaultState> {
     if state.mode == RiskVenueMode::Locked || state.mode == RiskVenueMode::WindDown {
         return Err(Error::InvalidState);
@@ -408,6 +448,7 @@ pub fn maker_escrow_releasable(state: &RiskVaultState) -> bool {
     state.mode == RiskVenueMode::WindDown
         && state.long_capital == 0
         && state.short_capital == 0
+        && state.queued_claim_liability == 0
 }
 
 fn signed_abs(value: i128) -> Result<u128> {
@@ -573,6 +614,7 @@ mod tests {
             short_maker_loss_collateral: 500_000_000,
             long_unwind_capacity: 2_000_000_000,
             short_unwind_capacity: 2_000_000_000,
+            queued_claim_liability: 0,
             epoch: 0,
         }
     }
@@ -802,6 +844,22 @@ mod tests {
         assert!(!maker_escrow_releasable(&winding));
         let empty = apply_close(&config(), winding, Side::Long, 1).expect("final exit");
         assert!(maker_escrow_releasable(&empty));
+    }
+
+    #[test]
+    fn queued_exit_liability_blocks_maker_escrow_release_until_paid() {
+        let mut state = active();
+        state.long_capital = 100;
+        let winding = begin_wind_down(state).expect("wind-down transition");
+        let queued = apply_pair_queued_close(&config(), winding, 100, 0, 90)
+            .expect("illiquid exit becomes a funded claim");
+        assert_eq!(queued.long_capital, 0);
+        assert_eq!(queued.queued_claim_liability, 90);
+        assert!(!maker_escrow_releasable(&queued));
+        let partially_paid = settle_queued_claim(queued, 50).expect("partial claim payment");
+        assert!(!maker_escrow_releasable(&partially_paid));
+        let paid = settle_queued_claim(partially_paid, 40).expect("final claim payment");
+        assert!(maker_escrow_releasable(&paid));
     }
 
     #[test]
