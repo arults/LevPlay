@@ -48,6 +48,14 @@ The checked-integer non-recourse settlement kernel calculates each side independ
 
 Standby is zero directional exposure at a funded residual NAV. It cannot recover from price movement alone. Recapitalization, valid oracles and restored capacity are required before a timelocked resume.
 
+## Exit and wind-down accounting
+
+Closing remains available after a maker commitment expires and while the venue is paused, in Standby, insolvent or winding down; those states stop new risk rather than trapping holders. A close burns or queues the holder's capital claim and recomputes the collateral obligation for the side that remains. An asymmetric long or short exit therefore cannot release the other side's loss collateral.
+
+If immediate liquidity is unavailable, the close becomes an explicit `queued_claim_liability` rather than disappearing from accounting. Maker escrow is releasable only after an explicit transition to `WindDown`, both long and short capital are zero, and every queued claim has been paid. The core rejects zero claims, over-redemptions, overpayments and arithmetic overflow.
+
+These are deterministic economic-core rules. The SBF layer still must bind each transition to holder share burns, FIFO claim accounts, canonical-USDC custody and fixed accounts before they protect real funds.
+
 ## Required SBF binding
 
 The next program layer must derive fixed PDAs for configuration, both market states, both product mints, the clearing vault, two reserve vaults, two maker vaults, wallet nonces and queued claims. It must use canonical Token-2022/USDC accounts and reject remaining accounts, arbitrary CPI bytes, substituted programs, mints, owners, oracles and destinations.
@@ -56,5 +64,5 @@ Open must atomically transfer capital, transfer the 50 bps entry fee, reconcile 
 
 ## Truth boundary
 
-The vault makes holder positions non-margin-liquidatable. It does not guarantee principal, continuous 2x tracking, issuer availability or recovery from Standby. Exact tracking is available only inside the funded and audited settlement envelope. xStocks issuer, oracle, liquidity, legal and smart-contract risks remain external trust boundaries.
+The vault makes holder positions non-margin-liquidatable. It does not guarantee principal, continuous 2x tracking, issuer availability or recovery from Standby. Exact tracking is available only inside the funded and audited settlement envelope. Ondo/PreStocks issuer, oracle, liquidity, legal and smart-contract risks remain external trust boundaries; catalog inclusion is not market admission.
 
