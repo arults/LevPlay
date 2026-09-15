@@ -377,7 +377,10 @@ pub fn apply_pair_close(
     Ok(RiskVaultState {
         long_capital: quote.long_capital_after,
         short_capital: quote.short_capital_after,
-        epoch: state.epoch.checked_add(1).ok_or(Error::ArithmeticOverflow)?,
+        epoch: state
+            .epoch
+            .checked_add(1)
+            .ok_or(Error::ArithmeticOverflow)?,
         ..state
     })
 }
@@ -404,12 +407,7 @@ pub fn apply_pair_queued_close(
     if claim_liability == 0 {
         return Err(Error::InvalidAmount);
     }
-    let closed = apply_pair_close(
-        config,
-        state,
-        long_capital_delta,
-        short_capital_delta,
-    )?;
+    let closed = apply_pair_close(config, state, long_capital_delta, short_capital_delta)?;
     Ok(RiskVaultState {
         queued_claim_liability: closed
             .queued_claim_liability
@@ -428,7 +426,10 @@ pub fn settle_queued_claim(state: RiskVaultState, paid_liability: u64) -> Result
             .queued_claim_liability
             .checked_sub(paid_liability)
             .ok_or(Error::ArithmeticOverflow)?,
-        epoch: state.epoch.checked_add(1).ok_or(Error::ArithmeticOverflow)?,
+        epoch: state
+            .epoch
+            .checked_add(1)
+            .ok_or(Error::ArithmeticOverflow)?,
         ..state
     })
 }
@@ -439,7 +440,10 @@ pub fn begin_wind_down(state: RiskVaultState) -> Result<RiskVaultState> {
     }
     Ok(RiskVaultState {
         mode: RiskVenueMode::WindDown,
-        epoch: state.epoch.checked_add(1).ok_or(Error::ArithmeticOverflow)?,
+        epoch: state
+            .epoch
+            .checked_add(1)
+            .ok_or(Error::ArithmeticOverflow)?,
         ..state
     })
 }
@@ -868,12 +872,11 @@ mod tests {
             let mut state = active();
             let long = seed.saturating_mul(10_000);
             let short = seed.saturating_mul(7_000);
-            state = apply_pair_open(&config(), state, long, short, 200)
-                .expect("funded bounded open");
-            state = apply_close(&config(), state, Side::Long, long)
-                .expect("independent long exit");
-            state = apply_close(&config(), state, Side::Short, short)
-                .expect("independent short exit");
+            state =
+                apply_pair_open(&config(), state, long, short, 200).expect("funded bounded open");
+            state = apply_close(&config(), state, Side::Long, long).expect("independent long exit");
+            state =
+                apply_close(&config(), state, Side::Short, short).expect("independent short exit");
             assert_eq!(state.long_capital, 0);
             assert_eq!(state.short_capital, 0);
         }
