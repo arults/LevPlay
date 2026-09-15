@@ -303,9 +303,13 @@ pub fn reconcile_pair_settlement(
     if long.side != Side::Long || short.side != Side::Short {
         return Err(Error::NotIsolated);
     }
-    if move_bps > i32::from(config.maximum_up_move_bps)
-        || move_bps < -i32::from(config.maximum_down_move_bps)
-    {
+    let move_outside_funded_envelope = if move_bps.is_negative() {
+        move_bps.unsigned_abs() > u32::from(config.maximum_down_move_bps)
+    } else {
+        u32::try_from(move_bps).map_err(|_| Error::ArithmeticOverflow)?
+            > u32::from(config.maximum_up_move_bps)
+    };
+    if move_outside_funded_envelope {
         return Err(Error::InvalidOracle);
     }
     let long_result = settle_interval(long, move_bps)?;
