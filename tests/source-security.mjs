@@ -16,11 +16,12 @@ assert.ok(!page.includes("secretKey") && !page.includes("privateKey"), "client m
 assert.match(page, /disabled=\{!paperMode && !canExecute\}/, "mainnet sign control must fail closed while paper mode stays local");
 assert.ok(!page.includes("sendTransaction("), "preview must not submit transactions");
 assert.ok(page.includes("Paper preview only. No funds or transactions will move."), "paper mode must be unmistakably labeled");
-assert.ok(page.includes("levplay-paper-v1"), "paper portfolio and history must persist locally");
+assert.ok(page.includes("levplay-paper-v2"), "paper portfolio and history must persist locally under the fee-on-top schema");
 assert.ok(page.includes("Your position is") && page.includes("stock reference"), "trade ticket must identify the product and its reference asset");
 assert.ok(page.includes('protocol.feeRecipient ? short(protocol.feeRecipient) : "Not configured"'), "fee destination must never be hidden or invented");
 assert.match(page, /setTimeout\(\(\) => setNotice\(null\), 3_000\)/, "user notices must clear after three seconds");
 assert.ok(page.includes("Insufficient USDC") && page.includes("Insufficient SOL"), "fund and gas failures must be explicit");
+assert.match(page, /balance\.usdc >= totalDebit && balance\.sol >= 0\.002/, "mainnet execution state must include token and gas sufficiency");
 assert.ok(page.includes("AbortSignal.timeout(12_000)"), "market and protocol reads must time out instead of hanging");
 
 assert.match(markets, /!halted\)/, "issuer halt must be part of market verification");
@@ -36,17 +37,26 @@ assert.ok(!wallet.includes("Access-Control-Allow-Origin"), "wallet balances must
 for (const gate of [
   "LEVPLAY_SVM_PROGRAM_ID",
   "LEVPLAY_SVM_FEE_RECIPIENT",
+  "LEVPLAY_SVM_FEE_TREASURY_AUTHORITY",
   "LEVPLAY_SVM_GOVERNANCE_MULTISIG",
   "LEVPLAY_SVM_GUARDIAN_MULTISIG",
+  "LEVPLAY_SVM_MULTISIG_PROGRAM_ID",
   "LEVPLAY_SVM_AUDIT_HASH",
   "LEVPLAY_SVM_RELEASE_HASH",
+  "LEVPLAY_SVM_BACKING_ATTESTATION_HASH",
   "LEVPLAY_SVM_PROGRAM_FROZEN",
+  "LEVPLAY_SVM_ADAPTER_PROGRAMS_JSON",
   "LEVPLAY_SVM_MARKETS_JSON",
   "LEVPLAY_SVM_EXECUTION_ENABLED",
 ]) assert.ok(protocol.includes(gate), `${gate} release gate must exist`);
 assert.match(protocol, /item\?\.xStockMint !== expected\.mint/, "deployment xStock mint must match the curated market");
 assert.match(protocol, /item\?\.leverage !== leverage/, "deployment leverage must match its product ID");
 assert.match(protocol, /vaults\.has\(item\.vault\).*productMints\.has\(item\.productMint\)/s, "vault and product-mint accounts must be unique");
+assert.match(protocol, /observations\.length >= 2/, "two independent mainnet RPC observations must be required");
+assert.match(protocol, /parsed\.parsed\.info\?\.mint === SOLANA_USDC_MINT/, "fee recipient must be the canonical USDC token account");
+assert.match(protocol, /parsed\.parsed\.info\?\.owner === treasuryAuthority/, "fee recipient owner must be pinned");
+assert.match(protocol, /allowedAdapters\.has\(item\.adapterProgram\)/, "backing adapters must be explicitly allowlisted");
+assert.match(protocol, /programDataBytes\[12\] === 0/, "upgradeable programs must be proven frozen from onchain ProgramData");
 
 for (const header of [
   "Content-Security-Policy",
@@ -57,4 +67,4 @@ for (const header of [
   "X-Frame-Options",
 ]) assert.ok(config.includes(header), `${header} must be configured`);
 
-console.log("LevPlay source security: 38 fail-closed assertions passed");
+console.log("LevPlay source security: 45 fail-closed assertions passed");

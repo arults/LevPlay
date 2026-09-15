@@ -1,10 +1,11 @@
 # LevPlay fee treasury runbook
 
-Status: **not configured**. The current paper preview calculates the disclosed 0.5% entry fee for UX and accounting tests, but it does not collect or move funds.
+Status: **not configured**. The current paper preview calculates the disclosed 0.5% entry fee on position capital and adds it on top for UX and accounting tests, but it does not collect or move funds. Deposits and withdrawals carry no LevPlay fee.
 
 ## Production ownership model
 
 - The fee destination must be a USDC token account owned by a Solana multisig vault, not a founder hot wallet.
+- The program stores both the exact token-account address and its expected multisig owner. Two independent mainnet RPCs must confirm the canonical USDC mint, Token Program owner and initialized state before signing can unlock.
 - Use a 3-of-5 threshold for production. Avoid 1-of-N and unanimous thresholds.
 - Suggested roles: founder, finance/operations, security lead, independent recovery signer and an institutional backup signer.
 - Every member controls only their own hardware-wallet key. Seed phrases and private keys must never be shared with LevPlay, a deployer, a hosting provider or another signer.
@@ -23,7 +24,7 @@ The owner accesses the treasury by connecting their signer wallet to the chosen 
 5. Configure the exact treasury token account in `LEVPLAY_SVM_FEE_RECIPIENT`.
 6. Verify onchain that the account is initialized, uses the canonical Solana USDC mint and is owned by the expected treasury vault.
 7. Pin the verified address in the program release and display it in every order review.
-8. Put fee changes behind governance, a public timelock and an immutable maximum of 50 basis points.
+8. Put fee changes behind governance, a public timelock and an immutable maximum of 50 basis points; the launch release fixes the fee at 50 basis points on position capital only.
 
 ## Operational controls
 

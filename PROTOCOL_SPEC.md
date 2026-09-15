@@ -17,11 +17,11 @@ Short products remain disabled until an audited xStock borrow or stock-perpetual
 
 ## Value flow
 
-1. User deposits USDC. The program rejects amounts below $10 or above the per-wallet and market caps.
-2. The program transfers exactly 0.5% to the configured fee treasury and records net equity.
-3. Shares mint from conservative NAV using the lower valid oracle price and post-fee assets.
+1. The user chooses position capital from USDC already held in the connected wallet; there is no LevPlay deposit balance.
+2. In one atomic transaction, the program transfers the full position capital into the isolated market vault and exactly 0.5% of that capital on top to the pinned USDC fee account. A $500 position therefore debits $502.50.
+3. Shares mint from conservative NAV using the full position capital and return to the same signing wallet. If the vault transfer, fee transfer, backing action or mint fails, the entire transaction fails.
 4. A permissionless rebalance executes only when leverage leaves the configured band. The program verifies allowlisted programs, exact mints, pre/post token balances, minimum output, price impact and oracle freshness.
-5. Redemption burns shares before assets leave the vault and pays no more than conservative NAV. If idle liquidity is insufficient, a queued claim is created; claims cannot be skipped or repriced by a keeper.
+5. Closing burns shares before assets leave the vault and returns available USDC proceeds to the same wallet. If idle liquidity is insufficient, a queued claim is created; claims cannot be skipped or repriced by a keeper.
 
 ## Settlement guard
 
@@ -40,8 +40,12 @@ Short products remain disabled until an audited xStock borrow or stock-perpetual
 - Emergency deleveraging is permissionless and always reduces absolute exposure.
 - New deposits stop before redemptions when backing liquidity falls below its floor.
 - NAV rounds against the protocol on mint and in favor of solvency on redemption; dust cannot inflate shares.
-- Fees are calculated in integer base units and cannot exceed the configured 50 basis points.
+- Fees are calculated in integer base units on position capital, added on top, and cannot exceed the immutable 50-basis-point ceiling. There is no deposit or withdrawal fee in the launch design.
 
 ## Mainnet release gates
 
-The frontend enables signing only after it verifies a deployed program, exact market PDAs and mints, separate multisigs, a frozen release hash, an independent audit hash and the explicit operator switch. Deployment, audit and live adapter configuration are intentionally absent from the hackathon build, so mainnet signing remains disabled.
+The frontend enables signing only after two independent mainnet RPCs verify the executable program, pinned USDC fee account and distinct multisig accounts, and after it verifies exact market PDAs/mints, an allowlisted backing adapter, a frozen release hash, an independent audit hash and the explicit multisig launch vote. Environment strings alone cannot unlock execution.
+
+## Backing boundary
+
+xStocks provide 1:1 spot stock/ETF exposure and an atomic RFQ flow; they do not provide 2×, 3× or 5× leverage. LevPlay therefore cannot launch from an xStocks API integration alone. Each market requires a separately audited source of additional or short exposure, enforceable liquidity limits, and deterministic deleveraging. The launch adapter must expose fixed program and market accounts, bounded slippage, exact pre/post balances and no arbitrary CPI targets.

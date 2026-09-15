@@ -46,7 +46,7 @@ export default function LandingPage() {
     <section className="dark-section" id="mechanics">
       <div className="mechanics-intro"><span className="eyebrow">One simple position</span><h2>Leveraged stock tokens, made clear.</h2><p>Each LevPlay market packages a managed daily leverage target into a token. xStocks provide the onchain stock reference; the ticket shows the exact product, fee, target exposure and settlement status before you continue.</p></div>
       <div className="mechanics-flow">
-        <article><span>1</span><Wallet/><h3>Deposit USDC</h3><p>Choose a LevPlay token and review the amount, 0.5% entry fee and target exposure.</p></article>
+        <article><span>1</span><Wallet/><h3>Use wallet USDC</h3><p>No LevPlay balance or separate deposit. Choose position capital and review the 0.5% fee added on top.</p></article>
         <article><span>2</span><Coins/><h3>Receive LevPlay tokens</h3><p>The isolated vault mints leveraged-token shares from conservative net asset value.</p></article>
         <article><span>3</span><Layers3/><h3>Vault manages exposure</h3><p>Permissionless keepers restore target leverage; they never custody user funds.</p></article>
         <article><span>4</span><BarChart3/><h3>Close when ready</h3><p>Burn the position token for its available USDC redemption value. Profit or loss is shown before confirmation.</p></article>

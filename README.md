@@ -6,14 +6,15 @@ LevPlay is a Solana-first interface and fail-closed protocol design for long, da
 
 - 15 curated markets: 10 stocks and 5 commodity ETFs.
 - 2x, 3x and 5x long exposure models; short products stay disabled.
-- 0.5% entry fee and a $100-per-wallet canary cap.
+- Wallet-direct entry with no LevPlay deposit balance: position capital moves to the isolated vault and the 0.5% fee is charged on top in one atomic transaction.
+- $100-per-wallet canary cap. A $500 future order means $500 capital + $2.50 fee = $502.50 total wallet debit.
 - Liquidation-free for the holder means no margin call, negative balance or wallet-level liquidation. A product share can still fall to zero.
 - xStocks API prices are never settlement authority.
 
 ## Implemented
 
 - Original product homepage with a focused Enter app flow and a clear explanation of the holder experience.
-- Complete local paper lifecycle: preview wallet, order review, entry, portfolio valuation, profit/loss scenarios, redemption and trade history.
+- Complete local paper lifecycle: wallet balance, fee-on-top order review, entry, portfolio valuation, profit/loss scenarios, redemption and trade history.
 - Fee-inclusive realized, unrealized and total P/L plus persisted paper cash, positions and history.
 - Responsive desktop and mobile navigation, portfolio cards, history rows and three-second user feedback.
 - Phantom/Backpack connection with live Solana SOL, USDC and allowlisted xStock balance reads.
@@ -30,7 +31,8 @@ LevPlay is a Solana-first interface and fail-closed protocol design for long, da
 - Audited backing/execution adapter with contractually available leverage liquidity.
 - Onchain Pyth and Chainlink settlement account validation inside value-moving instructions.
 - Independent security audit, fuzz/local-validator suite and economic stress campaign.
-- Governance and guardian multisigs, fee treasury, production RPC quorum and incident monitoring.
+- Governance and guardian multisigs, a pinned multisig-owned USDC fee account, production RPC quorum and incident monitoring.
+- A confirmed, audited backing adapter with sufficient leverage liquidity. xStocks spot issuance alone does not create leveraged exposure.
 - Jurisdiction and eligibility controls required for tokenized securities.
 
 The application intentionally cannot be made live with environment values alone unless every required program, market, audit and release identifier is provided. See `PROTOCOL_SPEC.md`, `SECURITY_AUDIT.md`, `TREASURY_RUNBOOK.md` and `MAINNET_LAUNCH_CHECKLIST.md`.

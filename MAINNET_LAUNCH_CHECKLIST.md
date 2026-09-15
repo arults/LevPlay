@@ -1,106 +1,116 @@
-# LevPlay Solana mainnet launch checklist
+# LevPlay Solana mainnet GO checklist
 
-Status date: 2026-09-15. A checked item requires independently reproducible evidence. A configuration value, screenshot or internal statement is not sufficient evidence for a real-money release.
+Status date: 2026-09-15. **GO means every Critical gate below has independently reproducible evidence for the exact release hash.** A configuration value, screenshot, preview result or internal review cannot satisfy a Critical gate. The application unlocks signing only when its machine-readable release checks also pass.
 
-## A. Product and economic design
+## Current completion
 
-- [x] Holder loss is capped at deposited equity in the protocol model.
-- [x] “Liquidation-free” is disclosed as no holder margin liquidation, not protection from a 100% product loss.
-- [x] Entry fee is fixed at 50 basis points in the model and UI.
-- [x] Initial user cap is $100 and short products are disabled.
-- [ ] Select and contract a leverage/backing venue for each stock market.
-- [ ] Prove daily leverage can be maintained through gaps, halts and thin liquidity.
-- [ ] Define funding, borrow, spread and rebalance-cost attribution in NAV.
-- [ ] Independent quantitative review of volatility drag, gap loss and insolvency scenarios.
-- [ ] Start with one 2x long stock. Do not launch 3x/5x until the 2x canary passes.
+| Gate | Severity | Current evidence | State |
+|---|---:|---|---|
+| Wallet-direct fee-on-top flow | Critical | UI/model: $500 capital + $2.50 fee = $502.50 debit; Max reserves fee | Passed at model/UI level |
+| Read-only market and wallet verification | High | Pinned xStock mints, Token-2022 checks, dual-feed registry, mainnet genesis | Passed |
+| Executable Solana program | Critical | Interface and threat model only; no Rust/SBF artifact | Pending |
+| Leverage backing venue | Critical | xStocks spot/RFQ researched; no audited leverage adapter or contracted capacity | Pending |
+| Independent program audit and retest | Critical | Internal source review only | Pending |
+| Governance, guardian and fee multisigs | Critical | Runbook exists; addresses and signers not supplied | Pending |
+| Mainnet RPC/authority quorum | Critical | Fail-closed verifier implemented; production endpoints/accounts not configured | Pending |
+| Legal eligibility and launch controls | Critical | Risk disclosure exists; counsel/eligibility implementation absent | Pending |
 
-## B. Solana program
+## A. Product and solvency — Critical
 
-- [ ] Implement the program in a pinned Solana/Anchor toolchain.
-- [ ] Isolate every market in separate vault and accounting accounts.
-- [ ] Use checked integer arithmetic and explicit decimal normalization everywhere.
-- [ ] Burn shares before redemption assets leave the vault.
-- [ ] Enforce fee, wallet, transaction, TVL, mint and redemption caps onchain.
-- [ ] Enforce exact mints, token programs, adapter programs, recipients and writable accounts.
-- [ ] Verify all CPI pre/post balance deltas and minimum output onchain.
-- [ ] Prevent duplicate initialization, account substitution, reinitialization and PDA spoofing.
-- [ ] Prevent signer, owner, close-authority, remaining-account and type-confusion attacks.
-- [ ] Make rebalancing permissionless but deterministic and non-custodial.
-- [ ] Make emergency deleveraging one-way toward lower risk.
-- [ ] Use pull/claim redemptions if immediate liquidity cannot be guaranteed.
-- [ ] Produce a reproducible SBF build and publish its hash.
-- [ ] Deploy to devnet and mainnet with independently verified program IDs.
-- [ ] Remove upgrade authority or place it behind a disclosed timelocked multisig after audit.
+- [x] Define “liquidation-free” as no holder margin account, negative balance or seizure of other wallet assets; disclose that the token may lose 100%.
+- [x] Charge 50 basis points only on opening position capital and add it on top; no LevPlay deposit/withdrawal fee.
+- [x] Start with wallet USDC, one signature and no persistent LevPlay cash balance.
+- [x] Cap the canary at $100 per wallet, one market, 2× long; short, 3× and 5× remain disabled for the canary.
+- [ ] Select a leverage/backing venue and exact fixed CPI adapter for the canary market.
+- [ ] Obtain written production access, limits, uptime terms and unwind procedures from that venue.
+- [ ] Prove committed liquidity covers the TVL cap plus gap, borrow/funding and unwind stress buffers.
+- [ ] Define funding, borrow, spread, rebalance, corporate-action and bad-debt attribution in NAV.
+- [ ] Independent quantitative review signs off on gap, halt, volatility drag and insolvency scenarios.
+- [ ] Demonstrate solvent wind-down with the backing venue unavailable.
 
-## C. Oracle and xStocks integration
+## B. Solana program — Critical
 
-- [x] Pin all 15 xStock mint addresses and verify Token-2022 ownership.
-- [x] Require scaled UI amount extension and reject unexpected transfer hooks.
-- [x] Observe issuer pause/halt state and corporate-action windows in read paths.
-- [x] Confirm Pyth and Chainlink registry entries for ten stock candidates.
-- [ ] Verify both oracle accounts, owners and feed IDs inside every value-moving instruction.
-- [ ] Enforce publish-time, confidence, publisher and cross-feed-deviation limits onchain.
-- [ ] Normalize price exponents and Token-2022 scaled UI multipliers without floats.
-- [ ] Test scheduled and surprise corporate actions against real fixtures.
-- [ ] Obtain xStocks/xChange production onboarding and authenticated RFQ access.
-- [ ] Confirm legal permission and service limits for production API use.
+- [ ] Implement the frozen [instruction interface](./programs/levplay/INTERFACE.md) in a pinned Solana/Anchor toolchain.
+- [ ] Isolate each market in separate state, backing and accounting PDAs.
+- [ ] Use checked integer arithmetic and explicit decimal/exponent normalization; no floats.
+- [ ] Enforce capital, fee, wallet, transaction, TVL, daily mint and daily redemption caps onchain.
+- [ ] Pin every mint, token program, oracle, fee recipient, treasury owner, adapter program, adapter market and writable account.
+- [ ] Reject arbitrary CPI data and remaining accounts; validate every CPI pre/post balance delta and minimum output.
+- [ ] Prevent duplicate initialization, replay, account substitution, reinitialization, PDA spoofing, type confusion and close-authority abuse.
+- [ ] Burn shares before redemption assets leave the vault; preserve FIFO claims when immediate liquidity is unavailable.
+- [ ] Make rebalancing permissionless, deterministic and non-custodial; emergency action may only lower absolute exposure.
+- [ ] Produce a reproducible SBF build, IDL, SBOM, source commit and binary hashes.
+- [ ] Deploy and verify devnet, then mainnet program/account IDs; freeze the audited canary release or use an audited timelocked upgrade path.
 
-## D. Testing and audit
+## C. Atomic wallet execution — Critical
 
-- [x] Protocol-model invariants pass.
-- [x] Live public xStocks and Solana mint checks pass.
-- [x] Client/source fail-closed assertions pass.
-- [x] Lint, production build and dependency advisory scan pass.
-- [ ] Rust unit and integration coverage for every instruction and error branch.
-- [ ] Local-validator tests with real Token-2022 and oracle fixtures.
-- [ ] Property tests for share/NAV conservation, rounding and fee limits.
-- [ ] Fuzz CPI inputs, account order, decimals, oracle values and state transitions.
-- [ ] Differential test model results against program execution.
-- [ ] Stress gaps, stale feeds, halts, congestion, failed keepers and unavailable liquidity.
-- [ ] Independent audit by a Solana-specialist firm; publish report and remediation commit.
-- [ ] Independent audit retest with all critical/high findings closed.
-- [ ] Public bug bounty with severity-based rewards and safe-harbor terms.
+- [x] Model `capital + floor(capital × 50 / 10,000)` as total wallet debit.
+- [x] Make Max compute capital after reserving the entry fee.
+- [x] Include the entry fee in realized and unrealized P/L cost basis.
+- [x] Display position capital, fee, total debit, target exposure, fee account and treasury owner before signing.
+- [ ] Build the transaction only from a signed/frozen deployment manifest; never accept critical accounts from the browser.
+- [ ] Simulate immediately before signature at the same commitment/blockhash context.
+- [ ] Decode and compare every instruction, signer, writable account, program, mint, amount and recipient against the quote.
+- [ ] Prove atomic rollback by forcing failure at capital transfer, fee transfer, adapter action and share mint/burn.
+- [ ] Reject expired blockhash/quote, reused nonce, altered account order, extra instruction and unexpected address lookup table.
+- [ ] Confirm open mints to and close returns USDC to the same signing wallet unless an explicit audited delegate flow is used.
 
-## E. Governance, operations and custody
+## D. Oracle and xStocks — Critical
 
-- [ ] Create distinct governance, guardian and fee-treasury multisigs.
-- [ ] Require hardware-wallet signers in different failure domains.
-- [ ] Document quorum, timelock, signer replacement and emergency procedures.
-- [ ] Use three independent paid Solana RPC providers with health/quorum monitoring.
-- [ ] Run at least three permissionless keeper operators in separate regions/clouds.
-- [ ] Alert on oracle deviation, missed rebalance, NAV drift, vault imbalance, halt and pause.
-- [ ] Maintain a public status page and tested incident communications.
-- [ ] Complete backup, key-loss, RPC-outage and issuer-halt game days.
-- [ ] Reconcile vault assets, liabilities, shares and fees continuously.
-- [ ] Define emergency redemption and orderly wind-down procedures.
+- [x] Pin all 15 xStock mint addresses and verify Token-2022 ownership, scaled UI extension, pause and transfer-hook state in read paths.
+- [x] Confirm Pyth and Chainlink registry entries for ten stock candidates; keep commodities blocked without equivalent evidence.
+- [ ] Verify both oracle account owners and feed IDs inside every value-moving instruction.
+- [ ] Enforce publish time, confidence, publisher count and cross-feed deviation onchain.
+- [ ] Test exponent and scaled-UI multiplier changes using raw integer fixtures.
+- [ ] Test scheduled and surprise corporate actions, market halts and issuer pause/freeze/permanent-delegate actions.
+- [ ] Obtain xStocks production onboarding and confirm whether the selected integration permits program-controlled vault wallets.
+- [ ] Treat xStocks/API/RFQ availability as an external dependency; prove redemptions and wind-down do not require one unauditable hot key.
 
-## F. Application and transaction safety
+## E. Adversarial verification and independent audit — Critical
 
-- [x] Homepage explains the tokenized position and distinguishes its xStock reference without redundant exclusivity language.
-- [x] Paper entry, fee-inclusive P/L, redemption, cash accounting, portfolio and history flow pass browser QA.
-- [x] Desktop layouts are browser-verified; mobile navigation, cards and history use dedicated responsive breakpoints and automated source assertions.
-- [x] No mainnet signing or transaction submission exists in the preview.
-- [x] Wallet read API only returns allowlisted assets.
-- [x] Mainnet genesis is checked before balances are trusted.
-- [x] CSP, frame denial, MIME sniffing, referrer and browser-permission policies are set.
-- [ ] Construct transactions only from server/onchain-verified deployment manifests.
-- [ ] Simulate every transaction immediately before signature.
-- [ ] Decode and show every instruction, program, mint, recipient, fee and limit to the user.
-- [ ] Reject changed blockhash context, unexpected writable accounts or extra instructions.
-- [ ] Add domain/DNS monitoring and signed release provenance.
-- [ ] Commission an external frontend and wallet-flow penetration test.
+- [x] Frontend/source fail-closed checks, protocol arithmetic model, live public-integration checks, lint and production build exist.
+- [ ] Rust unit tests cover every instruction, constraint and error branch.
+- [ ] Local-validator integration tests use real Token-2022 extensions, oracle fixtures and a faithful backing adapter.
+- [ ] Property tests prove NAV/share conservation, fee ceiling, rounding, caps and zero-supply transitions.
+- [ ] Fuzz account order, duplicate accounts, writable flags, mints, decimals, oracle values, CPI returns, nonces and state transitions.
+- [ ] Differential tests compare the economic model to program execution over randomized sequences.
+- [ ] Stress gaps, stale feeds, halts, congestion, failed keepers, unavailable RPCs and unavailable backing liquidity.
+- [ ] Solana-specialist independent audit covers the exact release commit and binary; all Critical/High findings are fixed.
+- [ ] Auditor retest confirms fixes and published report/hash; a second independent review covers economic/oracle design.
+- [ ] Public bug bounty with safe harbor and funded severity-based rewards is live before the public rollout.
 
-## G. Legal and launch operations
+## F. No-single-point-of-failure operations — Critical
 
-- [ ] Obtain counsel for tokenized-securities, derivatives, commodities and jurisdiction rules.
-- [ ] Implement eligibility, sanctions, geofence and required investor restrictions.
-- [ ] Finalize issuer, market-data, privacy, risk, terms and complaint disclosures.
-- [ ] Confirm xStocks distribution and branding permissions.
-- [ ] Purchase appropriate cyber/crime/E&O coverage.
-- [ ] Complete launch support, incident owners and 24/7 escalation coverage.
-- [ ] Run a $100 internal canary, then a small invited cohort, before 1,000 users.
-- [ ] Require a 7-day incident-free canary and explicit multisig go/no-go vote.
+- [ ] Create distinct governance, pause-only guardian and fee-treasury multisigs with hardware signers across organizations/regions.
+- [ ] Pin and onchain-verify the multisig program, account owners, canonical USDC fee account and treasury authority.
+- [ ] Document quorum, 48-hour governance timelock, signer replacement, key loss and emergency procedures.
+- [ ] Configure at least three independent paid Solana RPC providers; require two agreeing finalized observations for release status.
+- [ ] Run at least three permissionless keeper operators across clouds/regions with no custody authority.
+- [ ] Reconcile assets, liabilities, shares, exposure and fees continuously from independent indexers/RPCs.
+- [ ] Alert on oracle deviation, missed rebalance, NAV drift, vault imbalance, cap use, halt/pause and authority changes.
+- [ ] Operate a public status page and tested incident communications; complete RPC, signer, keeper, issuer and venue game days.
+- [ ] Prove emergency redemption and orderly wind-down without the frontend, one RPC, one keeper or one administrator.
 
-## Current decision
+## G. Application, infrastructure and legal — Critical
 
-**NO-GO for real money.** The interface and read-only verification layer are suitable for a hackathon preview. Sections B, the value-moving parts of C/D, and the external controls in E/G are not complete. The application must remain fail-closed until those items have verifiable evidence.
+- [x] Minimal responsive homepage, trade, portfolio/history and three-second error notices are implemented.
+- [x] CSP, frame denial, MIME sniffing, referrer and browser-permission policies are configured.
+- [x] Current release has no transaction submission path and fails closed when evidence is absent.
+- [ ] Add production wallet transaction construction/signing only after Sections A–F pass.
+- [ ] External frontend/wallet penetration test, domain/DNS monitoring, WAF/rate limits and signed release provenance pass.
+- [ ] Counsel approves tokenized-securities, derivatives, commodities and jurisdiction design.
+- [ ] Eligibility, sanctions, geofence, investor restrictions, market-data rights, terms, privacy and risk disclosures are implemented and tested.
+- [ ] 24/7 incident owners, support escalation, insurance and financial/operational runbooks are active.
+
+## H. Capped mainnet progression — Critical
+
+- [ ] Internal $100 end-to-end canary on one 2× long market using the audited frozen program.
+- [ ] Reconcile every instruction, share, backing asset, fee and redemption independently.
+- [ ] Complete seven incident-free days including at least one scheduled rebalance and one successful wind-down drill.
+- [ ] Multisig records an explicit GO vote referencing the program ID, release hash, audit hash, caps and rollback plan.
+- [ ] Invite a small cohort under the same aggregate TVL cap; expand only after another reviewed observation window.
+- [ ] Do not open to 1,000 users, raise caps, or enable 3×/5×/short until separate audit and risk votes pass.
+
+## Machine release rule
+
+The `/api/protocol` gate requires two independent Solana mainnet RPCs to verify the executable program, canonical USDC fee account, pinned treasury owner and distinct multisig accounts. It separately requires the independent audit hash, reproducible release hash, backing attestation, exact adapter allowlist, validated market manifest, frozen-program declaration and explicit execution switch. Any missing or disagreeing proof keeps signing unavailable.

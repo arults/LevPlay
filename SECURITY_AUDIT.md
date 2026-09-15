@@ -1,10 +1,10 @@
 # LevPlay security review — 2026-09-15
 
-## Verdict
+## Release decision
 
-**Hackathon demo: ready. Mainnet funds: blocked.**
+**The objective mainnet GO standard is now defined and machine-enforced; the current release remains safety-locked until its missing external and onchain proofs are supplied.**
 
-This is an internal engineering review, not an independent smart-contract audit. The published app is designed to fail closed and cannot construct or sign a mainnet trade while the program, audited vault deployments and release proofs are absent.
+This is an internal engineering review, not an independent smart-contract audit. The application cannot construct or sign a mainnet trade while the program, audited backing adapter, vault deployments, multisigs and release proofs are absent. Calling the preview “GO” without those artifacts would weaken the safety design rather than complete it.
 
 ## Verified release evidence
 
@@ -12,17 +12,18 @@ Validated on 2026-09-14 against the production build:
 
 | Check | Result |
 |---|---|
-| Protocol-model invariants | 12/12 passed |
+| Protocol-model invariants | 15/15 passed, including $500 + $2.50 fee-on-top and Max-balance safety |
 | Curated xStocks assets | 15/15 exact pinned Solana mints matched |
 | Token program and extensions | 15/15 Token-2022 mints verified, including scaled UI, pause state and transfer-hook guard |
 | Stock oracle registry | 10/10 stock markets expose both Pyth and Chainlink entries |
 | Commodity launch gate | 5/5 remain blocked until equivalent oracle/backing evidence exists |
-| Source security assertions | 38 fail-closed checks passed |
-| UI lifecycle assertions | 20 lifecycle and responsive checks passed |
-| Browser user-flow QA | Homepage → paper wallet → buy → nominal value and percentage P/L → close → realized history passed |
+| Source security assertions | 45 fail-closed checks passed |
+| UI lifecycle assertions | 25 lifecycle and responsive checks passed |
+| Browser user-flow QA | Homepage → paper wallet → $100 capital + $0.50 fee → $100.50 debit → +5% scenario → $110 redemption → $9.50 realized P/L → history passed; notices cleared after 3 seconds |
 | Static analysis | ESLint passed |
 | Production build | Passed with all app and API routes emitted |
 | Production dependency scan | No known vulnerabilities reported by the package-manager advisory database |
+| Mainnet release verification | Requires two independent RPCs to validate program, treasury and multisig account state; environment strings alone cannot unlock signing |
 
 These results prove the interface, read paths and modeled safety rules. They do not prove a Solana program that does not yet exist, economic solvency, backing-liquidity availability, oracle behavior under attack, or legal eligibility.
 
@@ -34,6 +35,10 @@ These results prove the interface, read paths and modeled safety rules. They do 
 | CONFIG-01 | Critical | A syntactically valid deployment manifest could associate a product with the wrong xStock mint or leverage value. | Product ticker, pinned mint and leverage must now match exactly; duplicate or overlapping vault/product-mint accounts are rejected. |
 | WEB-01 | Medium | Explicit anti-framing, MIME, referrer, browser-permission and content security policies were absent. | Production headers are configured and verified in the compiled Worker. |
 | SUPPLY-01 | Informational | Production dependency exposure needed a current advisory check. | Package-manager production audit reports no known advisories as of the review date. |
+| ECON-02 | High | The prior ticket deducted the 0.5% fee from position capital, conflicting with the approved “fee on top” rule. | Capital, fee, total debit, exposure, Max sizing and fee-inclusive P/L now use one consistent model with regression tests. |
+| RELEASE-02 | Critical | Syntactically valid environment variables could satisfy release checks without proving accounts existed on Solana mainnet. | Execution now also requires two distinct configured RPC hosts to verify mainnet genesis, the executable program, canonical-USDC fee account, pinned treasury owner and separately owned governance/guardian multisigs. |
+| ADAPTER-01 | Critical | A generic or client-selected backing adapter would permit arbitrary CPI/account substitution. | Each deployment must name an explicitly allowlisted adapter program and market; the instruction specification rejects unparsed remaining accounts. No adapter is configured until an independently audited venue is chosen. |
+| UX-03 | Medium | A wallet with enough position capital but not enough capital plus fee could pass review. | Balance checks and Max sizing now reserve the full fee; review discloses total wallet debit and exact treasury routing. |
 
 ## Implemented protections
 
@@ -50,10 +55,11 @@ These results prove the interface, read paths and modeled safety rules. They do 
 | Admin single point of failure | Separate governance and guardian multisigs; guardian pause is one-way; governance actions are delayed. |
 | Unlimited user loss | Holder debt is impossible and vault equity is floored at zero; the share may still lose all value. |
 | Fee overcharge | 50 basis points in integer USDC units, shown before signature and enforced by the release gate. |
+| Fee charged on deposit | There is no LevPlay deposit account. The fee is assessed only when opening a position and is added on top of the chosen capital. |
 | Unbounded pilot | $10 minimum, $100 per-wallet maximum, plus required onchain TVL and daily caps. |
 | Frontend pretending to settle | The UI labels the preview, exposes blockers and disables the signing control until every gate passes. |
 | Instrument confusion | Homepage and order ticket distinguish the LevPlay position token from its xStock reference without cluttering the primary message. |
-| Hidden fee destination | The order breakdown shows the configured fee account or `Not configured`; preview mode collects no funds. Production requires a multisig-owned USDC token account. |
+| Hidden fee destination | Review shows the complete configured fee token account and treasury owner or `Not configured`; two RPCs must verify its canonical USDC mint and ownership. |
 | Misstated paper P/L | Both realized and unrealized results include the 0.5% entry fee; paper cash is debited on entry and credited with sale proceeds. |
 | Unsupported browser UUID | Paper records use a runtime-compatible local identifier after browser QA exposed missing `crypto.randomUUID()` support. |
 | Deployment-manifest substitution | Every configured xStock mint must equal the curated mint for the product ticker; leverage must match the product ID; vault and product-mint accounts must be distinct and unique. |
@@ -73,6 +79,7 @@ The live AAPLx mint exposes mint, freeze, pause and permanent-delegate authoriti
 7. A 5× product requires dependable leverage liquidity and faster emergency deleveraging; it must not launch merely because the UI can model it.
 8. The current environment has no Solana/Anchor toolchain, deployer authority or funded deployment wallet; no reproducible program binary can be built or deployed here.
 9. The owner has created the private `arults/LevPlay` GitHub repository; the verified source snapshot must be synchronized after every release.
+10. No dedicated Codex Security or Solana audit service is connected in this environment. Internal automated review and GitHub CI do not replace the required independent audit.
 
 ## Required sequence
 
