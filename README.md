@@ -1,15 +1,15 @@
 # LevPlay
 
-LevPlay is a Solana-first interface and fail-closed protocol design for daily-target leveraged stock tokens. Ondo Stocks on Solana is the selected candidate spot route for the AAPL2L pilot; xStocks and PreStocks remain Coming soon. Transaction construction and signing remain disabled until every production gate is independently proven.
+LevPlay is a Solana-first, fail-closed infrastructure layer for daily-target leveraged tokens using Ondo public-stock and commodity-linked assets plus PreStocks pre-IPO references. xStocks is shelved. Transaction construction and signing remain disabled until every product's production gates are independently proven.
 
 ## Product boundary
 
-- 15 curated US stocks, 15 Hong Kong stocks and 5 commodity ETFs backed by pinned Solana xStocks mints, plus 7 pinned, live-priced PreStocks pre-IPO research references.
-- Paper models for 2x and 3x long/short exposure; every real-money product remains independently gated. The first external-audit canary remains isolated `AAPL2L` and `AAPL2S`.
+- 15 Ondo public stocks and 5 Ondo commodity-linked ETFs with 2x, 3x and 5x long/short candidates, plus 7 PreStocks references with 2x long/short candidates: 134 isolated product candidates.
+- Every product is independently gated. The first external-audit canary remains isolated `AAPL2L`; short, 3x, 5x and PreStocks rollout only after their separate collateral and reviews pass.
 - Wallet-direct entry with no LevPlay deposit balance: position capital moves to the isolated vault and the 0.5% fee is charged on top in one atomic transaction.
 - $100-per-wallet canary cap. A $500 future order means $500 capital + $2.50 fee = $502.50 total wallet debit.
 - Liquidation-free for the holder means no margin call, negative balance or wallet-level liquidation. A funded Standby floor may preserve residual NAV, but principal and recovery are not guaranteed; an unfunded gap is insolvency, never hidden as token dust.
-- xStocks API prices are never settlement authority.
+- Provider/API/DEX display prices are never settlement authority.
 
 ## Implemented
 
@@ -17,9 +17,9 @@ LevPlay is a Solana-first interface and fail-closed protocol design for daily-ta
 - Complete local paper lifecycle: wallet balance, fee-on-top order review, entry, portfolio valuation, profit/loss scenarios, redemption and trade history.
 - Fee-inclusive realized, unrealized and total P/L plus persisted paper cash, positions and history.
 - Responsive desktop and mobile navigation, portfolio cards, history rows and three-second user feedback.
-- Phantom/Backpack connection with live Solana SOL, USDC and allowlisted xStock balance reads.
-- Exact xStock mint pinning and onchain Token-2022 metadata/extension validation.
-- Live xStocks asset, trading-status, multiplier and oracle-registry reads.
+- Phantom/Backpack connection with live Solana SOL, USDC and allowlisted source-token balance reads.
+- Exact source mint pinning and onchain Token-2022 metadata/extension validation are required by product admission.
+- A 134-product Ondo/PreStocks catalog plus leverage-specific, fail-closed collateral and deployment manifests.
 - Dual-provider availability gate for Pyth and Chainlink.
 - Corporate-action, issuer-halt, Token-2022 pause and unexpected transfer-hook gates.
 - Environment-driven production release lock; absent evidence blocks signing.
@@ -32,7 +32,7 @@ LevPlay is a Solana-first interface and fail-closed protocol design for daily-ta
 - Onchain Pyth and Chainlink settlement account validation inside value-moving instructions.
 - Independent security audit, fuzz/local-validator suite and economic stress campaign.
 - Governance and guardian multisigs, a pinned multisig-owned USDC fee account, production RPC quorum and incident monitoring.
-- A confirmed, audited backing adapter with sufficient leverage liquidity. xStocks spot issuance alone does not create leveraged exposure.
+- Confirmed, audited Ondo and PreStocks adapters with sufficient market-specific leverage capital and exit liquidity.
 - A separately proven short borrow/perpetual route and deterministic buy-to-cover path; the short cannot reuse the long vault.
 - Jurisdiction and eligibility controls required for tokenized securities.
 
@@ -65,6 +65,7 @@ Production signing requires all of the following:
 - `LEVPLAY_SVM_PROGRAM_FROZEN=true`
 - `LEVPLAY_SVM_MARKETS_JSON` with audited deployments and oracle identifiers
 - `LEVPLAY_SVM_VENUE_MANIFEST_JSON` with the exact Ondo programs, AAPLon mint, solver allowlist, eligibility policy, approval/audit hashes, funded collateral and independent exit domains
+- `LEVPLAY_SVM_PRODUCT_MANIFESTS_JSON` with one independently audited, funded and deployed manifest per enabled product
 - `LEVPLAY_SVM_EXECUTION_ENABLED=true`
 
 These gates are necessary, not sufficient: the supplied addresses and hashes must be verified independently before enabling real-money use.

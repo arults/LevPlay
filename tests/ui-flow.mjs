@@ -20,11 +20,11 @@ assert.match(app, /paperMode \? "Close"/, "positions must expose a direct close 
 assert.match(app, /setDirection\("Short"\)/, "the audit scope must expose a short position flow");
 assert.match(app, /position\.direction === "Long" \? 1 : -1/, "long and short P&L must use opposite signed exposure");
 assert.match(app, /Funded Standby floor/, "trade UI must explain the residual-value protection boundary");
-assert.match(app, /\[2, 3\]\.map/, "the expanded catalog must expose only 2x and 3x leverage choices");
-assert.ok(!app.includes("[2, 3, 5].map"), "5x must not remain selectable");
+assert.match(app, /\[2, 3, 5\]/, "Ondo stocks and commodity-linked products must expose 2x, 3x and 5x choices");
+assert.match(app, /selected\.category === "Pre-IPO" \? \[2\]/, "PreStocks must remain limited to 2x");
 assert.match(app, /TabsTrigger value="Pre-IPO"/, "pre-IPO references must have a distinct market category");
-assert.match(app, /TabsTrigger value="Hong Kong"/, "Hong Kong xStocks must have a distinct market category");
-assert.match(app, /"Market closed"/, "a closed HKEX session must not be mislabeled as a provider outage");
+assert.ok(!app.includes('TabsTrigger value="Hong Kong"'), "Hong Kong products must remain shelved");
+assert.match(app, /Public stocks \+ commodities via Ondo/, "active providers must be clear");
 assert.match(app, /value - exitPosition\.costBasis/, "realized P\/L must include the entry fee");
 assert.match(app, /totalValue - totalInvested/, "unrealized P\/L must include the entry fee");
 assert.match(app, /const totalDebit = amount \+ fee/, "entry fee must be added on top of chosen position capital");
@@ -47,4 +47,4 @@ assert.match(css, /\.position-card\{grid-template-columns:1fr 1fr/, "positions m
 assert.match(css, /\.history-head\{display:none\}/, "dense table headers must be removed on mobile");
 assert.match(css, /\.workspace-tabs\{width:100%\}/, "mobile activity tabs must use the available width");
 
-console.log("LevPlay UI flow: 44 lifecycle, wallet, branding, catalog, Standby disclosure and responsive assertions passed");
+console.log("LevPlay UI flow: lifecycle, wallet, Ondo/PreStocks catalog, Standby and responsive assertions passed");

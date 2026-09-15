@@ -11,13 +11,13 @@ These are the items that cannot be manufactured by source code. Evidence must na
 
 Deliverable: signed legal memorandum plus an implementation matrix that engineering can encode and test. A disclaimer alone does not pass this gate.
 
-## 2. xStocks production eligibility
+## 2. Ondo and PreStocks production eligibility
 
-Current pilot priority: Ondo Stocks. Submit the same integration packet to Ondo through its official contact form or support@ondo.finance and obtain written permission for LevPlay's program-controlled AAPLon inventory and leveraged wrapper. Request production API credentials, Solana attestation verification, limits, halt/corporate-action procedures and the applicable country matrix. Keep xStocks and PreStocks applications open as future routes, but do not make them launch dependencies.
+Submit the integration packet to Ondo through its official contact form or support@ondo.finance and obtain written permission for program-controlled source inventory and the 2x/3x/5x leveraged wrapper. Request production API credentials, the signed Solana asset registry, attestation verification, limits, halt/corporate-action procedures and the applicable country matrix.
 
-- Apply through the official xStocks partner process.
-- Disclose that program-controlled vaults may hold and trade `AAPLx` as backing.
-- Obtain written confirmation covering the exact entity, jurisdictions, Solana mint, custody/redemption path, corporate actions, pause/freeze/permanent-delegate behavior, production limits and data usage.
+- Contact PreStocks for written permission covering the exact 2x long/short wrapper, program-controlled vaults, source mints, valuation methodology, redemption/secondary-liquidity route, administrative controls, product changes and eligible jurisdictions.
+- Ask both providers to disclose all mint, freeze, pause, permanent-delegate and transfer-hook authorities and to provide signed change/halt notifications.
+- xStocks is shelved and needs no launch work.
 
 Deliverable: signed approval/terms and a technical onboarding package. Never send credentials or private agreements to the repository.
 
@@ -65,4 +65,3 @@ Deliverable: tested runbooks and machine-verifiable endpoints/alerts, without co
 - Observe and reconcile for seven days before any cohort or cap expansion.
 
 Until every deliverable is present, the execution switch remains false by design.
-

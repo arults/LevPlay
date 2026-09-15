@@ -1,6 +1,6 @@
 # LevPlay backing venue decision record
 
-Status date: 2026-09-15. Decision state: **LevPlay Risk Vault v1 is the selected venue architecture and Ondo Stocks on Solana is the candidate AAPL2L spot route. No production backing route is admitted.** The checked Rust core and pinned Ondo identifiers are candidates, not onchain capacity or a completed launch gate. xStocks and PreStocks are Coming soon.
+Status date: 2026-09-15. Decision state: **LevPlay Risk Vault v1 is the selected architecture; Ondo and PreStocks are active source candidates; xStocks is shelved. No production backing route is admitted.** The checked Rust core and catalogs are candidates, not onchain capacity or a completed launch gate.
 
 ## Verified market boundary
 
@@ -8,12 +8,13 @@ Status date: 2026-09-15. Decision state: **LevPlay Risk Vault v1 is the selected
 |---|---|---|
 | LevPlay Risk Vault v1 | Checked-integer paired exposure, segregated maker escrow, independent-exit capacity, funded reserves, expiry and settlement reconciliation | Selected architecture; implementation is an economic core only until the SBF wrapper, exact accounts, funded escrows, audit and legal evidence pass |
 | Ondo Stocks on Solana | Published AAPLon Token-2022 mint, GM program, solver allowlist, API attestations, direct/JIT liquidity, onboarding and jurisdiction documentation | Selected candidate spot route for AAPL2L; not admitted until Ondo approves the wrapper, the exact transaction graph is audited and the emergency inventory exit is funded |
-| xStocks on Solana | 1:1-backed, transferable spot tokenized equities; xStocks describes the assets as redeemable for cash value or underlying and subject to jurisdiction restrictions | Eligible as a pinned `AAPLx` spot asset only; it does not create the second unit of long exposure or any short exposure |
+| PreStocks on Solana | Publicly describes fully backed, 24/7 pre-IPO economic-exposure tokens and publishes Solana products | Candidate source for isolated 2L/2S markets only; not admitted without exact issuer-signed mints, wrapper permission, independent settlement prices, liquidity and wind-down evidence |
+| xStocks on Solana | Previously researched spot-tokenized equity route | Shelved; no longer an active integration or launch dependency |
 | Jupiter Perps | The official current product route identifies SOL, BTC and ETH perpetuals | Rejected for the Apple pilot: no fixed `AAPL` market or production capacity evidence |
 | Drift | The official site describes leveraged perpetual markets and a liquidation engine; Drift's June 2026 recovery update says the protocol is being rebuilt for relaunch after user losses | Rejected for the Apple pilot: no verified `AAPL` market, fixed adapter terms, isolated non-recourse capacity or deterministic exit evidence; a margin-liquidated backing account would not satisfy this design |
 | Bespoke market maker / OTC route | Could contractually supply prepaid, non-recourse long funding or a capped-loss inverse derivative | Candidate only. It must be implemented onchain with fixed accounts, locked collateral, independent audit, production limits and a second exit route before admission |
 
-Primary sources: [xStocks product and eligibility description](https://xstocks.fi/), [Jupiter Perps](https://jup.ag/perps/long/SOL-SOL), [Drift product description](https://www.drift.trade/), and [Drift recovery update dated June 4, 2026](https://www.drift.trade/updates/drift-recovery-update-june-3-2026).
+Primary sources: [Ondo Stocks](https://ondo.finance/ondo-stocks), [Ondo API documentation](https://docs.ondo.finance/api-reference/assets/get-current-prices-for-all-supported-assets), [PreStocks products](https://prestocks.com/products), [Jupiter Perps](https://jup.ag/perps/long/SOL-SOL), and [Drift](https://www.drift.trade/).
 
 Absence of public evidence is not evidence that a venue cannot ever support the product. It means LevPlay cannot pin that venue into a real-money manifest today.
 
@@ -21,7 +22,7 @@ Absence of public evidence is not evidence that a venue cannot ever support the 
 
 ### `AAPL2L`
 
-The holder contributes position capital. A separately committed risk-capital tranche supplies the additional unit of exposure. For a $100 cap, the vault may hold up to $200 of `AAPLx`, but only if the additional funding is prepaid, non-recourse to holders, non-recallable through the wind-down horizon and segregated from the Standby reserve. A traditional margin loan that can call collateral or liquidate the vault is not admissible.
+The holder contributes position capital. A separately committed risk-capital tranche supplies the additional unit of exposure. For a $100 cap, the vault may hold up to $200 of the admitted source asset, but only if the additional funding is prepaid, non-recourse to holders, non-recallable through the wind-down horizon and segregated from the Standby reserve. A traditional margin loan that can call collateral or liquidate the vault is not admissible.
 
 Required locked resources are calculated independently:
 
@@ -58,5 +59,4 @@ The live-capacity rule disables new mints before exits. Reduced capacity may per
 - Source and independent audit for primary and emergency adapters.
 - Reproducible devnet stress ledger proving complete and partial exits with the primary venue unavailable.
 - Independent quantitative approval of gap size, capacity haircut, reserve size, volatility drag, market-hours and corporate-action behavior.
-- Legal approval for the eligible jurisdictions and program-controlled use of `AAPLx`.
-
+- Legal approval for the eligible jurisdictions and program-controlled use of the exact Ondo or PreStocks source token.
