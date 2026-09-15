@@ -8,6 +8,8 @@ const required = [
   "SECURITY_INVARIANTS.md",
   "SECURITY.md",
   "PROTOCOL_SPEC.md",
+  "lib/risk-engine.ts",
+  "tests/risk-engine.mjs",
   "programs/levplay/INTERFACE.md",
   "programs/levplay/THREAT_MODEL.md",
   "audit/deployment-manifest.schema.json"
@@ -25,11 +27,14 @@ const schema = JSON.parse(files.find(([path]) => path.endsWith(".json"))[1]);
 assert.deepEqual(schema.properties.markets.required, ["AAPL2L", "AAPL2S"]);
 assert.equal(schema.$defs.baseMarket.additionalProperties, false);
 assert.equal(schema.$defs.baseMarket.properties.leverage.const, 2);
+assert.ok(schema.$defs.baseMarket.required.includes("reserveVault"));
+assert.deepEqual([schema.$defs.baseMarket.properties.standbyBps.minimum, schema.$defs.baseMarket.properties.standbyBps.maximum], [1, 500]);
 
 const invariants = files.find(([path]) => path === "SECURITY_INVARIANTS.md")[1];
 assert.match(invariants, /share no vault, product mint, adapter market, nonce namespace or solvency accounting/);
 assert.match(invariants, /No instruction accepts generic CPI bytes/);
 assert.match(invariants, /Short exposure additionally proves available borrow\/perpetual capacity/);
+assert.match(invariants, /A residual NAV floor cannot be synthesized/);
 
 const marketSource = await read("lib/markets.ts");
 assert.equal([...marketSource.matchAll(/category: "Stocks"/g)].length, 15, "exactly 15 public-stock references must be pinned");

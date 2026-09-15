@@ -13,14 +13,14 @@ The first audit covers exactly two isolated Apple-referenced products:
 
 The aggregate mainnet canary ceiling is $1,000 across both products. `3×`, `5×`, commodities and every other ticker are out of scope and must remain unavailable in the signed deployment manifest.
 
-`AAPL2L` and `AAPL2S` must use separate market state, product mint, backing vault, adapter market and risk caps. A failure, insolvency or halt in one market must not expose the other market's backing.
+`AAPL2L` and `AAPL2S` must use separate market state, product mint, backing vault, USDC Standby reserve, adapter market and risk caps. A failure, insolvency or halt in one market must not expose the other market's backing.
 
 ## In scope
 
 - The exact Solana program source, Cargo lockfile, Anchor/Solana versions, IDL and reproducible SBF binary.
-- Initialization, open, close, rebalance, pause, claim and governance instructions.
+- Initialization, open, close, rebalance, enter-Standby, recapitalize/resume, pause, claim and governance instructions.
 - PDA derivation, account ownership, signer/writable constraints and Token-2022 extension handling.
-- Integer NAV/share accounting, fee rounding, caps, nonce/expiry handling and zero-supply transitions.
+- Integer NAV/share accounting, fee rounding, caps, nonce/expiry handling, reserve draws, Standby floors, insolvency disclosure and zero-supply transitions.
 - Fixed long and short backing adapters, including CPI data construction and pre/post balance reconciliation.
 - Pyth and Chainlink account identity, freshness, confidence, publisher and deviation enforcement.
 - Issuer halt, multiplier/corporate-action, liquidity outage, gap, congestion and orderly-wind-down behavior.
@@ -43,7 +43,7 @@ Out-of-scope dependencies are not assumed safe. Their compromise, pause and outa
 4. Exact devnet program, ProgramData, market, vault, mint, oracle, adapter and multisig addresses.
 5. Frozen deployment manifest matching [`audit/deployment-manifest.schema.json`](./audit/deployment-manifest.schema.json).
 6. Unit, integration, property, fuzz, differential and economic-stress results.
-7. Backing-venue production terms, limits, unwind procedure and short borrow/perpetual capacity evidence.
+7. Backing-venue production terms, limits, unwind procedure, isolated reserve funding/solvency evidence and short borrow/perpetual capacity evidence.
 8. Prior findings register with remediation commits.
 
 The audit cannot be called complete until the auditor retests the remediated exact binary and publishes a report hash.

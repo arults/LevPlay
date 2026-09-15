@@ -27,6 +27,7 @@ export function isSafeRpcUrl(value: unknown): value is string {
 type Deployment = {
   marketState: string;
   vault: string;
+  reserveVault: string;
   productMint: string;
   xStockMint: string;
   pythAccount: string;
@@ -39,6 +40,7 @@ type Deployment = {
   adapterMarket: string;
   leverage: 2 | 3 | 5;
   side: "long" | "short";
+  standbyBps: number;
 };
 
 type RpcAccount = { executable?: boolean; owner?: string; data?: unknown; lamports?: number };
@@ -128,6 +130,12 @@ function tokenVaultEvidence(value: RpcAccount, mint: string, authority: string) 
     parsed.info?.mint === mint && parsed.info?.owner === authority && parsed.info?.state === "initialized";
 }
 
+function reserveVaultEvidence(value: RpcAccount, authority: string) {
+  const parsed = parsedInfo(value);
+  return value.owner === TOKEN_PROGRAM && parsed?.type === "account" &&
+    parsed.info?.mint === SOLANA_USDC_MINT && parsed.info?.owner === authority && parsed.info?.state === "initialized";
+}
+
 function productMintEvidence(value: RpcAccount, authority: string) {
   const parsed = parsedInfo(value);
   return value.owner === TOKEN_2022_PROGRAM && parsed?.type === "mint" && parsed.info?.isInitialized === true &&
@@ -135,9 +143,10 @@ function productMintEvidence(value: RpcAccount, authority: string) {
 }
 
 async function marketEvidence(url: string, deployment: Deployment, programId: string) {
-  const [state, vault, productMint, xStockMint, pyth, chainlink, adapterProgram, adapterMarket] = await Promise.all([
+  const [state, vault, reserveVault, productMint, xStockMint, pyth, chainlink, adapterProgram, adapterMarket] = await Promise.all([
     account(url, deployment.marketState),
     account(url, deployment.vault, "jsonParsed"),
+    account(url, deployment.reserveVault, "jsonParsed"),
     account(url, deployment.productMint, "jsonParsed"),
     account(url, deployment.xStockMint, "jsonParsed"),
     account(url, deployment.pythAccount),
@@ -148,6 +157,7 @@ async function marketEvidence(url: string, deployment: Deployment, programId: st
   const xStockParsed = parsedInfo(xStockMint);
   return state.owner === programId && state.executable !== true &&
     tokenVaultEvidence(vault, deployment.xStockMint, deployment.marketState) &&
+    reserveVaultEvidence(reserveVault, deployment.marketState) &&
     productMintEvidence(productMint, deployment.marketState) &&
     xStockMint.owner === TOKEN_2022_PROGRAM && xStockParsed?.type === "mint" && xStockParsed.info?.isInitialized === true &&
     pyth.owner === deployment.pythOwner && pyth.executable !== true &&
@@ -183,6 +193,7 @@ function deployments(allowedAdapters: Set<string>): Record<string, Deployment> {
     const value = JSON.parse(process.env.LEVPLAY_SVM_MARKETS_JSON || "{}") as Record<string, Deployment>;
     const accepted: Record<string, Deployment> = {};
     const vaults = new Set<string>();
+    const reserveVaults = new Set<string>();
     const productMints = new Set<string>();
     for (const [key, item] of Object.entries(value)) {
       const match = key.match(/^([A-Z]+)(2|3)(L|S)$/);
@@ -190,14 +201,17 @@ function deployments(allowedAdapters: Set<string>): Record<string, Deployment> {
       const leverage = Number(match?.[2]);
       const side = match?.[3] === "S" ? "short" : "long";
       if (!expected || item?.xStockMint !== expected.mint || item?.leverage !== leverage || item?.side !== side ||
-        !isSolanaAddress(item?.marketState) || !isSolanaAddress(item?.vault) || !isSolanaAddress(item?.productMint) ||
+        !isSolanaAddress(item?.marketState) || !isSolanaAddress(item?.vault) || !isSolanaAddress(item?.reserveVault) || !isSolanaAddress(item?.productMint) ||
         !isSolanaAddress(item?.adapterProgram) || !allowedAdapters.has(item.adapterProgram) || !isSolanaAddress(item?.adapterMarket) ||
         !isSolanaAddress(item?.pythAccount) || !isSolanaAddress(item?.pythOwner) ||
         !isSolanaAddress(item?.chainlinkAccount) || !isSolanaAddress(item?.chainlinkOwner) ||
-        item.vault === item.productMint || vaults.has(item.vault) || productMints.has(item.productMint) ||
+        item.vault === item.productMint || item.vault === item.reserveVault || item.reserveVault === item.productMint ||
+        vaults.has(item.vault) || reserveVaults.has(item.reserveVault) || productMints.has(item.productMint) ||
+        !Number.isInteger(item.standbyBps) || item.standbyBps < 1 || item.standbyBps > 500 ||
         typeof item?.pythFeedId !== "string" || !/^[a-fA-F0-9]{64}$/.test(item.pythFeedId) ||
         typeof item?.chainlinkFeedId !== "string" || !/^0x[a-fA-F0-9]{64}$/.test(item.chainlinkFeedId)) continue;
       vaults.add(item.vault);
+      reserveVaults.add(item.reserveVault);
       productMints.add(item.productMint);
       accepted[key] = item;
     }
@@ -232,6 +246,7 @@ export async function protocolStatus() {
   const auditHash = process.env.LEVPLAY_SVM_AUDIT_HASH || "";
   const releaseHash = process.env.LEVPLAY_SVM_RELEASE_HASH || "";
   const backingHash = process.env.LEVPLAY_SVM_BACKING_ATTESTATION_HASH || "";
+  const reserveHash = process.env.LEVPLAY_SVM_RESERVE_ATTESTATION_HASH || "";
   const manifestHash = process.env.LEVPLAY_SVM_MANIFEST_HASH || "";
   const adapterSource = process.env.LEVPLAY_SVM_ADAPTER_PROGRAMS_JSON || "[]";
   const marketSource = process.env.LEVPLAY_SVM_MARKETS_JSON || "{}";
@@ -254,6 +269,7 @@ export async function protocolStatus() {
     { id: "release", label: "Frozen release hash", passed: hash(releaseHash), failure: "Frozen release hash is missing" },
     { id: "frozen", label: "Program authority frozen", passed: process.env.LEVPLAY_SVM_PROGRAM_FROZEN === "true" && live && observations.every((value) => value.frozen), failure: "Audited program release is not verifiably immutable onchain" },
     { id: "backing", label: "Backing venue attestation", passed: hash(backingHash) && adapters.size > 0, failure: "Audited backing venue and adapter evidence is missing" },
+    { id: "reserve", label: "Funded Standby reserve", passed: hash(reserveHash) && marketsLive, failure: "Isolated Standby reserve funding and solvency attestation is missing" },
     { id: "manifest", label: "Frozen deployment manifest", passed: manifestMatches, failure: "Deployment manifest does not match its frozen SHA-256 hash" },
     { id: "markets", label: "Audited vault deployment", passed: manifestMatches && marketsLive, failure: "No market deployment passed quorum verification of its state, vault, mints, oracles and fixed adapter" },
     { id: "switch", label: "Multisig go-live vote", passed: process.env.LEVPLAY_SVM_EXECUTION_ENABLED === "true", failure: "Mainnet execution switch is off" },

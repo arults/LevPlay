@@ -2,7 +2,7 @@
 
 ## Product boundary
 
-LevPlay is designed to issue transferable Token-2022 vault shares targeting 2× or 3× daily long or short exposure to one allowlisted reference. “Liquidation-free” means the holder has no margin account, margin call, negative balance or wallet-level liquidation. It does **not** mean risk-free: a vault share can fall to zero and the backing venue, issuer, oracle, liquidity, program and keeper network can fail.
+LevPlay is designed to issue transferable Token-2022 vault shares targeting 2× or 3× daily long or short exposure to one allowlisted reference. “Liquidation-free” means the holder has no margin account, margin call, negative balance or wallet-level liquidation. It does **not** mean principal protection. A share may approach zero, and a residual NAV floor is genuine only when an isolated reserve contains enough real collateral to fund it.
 
 The external-audit pilot is limited to two isolated Apple-referenced markets: `AAPL2L` and `AAPL2S`. The short product remains execution-disabled until a fixed audited borrow or stock-perpetual adapter proves capacity, funding bounds and deterministic buy-to-cover. A missing short backing route must never be disguised as synthetic inventory.
 
@@ -39,6 +39,9 @@ The external-audit pilot is limited to two isolated Apple-referenced markets: `A
 - Aggregate canary cap: $1,000 across `AAPL2L` and `AAPL2S`; the two markets have separate vaults and solvency accounting.
 - Market TVL, one-transaction size, daily mint and daily redemption caps are enforced onchain.
 - Emergency deleveraging is permissionless and always reduces absolute exposure.
+- Every market defines a funded standby floor and isolated reserve. When post-settlement NAV reaches that floor, exposure is reduced to zero and the series enters `Standby`; mint, rebalance and claims of continuing leveraged exposure stop.
+- A displayed minimum price, excess token decimals or reverse split never count as solvency. If the reserve cannot fund the floor after a gap, the state is `Insolvent`, not `Standby`, and the UI must disclose the uncovered deficit.
+- Standby cannot resume merely because the oracle price recovers: exposure was removed. Resumption requires explicit recapitalization, fresh oracle consensus, available hedge capacity, governance delay and pro-rata accounting that cannot dilute existing holders.
 - New deposits stop before redemptions when backing liquidity falls below its floor.
 - NAV rounds against the protocol on mint and in favor of solvency on redemption; dust cannot inflate shares.
 - Fees are calculated in integer base units on position capital, added on top, and cannot exceed the immutable 50-basis-point ceiling. There is no deposit or withdrawal fee in the launch design.

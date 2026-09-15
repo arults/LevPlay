@@ -29,10 +29,12 @@
     "baseMarket": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["marketState", "vault", "productMint", "xStockMint", "pythAccount", "pythOwner", "pythFeedId", "chainlinkAccount", "chainlinkOwner", "chainlinkFeedId", "adapterProgram", "adapterMarket", "leverage", "side"],
+      "required": ["marketState", "vault", "reserveVault", "standbyBps", "productMint", "xStockMint", "pythAccount", "pythOwner", "pythFeedId", "chainlinkAccount", "chainlinkOwner", "chainlinkFeedId", "adapterProgram", "adapterMarket", "leverage", "side"],
       "properties": {
         "marketState": { "$ref": "#/$defs/address" },
         "vault": { "$ref": "#/$defs/address" },
+        "reserveVault": { "$ref": "#/$defs/address" },
+        "standbyBps": { "type": "integer", "minimum": 1, "maximum": 500 },
         "productMint": { "$ref": "#/$defs/address" },
         "xStockMint": { "const": "XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp" },
         "pythAccount": { "$ref": "#/$defs/address" },

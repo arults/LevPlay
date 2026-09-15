@@ -13,12 +13,13 @@ Deterministic checks were rerun on 2026-09-15 against the production build. Brow
 | Check | Result |
 |---|---|
 | Protocol-model invariants | 18/18 passed, including fee-on-top, Max-balance safety and opposite-signed 2× long/short outcomes |
+| Standby risk-engine vectors | Integer-only funded-floor model passed deterministic cases plus 588 adversarial long/short intervals; unfunded floors are reported insolvent |
 | Curated xStocks assets | 20/20 exact pinned Solana mints matched: 15 stocks and 5 commodity ETFs |
 | Token program and extensions | 20/20 Token-2022 mints verified, including scaled UI, pause state and transfer-hook guard |
 | Stock oracle registry | 10/10 stock markets expose both Pyth and Chainlink entries |
 | Commodity launch gate | 5/5 remain blocked until equivalent oracle/backing evidence exists |
-| Source security assertions | 64 fail-closed checks passed |
-| UI lifecycle assertions | 30 lifecycle, catalog and responsive checks passed |
+| Source security assertions | 68 fail-closed checks passed |
+| UI lifecycle assertions | 33 lifecycle, catalog, Standby-disclosure and responsive checks passed |
 | Audit-package assertions | Scope, evidence index, schema and invariant checks passed |
 | Browser user-flow QA | Long flow retained; short flow verified as AAPL2S → $50 capital + $0.25 fee → +5% reference move → $45 proceeds → −$5.25 fee-inclusive P/L → close/history. No application console errors. |
 | Static analysis | ESLint passed |
@@ -46,6 +47,8 @@ These results prove the interface, read paths and modeled safety rules. They do 
 | RPC-01 | Medium | Configured RPC URLs accepted literal IP and local-network style destinations, and upstream response sizes were unbounded. | Shared HTTPS-only RPC validation rejects credentials, ports, IP literals, localhost and `.local`; RPC/xStocks response sizes and wallet request bodies are bounded. |
 | PREIPO-01 | Critical | A PreStocks catalog entry could be mistaken for a launch-ready leveraged market. | Pre-IPO entries are pinned and labeled separately, expose no trusted price in LevPlay, always return `verified: false`, and cannot satisfy the execution gate without independent dual oracles plus audited long/short backing and unwind evidence. |
 | ECON-03 | Critical | Short exposure could be presented without a separately proven borrow/perpetual route and isolated solvency boundary. | Audit scope is frozen to isolated `AAPL2L` and `AAPL2S`; short execution remains locked until its fixed adapter, capacity, funding bounds and buy-to-cover path are independently proven. |
+| ECON-04 | Critical | A cosmetic minimum token price could be described as a never-zero guarantee without real assets funding it. | The reference risk engine permits Standby only at a collateralized floor, removes exposure in Standby, records reserve draw once, and labels an unfunded gap `Insolvent`. Oracle recovery alone cannot manufacture NAV or restart exposure. |
+| RELEASE-04 | Critical | A market manifest could omit or reuse the reserve supposedly protecting residual NAV. | Every market now requires a unique canonical-USDC reserve vault controlled by its market PDA, a bounded 1–500 bps Standby floor and a release-bound reserve solvency attestation. |
 
 ## Implemented protections
 
@@ -60,7 +63,7 @@ These results prove the interface, read paths and modeled safety rules. They do 
 | Malicious transfer hook | Any unexpected Token-2022 transfer-hook program blocks the mint. |
 | Keeper compromise | Rebalances are permissionless and constrained by exact mints, programs, balance deltas, minimum output and oracle state. |
 | Admin single point of failure | Separate governance and guardian multisigs; guardian pause is one-way; governance actions are delayed. |
-| Unlimited user loss | Holder debt is impossible and vault equity is floored at zero; the share may still lose all value. |
+| Unlimited user loss | Holder debt is impossible. A Standby floor is recognized only when an isolated USDC reserve funds it; otherwise the market is explicitly insolvent and cannot mint. |
 | Fee overcharge | 50 basis points in integer USDC units, shown before signature and enforced by the release gate. |
 | Fee charged on deposit | There is no LevPlay deposit account. The fee is assessed only when opening a position and is added on top of the chosen capital. |
 | Unbounded pilot | $10 minimum, $100 per-wallet maximum, plus required onchain TVL and daily caps. |
@@ -70,6 +73,7 @@ These results prove the interface, read paths and modeled safety rules. They do 
 | Misstated paper P/L | Both realized and unrealized results include the 0.5% entry fee; paper cash is debited on entry and credited with sale proceeds. |
 | Unsupported browser UUID | Paper records use a runtime-compatible local identifier after browser QA exposed missing `crypto.randomUUID()` support. |
 | Deployment-manifest substitution | Every configured xStock mint must equal the curated mint for the product ticker; leverage must match the product ID; vault and product-mint accounts must be distinct and unique. |
+| Fake residual NAV | Each market pins a unique PDA-controlled USDC reserve and bounded Standby floor; excess decimals, displayed dust and reverse splits are never counted as collateral. |
 
 ## xStocks trust boundary
 
@@ -77,7 +81,7 @@ The live AAPLx mint exposes mint, freeze, pause and permanent-delegate authoriti
 
 ## Open critical blockers
 
-1. No LevPlay SVM program is deployed.
+1. The integer-only reference engine and audit vectors exist, but no LevPlay Rust/SBF program is deployed.
 2. The vault/execution adapter has not been implemented against a confirmed liquid backing venue for every market.
 3. No independent audit, fuzz suite, local-validator integration suite or mainnet-fork economic stress test has completed.
 4. No governance multisig, guardian multisig or fee treasury has been supplied.
@@ -92,4 +96,4 @@ The live AAPLx mint exposes mint, freeze, pause and permanent-delegate authoriti
 
 ## Required sequence
 
-Implement and compile the SVM program; run unit, property, fuzz and local-validator tests; deploy to devnet; run an economic stress campaign; commission an independent audit and remediate every finding; freeze the release; configure multisigs and monitoring; then run a capped mainnet canary with one 2× market before considering 3× or 5× products.
+Port the reviewed integer state machine to the SVM program; compile it; run unit, property, fuzz and local-validator differential tests; deploy to devnet; run an economic stress campaign; commission an independent audit and remediate every finding; freeze the release; configure multisigs and monitoring; then run a capped mainnet canary with one 2× market before considering 3× products.

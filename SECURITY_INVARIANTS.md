@@ -20,5 +20,8 @@ These invariants apply independently to `AAPL2L` and `AAPL2S`.
 16. Upgrades are either impossible for the audited binary or timelocked and require a new audit/retest before execution resumes.
 17. Short exposure additionally proves available borrow/perpetual capacity, bounded funding and a deterministic buy-to-cover/unwind path.
 18. Loss of the frontend, one RPC, one keeper or one administrator cannot prevent permissionless close/claim processing or orderly wind-down.
+19. Standby sets directional exposure to zero, disables minting and preserves only pro-rata claims backed by identifiable assets in the isolated market and reserve vaults.
+20. A residual NAV floor cannot be synthesized from token precision, UI rounding, a reverse split or an oracle-only price change; insufficient reserve produces an explicit insolvent state.
+21. Standby resumption requires settled recapitalization, sustained oracle agreement, available adapter capacity and delayed governance authorization without diluting existing holders.
 
 Each invariant requires at least one positive test, one negative test and one adversarial mutation test in the final evidence bundle.

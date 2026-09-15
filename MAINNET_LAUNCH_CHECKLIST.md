@@ -7,6 +7,7 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 | Gate | Severity | Current evidence | State |
 |---|---:|---|---|
 | Wallet-direct fee-on-top flow | Critical | UI/model: $500 capital + $2.50 fee = $502.50 debit; Max reserves fee | Passed at model/UI level |
+| Funded Standby model | Critical | Integer reference engine plus 588 adversarial long/short intervals; fake dust fails insolvent | Passed at model level |
 | Read-only market and wallet verification | High | Pinned xStock mints, Token-2022 checks, dual-feed registry, mainnet genesis | Passed |
 | Executable Solana program | Critical | Interface and threat model only; no Rust/SBF artifact | Pending |
 | Leverage backing venue | Critical | xStocks spot/RFQ researched; no audited long leverage adapter or separately proven short route/capacity | Pending |
@@ -17,7 +18,8 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 
 ## A. Product and solvency — Critical
 
-- [x] Define “liquidation-free” as no holder margin account, negative balance or seizure of other wallet assets; disclose that the token may lose 100%.
+- [x] Define “liquidation-free” as no holder margin account, negative balance or seizure of other wallet assets; disclose that principal and recovery are not guaranteed.
+- [x] Define Standby as zero exposure at a genuinely funded residual-NAV floor; never treat token decimals or a displayed minimum as collateral.
 - [x] Charge 50 basis points only on opening position capital and add it on top; no LevPlay deposit/withdrawal fee.
 - [x] Start with wallet USDC, one signature and no persistent LevPlay cash balance.
 - [x] Freeze the audit scope to isolated `AAPL2L` and `AAPL2S` markets, $100 per wallet and $1,000 aggregate; 3×, 5×, commodities and other tickers remain disabled.
@@ -25,6 +27,7 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 - [ ] Obtain written production access, limits, uptime terms and unwind procedures from that venue.
 - [ ] Prove short borrow/perpetual capacity, bounded funding and deterministic buy-to-cover without sharing the long vault or solvency pool.
 - [ ] Prove committed liquidity covers the TVL cap plus gap, borrow/funding and unwind stress buffers.
+- [ ] Fund each market's isolated USDC Standby reserve and independently attest that the configured floor is covered under the approved gap model.
 - [ ] Define funding, borrow, spread, rebalance, corporate-action and bad-debt attribution in NAV.
 - [ ] Independent quantitative review signs off on gap, halt, volatility drag and insolvency scenarios.
 - [ ] Demonstrate solvent wind-down with the backing venue unavailable.
@@ -40,6 +43,7 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 - [ ] Prevent duplicate initialization, replay, account substitution, reinitialization, PDA spoofing, type confusion and close-authority abuse.
 - [ ] Burn shares before redemption assets leave the vault; preserve FIFO claims when immediate liquidity is unavailable.
 - [ ] Make rebalancing permissionless, deterministic and non-custodial; emergency action may only lower absolute exposure.
+- [ ] Implement `enter_standby` and `resume_from_standby`; prove Standby has zero exposure and cannot resume from an oracle-only price change.
 - [ ] Produce a reproducible SBF build, IDL, SBOM, source commit and binary hashes.
 - [ ] Deploy and verify devnet, then mainnet program/account IDs; freeze the audited canary release or use an audited timelocked upgrade path.
 
@@ -73,6 +77,7 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 - [ ] Rust unit tests cover every instruction, constraint and error branch.
 - [ ] Local-validator integration tests use real Token-2022 extensions, oracle fixtures and a faithful backing adapter.
 - [ ] Property tests prove NAV/share conservation, fee ceiling, rounding, caps and zero-supply transitions.
+- [x] Reference-model vectors prove non-negative accounting, bounded reserve draws, zero Standby exposure and explicit insolvency when a floor is unfunded.
 - [ ] Fuzz account order, duplicate accounts, writable flags, mints, decimals, oracle values, CPI returns, nonces and state transitions.
 - [ ] Differential tests compare the economic model to program execution over randomized sequences.
 - [ ] Stress gaps, stale feeds, halts, congestion, failed keepers, unavailable RPCs and unavailable backing liquidity.
@@ -115,4 +120,4 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 
 ## Machine release rule
 
-The `/api/protocol` gate requires two independent Solana mainnet RPCs to verify the executable program, canonical USDC fee account, pinned treasury owner and distinct multisig accounts. It separately requires the independent audit hash, reproducible release hash, backing attestation, exact adapter allowlist, validated market manifest, frozen-program declaration and explicit execution switch. Any missing or disagreeing proof keeps signing unavailable.
+The `/api/protocol` gate requires two independent Solana mainnet RPCs to verify the executable program, canonical USDC fee account, pinned treasury owner and distinct multisig accounts. It separately requires the independent audit hash, reproducible release hash, backing attestation, reserve-solvency attestation, exact adapter allowlist, validated market and reserve-vault manifest, frozen-program declaration and explicit execution switch. Any missing or disagreeing proof keeps signing unavailable.

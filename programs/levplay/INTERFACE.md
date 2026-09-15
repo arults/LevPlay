@@ -32,6 +32,14 @@ Inputs are `shares_in`, `min_usdc_out`, `quote_expiry_slot`, and a single-use cl
 
 Permissionless and deterministic. It runs only outside the leverage band, chooses direction from onchain state, enforces maximum notional/price impact, verifies oracle agreement, and pays no arbitrary caller-selected recipient. Emergency mode may only reduce absolute exposure.
 
+## `enter_standby`
+
+Permissionless when conservative post-settlement NAV is at or below the configured funded floor. The instruction settles P&L, draws no more than the isolated reserve balance needed to fund the floor, reduces exposure to zero through the pinned adapter, verifies the unwind delta, records any uncovered deficit and disables minting. It must never create nominal dust that is not backed by vault assets.
+
+## `resume_from_standby`
+
+Governance-timelocked and executable only after an explicit recapitalization has settled in the same market vault, both oracles have remained valid for the configured observation window and the adapter proves capacity. Existing shares retain the same pro-rata claim before new shares can mint. Oracle appreciation alone cannot resume exposure because standby holds no directional position.
+
 ## Administration
 
 Governance may schedule bounded changes behind a timelock. The distinct guardian may pause immediately and cannot unpause, withdraw, change recipients, change adapters or mint shares. No authority can move market backing to the fee treasury.

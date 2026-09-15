@@ -8,7 +8,7 @@ LevPlay is a Solana-first interface and fail-closed protocol design for long, da
 - Paper models for 2x and 3x long/short exposure; every real-money product remains independently gated. The first external-audit canary remains isolated `AAPL2L` and `AAPL2S`.
 - Wallet-direct entry with no LevPlay deposit balance: position capital moves to the isolated vault and the 0.5% fee is charged on top in one atomic transaction.
 - $100-per-wallet canary cap. A $500 future order means $500 capital + $2.50 fee = $502.50 total wallet debit.
-- Liquidation-free for the holder means no margin call, negative balance or wallet-level liquidation. A product share can still fall to zero.
+- Liquidation-free for the holder means no margin call, negative balance or wallet-level liquidation. A funded Standby floor may preserve residual NAV, but principal and recovery are not guaranteed; an unfunded gap is insolvency, never hidden as token dust.
 - xStocks API prices are never settlement authority.
 
 ## Implemented

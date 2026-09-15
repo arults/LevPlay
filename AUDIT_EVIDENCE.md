@@ -12,6 +12,8 @@ Every row must link to immutable evidence for the same release commit. `Missing`
 | Deployment manifest schema | [`audit/deployment-manifest.schema.json`](./audit/deployment-manifest.schema.json) | Present |
 | TypeScript release-gate tests | [`tests/source-security.mjs`](./tests/source-security.mjs) | Present |
 | Economic model tests | [`tests/protocol-model.mjs`](./tests/protocol-model.mjs) | Present |
+| Standby reference engine | [`lib/risk-engine.ts`](./lib/risk-engine.ts) | Present |
+| Standby/adversarial vectors | [`tests/risk-engine.mjs`](./tests/risk-engine.mjs) | Present |
 | Solana Rust program source | — | **Missing** |
 | Fixed long adapter source | — | **Missing** |
 | Fixed short adapter source | — | **Missing** |
@@ -31,3 +33,4 @@ Every row must link to immutable evidence for the same release commit. `Missing`
 - Audit findings remain open until a remediation commit and auditor retest are linked.
 - Mainnet addresses must be independently reproduced from chain state through at least two RPC providers.
 - Secrets, seed phrases, private keys and private RPC credentials must never be committed.
+- A Standby floor is evidenced only by a unique onchain reserve vault, its canonical-USDC balance, the exact liabilities/supply snapshot and an independent solvency attestation for the release hash.

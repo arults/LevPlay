@@ -50,6 +50,7 @@ for (const gate of [
   "LEVPLAY_SVM_AUDIT_HASH",
   "LEVPLAY_SVM_RELEASE_HASH",
   "LEVPLAY_SVM_BACKING_ATTESTATION_HASH",
+  "LEVPLAY_SVM_RESERVE_ATTESTATION_HASH",
   "LEVPLAY_SVM_MANIFEST_HASH",
   "LEVPLAY_SVM_PROGRAM_FROZEN",
   "LEVPLAY_SVM_ADAPTER_PROGRAMS_JSON",
@@ -60,6 +61,8 @@ assert.match(protocol, /item\?\.xStockMint !== expected\.mint/, "deployment xSto
 assert.match(protocol, /item\?\.leverage !== leverage/, "deployment leverage must match its product ID");
 assert.match(protocol, /item\?\.side !== side/, "deployment side must match its long or short product ID");
 assert.match(protocol, /vaults\.has\(item\.vault\).*productMints\.has\(item\.productMint\)/s, "vault and product-mint accounts must be unique");
+assert.match(protocol, /reserveVaults\.has\(item\.reserveVault\)/, "standby reserve vaults must be unique per market");
+assert.match(protocol, /item\.standbyBps < 1 \|\| item\.standbyBps > 500/, "standby floors must remain inside a bounded range");
 assert.match(protocol, /observations\.length >= 2/, "two independent mainnet RPC observations must be required");
 assert.match(protocol, /parsed\.parsed\.info\?\.mint === SOLANA_USDC_MINT/, "fee recipient must be the canonical USDC token account");
 assert.match(protocol, /parsed\.parsed\.info\?\.owner === treasuryAuthority/, "fee recipient owner must be pinned");
@@ -68,6 +71,7 @@ assert.match(protocol, /programDataBytes\[12\] === 0/, "upgradeable programs mus
 assert.match(protocol, /marketEvidence\(url, deployment, values\.programId\)/, "every configured market must be verified independently by each RPC");
 assert.match(protocol, /state\.owner === programId/, "market state must be owned by the audited LevPlay program");
 assert.match(protocol, /tokenVaultEvidence\(vault, deployment\.xStockMint, deployment\.marketState\)/, "backing vault mint and authority must be pinned");
+assert.match(protocol, /reserveVaultEvidence\(reserveVault, deployment\.marketState\)/, "standby reserve must be canonical USDC controlled by the market PDA");
 assert.match(protocol, /productMintEvidence\(productMint, deployment\.marketState\)/, "product mint authority must be pinned and freeze authority absent");
 assert.match(protocol, /pyth\.owner === deployment\.pythOwner/, "Pyth account owner must match the frozen manifest");
 assert.match(protocol, /chainlink\.owner === deployment\.chainlinkOwner/, "Chainlink account owner must match the frozen manifest");
@@ -87,4 +91,4 @@ for (const header of [
   "X-Frame-Options",
 ]) assert.ok(config.includes(header), `${header} must be configured`);
 
-console.log("LevPlay source security: 64 fail-closed assertions passed");
+console.log("LevPlay source security: 68 fail-closed assertions passed");
