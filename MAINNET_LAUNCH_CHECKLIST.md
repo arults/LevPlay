@@ -11,7 +11,7 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 5. **Legal launch controls:** counsel approval, eligibility/sanctions/geofence rules, issuer permissions, market-data rights and customer disclosures.
 6. **Capped mainnet canary:** $1,000 aggregate across audited `AAPL2L` and `AAPL2S`, reconciliation, seven-day observation and explicit multisig GO vote.
 
-Catalog expansion is not a launch-gate substitute. The 15 Hong Kong references added on 2026-09-15 remain signing-disabled until separately admitted by oracle, backing-capacity, audit and risk votes after the two-market canary.
+Catalog expansion is not a launch-gate substitute. The catalog now contains 134 Ondo/PreStocks candidates, while xStocks and Hong Kong products are shelved. Every product remains signing-disabled until separately admitted after the initial canary.
 
 ## Current completion
 
@@ -39,10 +39,14 @@ Catalog expansion is not a launch-gate substitute. The 15 Hong Kong references a
 - [x] Select LevPlay Risk Vault v1 as the canary venue architecture and freeze its economic admission model.
 - [x] Select Ondo Stocks on Solana as the candidate AAPL2L spot route; pin the published GM program, Jupiter Order Engine, AAPLon mint, Token-2022 program and solver set.
 - [x] Add a fail-closed venue-manifest gate covering legal eligibility, explicit wrapper approval, audit/retest, collateral, expiry and independent exits.
+- [x] Define 134 independently admitted candidates: 15 Ondo stocks and 5 commodity-linked ETFs at 2x/3x/5x L/S, plus 7 PreStocks at 2x L/S; shelf xStocks and HK products.
+- [x] Encode leverage-specific long capital, bounded short payout collateral, real Standby floor, maximum redemption liability and independent exit liquidity.
+- [x] Require three RPC domains, three keepers plus permissionless rebalance, distinct multisigs and exit operators, 48-hour upgrades and close-only pro-rata source-outage mode.
 - [ ] Implement and admit the exact SBF risk-vault program, accounts and fixed hedge adapters for the canary market.
 - [x] Encode fail-closed venue admission rules for pinned accounts, non-recourse funding, committed capacity, bounded short loss and an independent emergency exit.
 - [ ] Obtain written production access, limits, uptime terms and unwind procedures from that venue.
 - [ ] Obtain written Ondo approval for program-controlled AAPLon inventory inside LevPlay's leveraged wrapper and production API/attestation access.
+- [ ] Obtain written PreStocks wrapper/integration permission, issuer-signed Solana mint registry, source-control disclosure and production halt/redemption procedures.
 - [ ] Prove short borrow/perpetual capacity, bounded funding and deterministic buy-to-cover without sharing the long vault or solvency pool.
 - [ ] Prove committed liquidity covers the TVL cap plus gap, borrow/funding and unwind stress buffers.
 - [ ] Fund each market's isolated USDC Standby reserve and independently attest that the configured floor is covered under the approved gap model.
@@ -79,16 +83,16 @@ Catalog expansion is not a launch-gate substitute. The 15 Hong Kong references a
 - [ ] Reject expired blockhash/quote, reused nonce, altered account order, extra instruction and unexpected address lookup table.
 - [ ] Confirm open mints to and close returns USDC to the same signing wallet unless an explicit audited delegate flow is used.
 
-## D. Oracle and xStocks — Critical
+## D. Oracles and source providers — Critical
 
-- [x] Pin all 35 curated xStock mint addresses and verify Token-2022 ownership, scaled UI extension, pause and transfer-hook state in read paths; Hong Kong entries additionally require issuer country `HK` and exchange MIC `XHKG`.
-- [x] Confirm Pyth and Chainlink registry entries for ten stock candidates; keep commodities blocked without equivalent evidence.
+- [x] Pin the published Ondo AAPLon Solana mint and require authenticated source-registry hashes plus independent onchain verification for every additional mint.
+- [x] Keep PreStocks and all non-AAPL products blocked until exact source mints and two independent settlement sources are admitted.
 - [ ] Verify both oracle account owners and feed IDs inside every value-moving instruction.
 - [ ] Enforce publish time, confidence, publisher count and cross-feed deviation onchain.
 - [ ] Test exponent and scaled-UI multiplier changes using raw integer fixtures.
 - [ ] Test scheduled and surprise corporate actions, market halts and issuer pause/freeze/permanent-delegate actions.
-- [ ] Obtain xStocks production onboarding and confirm whether the selected integration permits program-controlled vault wallets.
-- [ ] Treat xStocks/API/RFQ availability as an external dependency; prove redemptions and wind-down do not require one unauditable hot key.
+- [ ] Obtain Ondo and PreStocks production onboarding and confirm program-controlled vault and leveraged-wrapper permission.
+- [ ] Treat each issuer/API/DEX route as an external trust boundary; prove close-only pro-rata wind-down and funded exits without one hot key, API, RPC, keeper or frontend.
 
 ## E. Adversarial verification and independent audit — Critical
 

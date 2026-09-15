@@ -10,6 +10,7 @@ const required = [
   "PROTOCOL_SPEC.md",
   "BACKING_VENUE_DECISION.md",
   "ONDO_ADAPTER_SPEC.md",
+  "MULTI_VENUE_PRODUCT_LAYER.md",
   "Cargo.toml",
   "Cargo.lock",
   "rust-toolchain.toml",
@@ -17,8 +18,10 @@ const required = [
   "programs/levplay-core/src/lib.rs",
   "lib/backing-engine.ts",
   "lib/venue-registry.ts",
+  "lib/product-registry.ts",
   "tests/backing-engine.mjs",
   "tests/venue-registry.mjs",
+  "tests/product-registry.mjs",
   "lib/risk-engine.ts",
   "tests/risk-engine.mjs",
   "programs/levplay/INTERFACE.md",
@@ -61,6 +64,11 @@ assert.match(ondoAdapter, /123mYEnRLM2LLYsJW3K6oyYh8uP1fngj732iG638ondo/);
 assert.match(ondoAdapter, /must never accept an arbitrary Ondo program/);
 assert.match(ondoAdapter, /Close and pro-rata wind-down remain permissionless/);
 
+const multiVenue = files.find(([path]) => path === "MULTI_VENUE_PRODUCT_LAYER.md")[1];
+assert.match(multiVenue, /134-product audit candidate/);
+assert.match(multiVenue, /three independent RPC domains/);
+assert.match(multiVenue, /external issuer\/provider trust boundaries/);
+
 const rustCore = files.find(([path]) => path === "programs/levplay-core/src/lib.rs")[1];
 assert.match(rustCore, /#!\[no_std\]/, "Rust core must remain SBF-compatible at the language boundary");
 assert.match(rustCore, /#!\[forbid\(unsafe_code\)\]/, "unsafe Rust is forbidden");
@@ -68,10 +76,10 @@ assert.ok(!/\bf(32|64)\b/.test(rustCore), "protocol arithmetic must not use floa
 for (const primitive of ["checked_add", "checked_sub", "checked_mul", "checked_div"]) assert.ok(rustCore.includes(primitive), `${primitive} must remain explicit`);
 
 const marketSource = await read("lib/markets.ts");
-assert.equal([...marketSource.matchAll(/category: "Stocks"/g)].length, 15, "exactly 15 public-stock references must be pinned");
-assert.equal([...marketSource.matchAll(/category: "Hong Kong"/g)].length, 15, "exactly 15 Hong Kong public-stock references must be pinned");
+assert.equal([...marketSource.matchAll(/market\("[A-Z]+on"[^\n]+"Stocks"/g)].length, 15, "exactly 15 Ondo stock references must be selected");
+assert.equal([...marketSource.matchAll(/market\("[A-Z]+on"[^\n]+"Commodities"/g)].length, 5, "exactly five Ondo commodity-linked references must be selected");
 assert.equal([...marketSource.matchAll(/category: "Pre-IPO"/g)].length, 7, "the observed PreStocks catalog must contain seven live-priced pinned references");
-for (const name of ["Tencent", "Xiaomi", "Meituan", "BYD", "Hong Kong Exchanges and Clearing", "AIA", "China Construction Bank", "Industrial and Commercial Bank of China", "Bank of China", "Ping An Insurance", "ANTA Sports", "Pop Mart", "Geely Automobile", "Cathay Pacific Airways", "Kuaishou Technology"]) assert.ok(marketSource.includes(`name: "${name}"`), `${name} Hong Kong xStock must be pinned`);
+assert.ok(!marketSource.includes("xStocks"), "xStocks must remain shelved from the active market source");
 for (const name of ["Anthropic", "OpenAI", "Anduril", "Neuralink", "Kalshi", "Polymarket", "SpaceX"]) assert.ok(marketSource.includes(`name: "${name}"`), `${name} PreStocks reference must be pinned`);
 
 console.log("LevPlay audit package: scope, evidence index, schema and invariants passed");

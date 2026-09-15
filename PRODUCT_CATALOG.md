@@ -1,36 +1,43 @@
 # LevPlay product-candidate catalog
 
-Status: research and paper-preview catalog. Listing here does not authorize a real-money market.
+Status date: 2026-09-15. This catalog defines isolated products for audit and paper preview. A listing is not a deployed token or permission to offer it.
 
-## Mainnet pilot route
+## Active source candidates
 
-Ondo Stocks AAPLon on Solana is the selected candidate spot reference/backing asset for AAPL2L. xStocks public-stock entries and every PreStocks entry remain Coming soon. AAPL2S remains execution-disabled until its separate bounded-payout counterparty contract and full collateral are audited.
+| Source | Underlyings | Products per underlying | Candidate total |
+|---|---:|---:|---:|
+| Ondo Stocks | 15 US stocks/ETFs | 2L, 2S, 3L, 3S, 5L, 5S | 90 |
+| Ondo commodity-linked ETFs | 5 | 2L, 2S, 3L, 3S, 5L, 5S | 30 |
+| PreStocks | 7 pre-IPO references | 2L, 2S | 14 |
+| **Total** | **27** | — | **134** |
 
-## Public-stock references
+xStocks is shelved and is not an active integration or launch dependency. Hong Kong products are omitted because neither admitted source currently provides a verified HK catalog for this release.
 
-Fifteen xStocks references are pinned: Apple, Microsoft, NVIDIA, Alphabet, Amazon, Meta, Tesla, MicroStrategy, Coinbase, Robinhood, Netflix, AMD, Broadcom, JPMorgan Chase and Palantir.
+## Ondo public stocks
 
-## Hong Kong public-stock references
+Apple, Microsoft, NVIDIA, Alphabet Class A, Amazon, Tesla, AMD, Netflix, SPDR S&P 500 ETF, Disney, Uber, Robinhood Markets, SoFi Technologies, Oracle and Invesco QQQ.
 
-Fifteen HKEX-listed xStocks references are pinned from the live xStocks API: Tencent, Xiaomi, Meituan, BYD, Hong Kong Exchanges and Clearing, AIA, China Construction Bank, ICBC, Bank of China, Ping An Insurance, ANTA Sports, Pop Mart, Geely Automobile, Cathay Pacific Airways and Kuaishou Technology. Each entry uses the issuer-reported Solana deployment address and remains fail-closed unless its mint state, trading status, atomic-swap capability and independent settlement feeds pass.
+The source symbols are `AAPLon`, `MSFTon`, `NVDAon`, `GOOGLon`, `AMZNon`, `TSLAon`, `AMDon`, `NFLXon`, `SPYon`, `DISon`, `UBERon`, `HOODon`, `SOFIon`, `ORCLon` and `QQQon`. Only AAPLon has a currently pinned Solana mint in the checked-in public integration. The other exact Solana mints must come from an authenticated, signed Ondo source registry and be independently verified before their product manifests can pass.
 
-Each reference has four candidate LevPlay products: `2L`, `2S`, `3L` and `3S`, for 60 public-stock candidates. Each product requires its own manifest entry, market PDA, product mint, vault, adapter market, caps, nonce domain, oracle accounts and solvency evidence. Approval of one product does not approve another.
+## Ondo commodity-linked products
 
-## Pre-IPO references
+Gold (`GLDon`), silver (`SLVon`), platinum (`PPLTon`), oil (`USOon`) and copper miners (`COPXon`). These are tokenized exchange-traded products providing commodity-related economic exposure; LevPlay must not describe them as claims on physical commodities.
 
-Seven currently live-priced Solana PreStocks mints observed on 2026-09-15 are pinned: Anthropic, OpenAI, Anduril, Neuralink, Kalshi, Polymarket and SpaceX. Catalog entries without a verifiable live Solana DEX reference remain hidden until they can be pinned and validated.
+## PreStocks pre-IPO products
 
-The interface exposes the same `2L`, `2S`, `3L` and `3S` paper models, for 36 pre-IPO research candidates. Every one remains execution-blocked because the current evidence does not establish:
+Anthropic, OpenAI, Anduril, Neuralink, Kalshi, Polymarket and SpaceX. Each is limited to 2L and 2S at this stage. PreStocks provide economic exposure only—not shares, ownership, voting, dividend or information rights—and disclose total-loss and secondary-liquidity risk.
 
-- two independent, manipulation-resistant settlement feeds;
-- a fixed audited route for additional long exposure;
-- separately funded short exposure with bounded borrow/funding and deterministic buy-to-cover;
-- sufficient secondary liquidity, redemptions and an orderly wind-down;
-- treatment of issuer freezes, forced transfers, burns, valuation changes and corporate events;
-- production integration permission and jurisdiction/eligibility controls.
+PreStocks admission requires an issuer-signed source registry, the exact mint and Token-2022 authority state, written wrapper permission, two manipulation-resistant settlement sources, market-specific liquidity and wind-down evidence, and legal approval. A DEX price alone can never settle a LevPlay mint, rebalance or redemption.
 
-PreStocks confer economic exposure only—not equity ownership, voting, dividend or information rights—and disclose total-loss, administrative-control and secondary-liquidity risks. LevPlay must reproduce those limitations before any order review.
+## Isolation and collateral rules
+
+Every one of the 134 candidates has a unique product ID, product mint, market PDA, collateral vault, fee vault, two oracle accounts, exposure cap, wallet cap and audit/deployment record. No product shares capital or bad debt with another.
+
+- An `N×L` vault requires maker-funded long capital of at least `(N − 1) × aggregate capital cap`, in addition to holder capital.
+- An `N×S` vault is a bounded-payout, prepaid claim requiring short-gain collateral of at least `N × aggregate capital cap`; it may not depend on margin borrowing or a liquidatable perpetual position.
+- Each product funds its own Standby NAV floor and independent exit liquidity up to its declared maximum redemption liability.
+- New mints stop on oracle disagreement, stale data, provider halt, source control change, capacity exhaustion, missed rebalance or expired evidence. Closing remains permissionless and switches to close-only pro-rata mode during source outages.
 
 ## Promotion rule
 
-A paper candidate becomes an audit candidate only after its oracle, venue and capacity evidence is committed. It becomes a mainnet candidate only after the exact program binary, adapter, deployment manifest, independent audit/retest, multisig vote and capped canary plan all bind to the same signed release.
+A candidate becomes executable only when its machine-readable product manifest passes every invariant in `lib/product-registry.ts` and binds provider/legal approvals, source registry, collateral, two oracles, audit, economic review, retest and deployment to the exact release. Approval of one product never approves another leverage, direction or underlying.

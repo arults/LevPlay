@@ -1,6 +1,6 @@
 # LevPlay Ondo Stocks Solana adapter boundary
 
-Status date: 2026-09-15. Ondo Stocks is the selected candidate source of spot AAPL exposure for the capped AAPL2L pilot. xStocks and PreStocks are Coming soon. No venue is production-admitted until the signed manifest passes every release check.
+Status date: 2026-09-15. Ondo Stocks is the selected source candidate for 15 public stocks and five commodity-linked ETFs. PreStocks is a parallel 2x pre-IPO candidate and xStocks is shelved. AAPL2L remains the first capped pilot. No venue or product is production-admitted until its signed manifests pass every release check.
 
 ## Pinned public identifiers
 
@@ -12,6 +12,8 @@ Status date: 2026-09-15. Ondo Stocks is the selected candidate source of spot AA
 - Canonical Solana USDC: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 
 The official Ondo simulator currently publishes four authorized solver addresses. They are pinned in lib/venue-registry.ts; a solver-set change blocks admission until source, integration and audit evidence are updated.
+
+Ondo documents that its current latest-price endpoint is for display and is not an oracle, and says an official oracle is still in development. LevPlay therefore cannot promote that endpoint, or a soft quote, into settlement authority. Each product remains blocked until two independent onchain settlement sources and their account owners are audited.
 
 ## Atomic opening boundary
 

@@ -24,19 +24,16 @@ assert.ok(page.includes("Insufficient USDC") && page.includes("Insufficient SOL"
 assert.match(page, /balance\.usdc >= totalDebit && balance\.sol >= 0\.002/, "mainnet execution state must include token and gas sufficiency");
 assert.ok(page.includes("AbortSignal.timeout(12_000)"), "market and protocol reads must time out instead of hanging");
 
-assert.match(markets, /!halted\)/, "issuer halt must be part of market verification");
-assert.match(markets, /pause\?\.paused !== true/, "Token-2022 pause must block a market");
-assert.match(markets, /!hook\?\.programId/, "unexpected transfer hooks must block a market");
-assert.match(markets, /\(!quoteAvailable && !marketClosed\)/, "a missing quote may only be represented as a closed market, never a verified market");
-assert.match(markets, /quoteAvailable && mintState\?\.valid/, "settlement readiness must require an actual positive quote");
-assert.match(markets, /provider === "Pyth"/, "Pyth registry entry must be required");
-assert.match(markets, /provider === "Chainlink"/, "Chainlink registry entry must be required");
-assert.match(markets, /api\.dexscreener\.com\/latest\/dex\/tokens/, "pre-IPO display references must use a pinned HTTPS market-data endpoint");
-assert.match(markets, /listingCountry=HK&network=Solana&pageSize=100/, "Hong Kong metadata must use the issuer's country- and network-filtered catalog");
-assert.match(markets, /item\.symbol === market\.symbol/, "Hong Kong catalog results must match each pinned symbol exactly");
-assert.match(markets, /pair\.chainId === "solana"/, "pre-IPO references must reject pairs from other chains");
-assert.match(markets, /pair\.baseToken\?\.address === mint/, "pre-IPO references must match the pinned mint exactly");
-assert.match(markets, /verified: false/, "DEX display references must never be promoted to settlement verification");
+assert.match(markets, /ONDO_API/, "Ondo API origin must be imported from the pinned registry");
+assert.match(markets, /process\.env\.ONDO_API_KEY/, "Ondo credentials must remain server-side");
+assert.match(markets, /assets\/all\/prices\/latest/, "Ondo display prices must use the documented endpoint");
+assert.match(markets, /verified: false/, "provider and DEX display prices must never become settlement verification");
+assert.match(markets, /api\.dexscreener\.com\/latest\/dex\/tokens/, "pre-IPO display references must use a pinned HTTPS endpoint");
+assert.match(markets, /pair\.chainId === "solana"/, "pre-IPO references must reject other chains");
+assert.match(markets, /pair\.baseToken\?\.address === mint/, "pre-IPO references must match the pinned mint");
+assert.match(markets, /sourceMintVerified/, "pinned source mints must be independently checked onchain");
+assert.match(markets, /Math\.abs\(Date\.now\(\) - timestamp\) <= 60_000/, "stale display prices must be identified");
+assert.ok(!markets.includes("XSTOCKS_API"), "xStocks must remain shelved");
 
 assert.match(wallet, /getGenesisHash/, "wallet reads must verify Solana mainnet");
 assert.match(wallet, /knownMints\.has\(mint\)/, "wallet API must return only allowlisted assets");
@@ -46,7 +43,7 @@ assert.match(wallet, /application\/json/, "wallet endpoint must require JSON");
 assert.match(wallet, /isSafeRpcUrl/, "wallet RPC configuration must reject unsafe URLs");
 assert.match(wallet, /Oversized RPC response/, "wallet RPC responses must be bounded");
 assert.match(markets, /isSafeRpcUrl/, "market RPC configuration must reject unsafe URLs");
-assert.match(markets, /Oversized xStocks response/, "xStocks responses must be bounded");
+assert.match(markets, /Oversized Ondo response/, "Ondo responses must be bounded");
 
 for (const gate of [
   "LEVPLAY_SVM_PROGRAM_ID",
@@ -63,6 +60,7 @@ for (const gate of [
   "LEVPLAY_SVM_PROGRAM_FROZEN",
   "LEVPLAY_SVM_ADAPTER_PROGRAMS_JSON",
   "LEVPLAY_SVM_MARKETS_JSON",
+  "LEVPLAY_SVM_PRODUCT_MANIFESTS_JSON",
   "LEVPLAY_SVM_EXECUTION_ENABLED",
 ]) assert.ok(protocol.includes(gate), `${gate} release gate must exist`);
 assert.match(protocol, /item\?\.xStockMint !== expected\.mint/, "deployment xStock mint must match the curated market");
@@ -99,4 +97,4 @@ for (const header of [
   "X-Frame-Options",
 ]) assert.ok(config.includes(header), `${header} must be configured`);
 
-console.log("LevPlay source security: 72 fail-closed assertions passed");
+console.log("LevPlay source security: provider display data, wallet and release gates passed");

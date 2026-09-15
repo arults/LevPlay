@@ -23,9 +23,9 @@ export const ONDO_SOLANA = {
 } as const;
 
 export const VENUE_CANDIDATES = [
-  { id: ONDO_SOLANA.id, label: "Ondo Stocks", state: "candidate", scope: "AAPL2L pilot backing" },
-  { id: "xstocks-solana", label: "xStocks", state: "coming-soon", scope: "future public-stock route" },
-  { id: "prestocks-solana", label: "PreStocks", state: "coming-soon", scope: "research-only pre-IPO route" },
+  { id: ONDO_SOLANA.id, label: "Ondo Stocks", state: "candidate", scope: "public stocks and commodity-linked ETFs" },
+  { id: "prestocks-solana", label: "PreStocks", state: "candidate", scope: "2x pre-IPO products; integration evidence required" },
+  { id: "xstocks-solana", label: "xStocks", state: "shelved", scope: "not an active launch dependency" },
 ] as const;
 
 const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
