@@ -15,6 +15,7 @@ Deterministic checks were rerun on 2026-09-15 against the production build. Brow
 | Protocol-model invariants | 18/18 passed, including fee-on-top, Max-balance safety and opposite-signed 2× long/short outcomes |
 | Standby risk-engine vectors | Integer-only funded-floor model passed deterministic cases plus 588 adversarial long/short intervals; unfunded floors are reported insolvent |
 | Rust protocol kernel | Pinned Rust 1.85 `no_std` core passed 39 unit/adversarial tests, including independent/asymmetric closes, FIFO claims, strict decoding/account layouts, transaction composition, replay guards and 128 deterministic open/close sequences; zero-warning Clippy with arithmetic-side-effect denial and rustfmt |
+| Solana SBF shell | 3 entrypoint tests passed; checksum-pinned Agave v4.2.1 built a non-secret `.so` with SHA-256 `049111b10631459b6c8735e58bf70c73995a8f146ea1f2891da615a435534c27` in workflow run `35005124622`; every valid instruction remains execution-locked |
 | Backing admission vectors | 11 fixed admission cases and 256 capacity-boundary vectors passed; no production venue is inferred or admitted |
 | Candidate product catalog | 136 definitions: 15 Ondo stocks and 5 commodity-linked ETFs at 2×/3×/5× L/S, plus 8 PreStocks references at 2× L/S; every market remains separately fail-closed pending admission |
 | Source-token verification | Read-only registry checks are modeled; no catalog count or issuer API response is treated as settlement, solvency or production admission evidence |
@@ -29,7 +30,7 @@ Deterministic checks were rerun on 2026-09-15 against the production build. Brow
 | Production dependency scan | No known vulnerabilities reported by the package-manager advisory database |
 | Mainnet release verification | Requires two independent RPCs to validate program, treasury and multisig account state; environment strings alone cannot unlock signing |
 
-These results prove the interface, read paths, deterministic Rust kernel and modeled safety rules. They do not prove a value-moving Solana program that does not yet exist, economic solvency, backing-liquidity availability, oracle account parsing under attack, or legal eligibility.
+These results prove the interface, read paths, deterministic Rust kernel, fail-closed SBF entrypoint and modeled safety rules. They do not prove a value-moving Solana handler, economic solvency, backing-liquidity availability, oracle account parsing under attack, or legal eligibility.
 
 ## Remediated findings — 2026-09-15
 
@@ -54,6 +55,7 @@ These results prove the interface, read paths, deterministic Rust kernel and mod
 | ECON-05 | Critical | Maker collateral could be released after holder capital was removed from active totals while an illiquid exit was still owed. | The Rust core now records owner-bound, monotonically sequenced FIFO claims as explicit liabilities; later claims cannot skip a partially paid head claim. Independent closes remain available after pause/expiry, remaining-side obligations are recomputed, and maker escrow is releasable only in WindDown after both capital counters and queued liabilities reach zero. |
 | PROGRAM-01 | Critical | A future SBF wrapper could accept ambiguous instruction bytes, reordered/aliased accounts, privilege changes, extra transaction instructions or replayed nonces. | The allocation-free core now freezes a versioned length-bounded ABI, exact open-account count/order/key/owner/flags, duplicate rejection, Compute-Budget-only prefixes with a terminal LevPlay instruction, and checked single-use nonces. The wrapper must source bindings from program state and remains unimplemented. |
 | RELEASE-05 | Critical | The deployment schema still referenced the shelved xStocks mint and did not bind one release to its SBF, IDL, SBOM and build environment. | The schema now requires the Ondo AAPLon source boundary, source-registry and adapter hashes, program-data/loader/upgrade policy, and SHA-256 hashes for source, SBF, IDL, SBOM and immutable toolchain image. A tested CLI refuses missing, empty, oversized or duplicate artifact files. |
+| PROGRAM-02 | Critical | There was no executable Solana entrypoint or reproducible SBF evidence. | A pinned `solana-program = 2.2.0` entrypoint now strictly decodes the frozen ABI and always returns a dedicated execution-lock error. Stable Agave v4.2.1 is archive-checksum pinned; CI run `35005124622` built binary SHA-256 `049111b10631459b6c8735e58bf70c73995a8f146ea1f2891da615a435534c27` and removed generated keypairs before artifact upload. This remediates build provenance only, not value-moving execution. |
 
 ## Implemented protections
 
@@ -86,14 +88,14 @@ Ondo and PreStocks issuer controls, redemption availability, legal eligibility, 
 
 ## Open critical blockers
 
-1. The checked Rust protocol kernel and audit vectors exist, but no Solana entrypoint, account processor, Token-2022 CPI layer or SBF program is deployed.
+1. The checked Rust protocol kernel and executable fail-closed SBF shell exist, but no program-owned account processor, Token-2022 CPI layer or value-moving program is deployed.
 2. The vault/execution adapter has not been implemented against a confirmed liquid backing venue for every market.
 3. No independent audit, fuzz suite, local-validator integration suite or mainnet-fork economic stress test has completed.
 4. No governance multisig, guardian multisig or fee treasury has been supplied.
 5. No production RPC quorum, monitoring, incident response or permissionless keeper set is live.
 6. Securities/derivatives-law and Ondo/PreStocks jurisdiction controls are not integrated.
 7. A 5× product requires dependable leverage liquidity and faster emergency deleveraging; it must not launch merely because the UI can model it.
-8. Clean GitHub CI has the pinned Rust compiler, but the current local environment has no Solana/Anchor toolchain, deployer authority or funded deployment wallet; no reproducible SBF binary can yet be built or deployed here.
+8. GitHub CI reproducibly builds the locked SBF shell with checksum-pinned Agave v4.2.1, but no deployer ceremony, authority, funded wallet, IDL/SBOM/source bundle or independently reproduced binary exists; deployment remains blocked.
 9. The owner has created the private `arults/LevPlay` GitHub repository; the verified source snapshot must be synchronized after every release.
 10. No dedicated Codex Security or Solana audit service is connected in this environment. Internal automated review and GitHub CI do not replace the required independent audit.
 11. GitHub branch protection and signed-commit enforcement are not enabled; the repository owner must apply the policy before mainnet release provenance can pass.
