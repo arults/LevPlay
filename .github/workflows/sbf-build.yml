@@ -38,7 +38,9 @@ jobs:
         with:
           toolchain: 1.85.0
       - name: Verify locked native workspace
-        run: cargo test --workspace --locked
+        run: |
+          cargo metadata --locked --format-version 1 > /dev/null
+          cargo test --workspace --locked
       - name: Install checksum-pinned Agave build tools
         shell: bash
         run: |
@@ -53,11 +55,12 @@ jobs:
           tool="$(find "${install_dir}" -type f -name cargo-build-sbf -print -quit)"
           test -n "${tool}"
           echo "$(dirname "${tool}")" >> "${GITHUB_PATH}"
-      - name: Build locked SBF artifact
+      - name: Build SBF from committed dependency lock
         shell: bash
         run: |
           set -euo pipefail
-          cargo build-sbf --manifest-path programs/levplay-sbf/Cargo.toml --locked
+          cargo metadata --locked --format-version 1 > /dev/null
+          cargo build-sbf --manifest-path programs/levplay-sbf/Cargo.toml
           find target/deploy -maxdepth 1 -type f -name '*-keypair.json' -delete
           test -s target/deploy/levplay_sbf.so
           sha256sum target/deploy/levplay_sbf.so | tee target/deploy/levplay_sbf.so.sha256
