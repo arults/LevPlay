@@ -37,9 +37,12 @@ Catalog expansion is not a launch-gate substitute. The 15 Hong Kong references a
 - [x] Start with wallet USDC, one signature and no persistent LevPlay cash balance.
 - [x] Freeze the audit scope to isolated `AAPL2L` and `AAPL2S` markets, $100 per wallet and $1,000 aggregate; 3×, 5×, commodities and other tickers remain disabled.
 - [x] Select LevPlay Risk Vault v1 as the canary venue architecture and freeze its economic admission model.
+- [x] Select Ondo Stocks on Solana as the candidate AAPL2L spot route; pin the published GM program, Jupiter Order Engine, AAPLon mint, Token-2022 program and solver set.
+- [x] Add a fail-closed venue-manifest gate covering legal eligibility, explicit wrapper approval, audit/retest, collateral, expiry and independent exits.
 - [ ] Implement and admit the exact SBF risk-vault program, accounts and fixed hedge adapters for the canary market.
 - [x] Encode fail-closed venue admission rules for pinned accounts, non-recourse funding, committed capacity, bounded short loss and an independent emergency exit.
 - [ ] Obtain written production access, limits, uptime terms and unwind procedures from that venue.
+- [ ] Obtain written Ondo approval for program-controlled AAPLon inventory inside LevPlay's leveraged wrapper and production API/attestation access.
 - [ ] Prove short borrow/perpetual capacity, bounded funding and deterministic buy-to-cover without sharing the long vault or solvency pool.
 - [ ] Prove committed liquidity covers the TVL cap plus gap, borrow/funding and unwind stress buffers.
 - [ ] Fund each market's isolated USDC Standby reserve and independently attest that the configured floor is covered under the approved gap model.

@@ -2,6 +2,10 @@
 
 Status: research and paper-preview catalog. Listing here does not authorize a real-money market.
 
+## Mainnet pilot route
+
+Ondo Stocks AAPLon on Solana is the selected candidate spot reference/backing asset for AAPL2L. xStocks public-stock entries and every PreStocks entry remain Coming soon. AAPL2S remains execution-disabled until its separate bounded-payout counterparty contract and full collateral are audited.
+
 ## Public-stock references
 
 Fifteen xStocks references are pinned: Apple, Microsoft, NVIDIA, Alphabet, Amazon, Meta, Tesla, MicroStrategy, Coinbase, Robinhood, Netflix, AMD, Broadcom, JPMorgan Chase and Palantir.

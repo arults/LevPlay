@@ -25,6 +25,7 @@ jobs:
       - run: pnpm test:protocol
       - run: pnpm test:risk
       - run: pnpm test:backing
+      - run: pnpm test:venue
       - run: cargo test --workspace --locked
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo fmt --all -- --check

@@ -13,6 +13,8 @@ Deliverable: signed legal memorandum plus an implementation matrix that engineer
 
 ## 2. xStocks production eligibility
 
+Current pilot priority: Ondo Stocks. Submit the same integration packet to Ondo through its official contact form or support@ondo.finance and obtain written permission for LevPlay's program-controlled AAPLon inventory and leveraged wrapper. Request production API credentials, Solana attestation verification, limits, halt/corporate-action procedures and the applicable country matrix. Keep xStocks and PreStocks applications open as future routes, but do not make them launch dependencies.
+
 - Apply through the official xStocks partner process.
 - Disclose that program-controlled vaults may hold and trade `AAPLx` as backing.
 - Obtain written confirmation covering the exact entity, jurisdictions, Solana mint, custody/redemption path, corporate actions, pause/freeze/permanent-delegate behavior, production limits and data usage.
