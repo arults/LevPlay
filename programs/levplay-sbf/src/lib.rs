@@ -4,6 +4,11 @@
 //! closed. It cannot move funds or mutate accounts until the audited account
 //! state, oracle, token and backing-vault handlers are admitted.
 
+// Solana 2.2's entrypoint macro probes SBF-only cfg values that host Rust 1.85
+// does not know. Keep this exception crate-local; all other warnings are denied
+// by CI and the dependency-free economic core forbids unsafe code.
+#![allow(unexpected_cfgs)]
+
 use levplay_core::{decode_instruction, Error};
 use solana_program::{
     account_info::AccountInfo, entrypoint, entrypoint::ProgramResult,
