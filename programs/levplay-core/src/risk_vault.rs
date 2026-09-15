@@ -5,7 +5,10 @@
 //! This module intentionally performs no CPI. A later SBF wrapper must bind its
 //! inputs to fixed PDAs, token accounts and audited adapters.
 
-use crate::{mul_div_ceil, settle_interval, Address, Error, Result, Side, Settlement, VaultState, BPS, PILOT_LEVERAGE_BPS};
+use crate::{
+    mul_div_ceil, settle_interval, Address, Error, Result, Settlement, Side, VaultState, BPS,
+    PILOT_LEVERAGE_BPS,
+};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u8)]
@@ -143,7 +146,11 @@ fn exposure(capital: u64, leverage_bps: u16) -> Result<u64> {
 
 fn reserve_requirement(config: &RiskVaultConfig, capital: u64) -> Result<u64> {
     let floor = mul_div_ceil(capital, u64::from(config.floor_bps), BPS)?;
-    let unwind = mul_div_ceil(exposure(capital, config.leverage_bps)?, u64::from(config.unwind_bps), BPS)?;
+    let unwind = mul_div_ceil(
+        exposure(capital, config.leverage_bps)?,
+        u64::from(config.unwind_bps),
+        BPS,
+    )?;
     let variable = floor.checked_add(unwind).ok_or(Error::ArithmeticOverflow)?;
     Ok(variable.max(config.minimum_reserve_per_side))
 }
@@ -156,15 +163,24 @@ pub fn quote_pair_open(
     current_slot: u64,
 ) -> Result<CapacityQuote> {
     validate_risk_vault_config(config)?;
-    if state.mode != RiskVenueMode::Active || (long_capital_delta == 0 && short_capital_delta == 0) {
+    if state.mode != RiskVenueMode::Active || (long_capital_delta == 0 && short_capital_delta == 0)
+    {
         return Err(Error::InvalidState);
     }
     if current_slot > config.commitment_expiry_slot {
         return Err(Error::QuoteExpired);
     }
-    let long_capital_after = state.long_capital.checked_add(long_capital_delta).ok_or(Error::ArithmeticOverflow)?;
-    let short_capital_after = state.short_capital.checked_add(short_capital_delta).ok_or(Error::ArithmeticOverflow)?;
-    let aggregate = long_capital_after.checked_add(short_capital_after).ok_or(Error::ArithmeticOverflow)?;
+    let long_capital_after = state
+        .long_capital
+        .checked_add(long_capital_delta)
+        .ok_or(Error::ArithmeticOverflow)?;
+    let short_capital_after = state
+        .short_capital
+        .checked_add(short_capital_delta)
+        .ok_or(Error::ArithmeticOverflow)?;
+    let aggregate = long_capital_after
+        .checked_add(short_capital_after)
+        .ok_or(Error::ArithmeticOverflow)?;
     if long_capital_after > config.side_capital_cap
         || short_capital_after > config.side_capital_cap
         || aggregate > config.aggregate_capital_cap
@@ -175,8 +191,12 @@ pub fn quote_pair_open(
     let long_exposure = exposure(long_capital_after, config.leverage_bps)?;
     let short_exposure = exposure(short_capital_after, config.leverage_bps)?;
     let matched_exposure = long_exposure.min(short_exposure);
-    let unmatched_long_exposure = long_exposure.checked_sub(matched_exposure).ok_or(Error::ArithmeticOverflow)?;
-    let unmatched_short_exposure = short_exposure.checked_sub(matched_exposure).ok_or(Error::ArithmeticOverflow)?;
+    let unmatched_long_exposure = long_exposure
+        .checked_sub(matched_exposure)
+        .ok_or(Error::ArithmeticOverflow)?;
+    let unmatched_short_exposure = short_exposure
+        .checked_sub(matched_exposure)
+        .ok_or(Error::ArithmeticOverflow)?;
 
     // Matching reduces active hedge usage but not escrow. Either side can close
     // first, so the remaining long must be fundable without depending on the
@@ -193,11 +213,8 @@ pub fn quote_pair_open(
     // The full short side is collateralized for the funded epoch even while it
     // is matched. This preserves independent redemption if the long side exits.
     // Gaps outside the bound fail closed instead of creating an unfunded claim.
-    let required_short_loss_collateral = mul_div_ceil(
-        short_exposure,
-        u64::from(config.maximum_down_move_bps),
-        BPS,
-    )?;
+    let required_short_loss_collateral =
+        mul_div_ceil(short_exposure, u64::from(config.maximum_down_move_bps), BPS)?;
     let required_long_reserve = reserve_requirement(config, long_capital_after)?;
     let required_short_reserve = reserve_requirement(config, short_capital_after)?;
 
@@ -244,12 +261,18 @@ fn quote_is_funded(state: &RiskVaultState, quote: &CapacityQuote) -> bool {
                 .unwrap_or(u64::MAX)
 }
 
-pub fn admit_risk_vault(config: &RiskVaultConfig, state: RiskVaultState, current_slot: u64) -> Result<RiskVaultState> {
+pub fn admit_risk_vault(
+    config: &RiskVaultConfig,
+    state: RiskVaultState,
+    current_slot: u64,
+) -> Result<RiskVaultState> {
     validate_risk_vault_config(config)?;
     if state.mode != RiskVenueMode::Locked {
         return Err(Error::InvalidState);
     }
-    let minimum_expiry = current_slot.checked_add(config.minimum_commitment_slots).ok_or(Error::ArithmeticOverflow)?;
+    let minimum_expiry = current_slot
+        .checked_add(config.minimum_commitment_slots)
+        .ok_or(Error::ArithmeticOverflow)?;
     if config.commitment_expiry_slot < minimum_expiry
         || state.long_reserve < config.minimum_reserve_per_side
         || state.short_reserve < config.minimum_reserve_per_side
@@ -258,7 +281,10 @@ pub fn admit_risk_vault(config: &RiskVaultConfig, state: RiskVaultState, current
     {
         return Err(Error::CapExceeded);
     }
-    Ok(RiskVaultState { mode: RiskVenueMode::Active, ..state })
+    Ok(RiskVaultState {
+        mode: RiskVenueMode::Active,
+        ..state
+    })
 }
 
 pub fn apply_pair_open(
@@ -268,7 +294,13 @@ pub fn apply_pair_open(
     short_capital_delta: u64,
     current_slot: u64,
 ) -> Result<RiskVaultState> {
-    let quote = quote_pair_open(config, &state, long_capital_delta, short_capital_delta, current_slot)?;
+    let quote = quote_pair_open(
+        config,
+        &state,
+        long_capital_delta,
+        short_capital_delta,
+        current_slot,
+    )?;
     if !quote_is_funded(&state, &quote) {
         return Err(Error::CapExceeded);
     }
@@ -279,7 +311,13 @@ pub fn apply_pair_open(
     })
 }
 
-pub fn apply_open(config: &RiskVaultConfig, state: RiskVaultState, side: Side, capital: u64, current_slot: u64) -> Result<RiskVaultState> {
+pub fn apply_open(
+    config: &RiskVaultConfig,
+    state: RiskVaultState,
+    side: Side,
+    capital: u64,
+    current_slot: u64,
+) -> Result<RiskVaultState> {
     match side {
         Side::Long => apply_pair_open(config, state, capital, 0, current_slot),
         Side::Short => apply_pair_open(config, state, 0, capital, current_slot),
@@ -314,66 +352,124 @@ pub fn reconcile_pair_settlement(
     }
     let long_result = settle_interval(long, move_bps)?;
     let short_result = settle_interval(short, move_bps)?;
-    let expected_external_pnl = long_result.pnl.checked_add(short_result.pnl).ok_or(Error::ArithmeticOverflow)?;
-    let difference = expected_external_pnl.checked_sub(reported_external_pnl).ok_or(Error::ArithmeticOverflow)?;
+    let expected_external_pnl = long_result
+        .pnl
+        .checked_add(short_result.pnl)
+        .ok_or(Error::ArithmeticOverflow)?;
+    let difference = expected_external_pnl
+        .checked_sub(reported_external_pnl)
+        .ok_or(Error::ArithmeticOverflow)?;
     if signed_abs(difference)? > u128::from(maximum_reconciliation_error) {
         return Err(Error::SlippageExceeded);
     }
-    Ok(PairSettlement { long: long_result, short: short_result, expected_external_pnl, reported_external_pnl })
+    Ok(PairSettlement {
+        long: long_result,
+        short: short_result,
+        expected_external_pnl,
+        reported_external_pnl,
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn address(value: u8) -> Address { [value; 32] }
+    fn address(value: u8) -> Address {
+        [value; 32]
+    }
 
     fn config() -> RiskVaultConfig {
         RiskVaultConfig {
-            collateral_mint: address(1), clearing_vault: address(2), long_market: address(3), short_market: address(4),
-            long_reserve_vault: address(5), short_reserve_vault: address(6), long_maker_vault: address(7), short_maker_vault: address(8),
-            maker_a: address(9), maker_b: address(10), leverage_bps: PILOT_LEVERAGE_BPS, floor_bps: 100,
-            aggregate_capital_cap: 1_000_000_000, side_capital_cap: 1_000_000_000, maximum_up_move_bps: 5_000,
-            maximum_down_move_bps: 5_000, unwind_bps: 100, minimum_reserve_per_side: 2_000_000,
-            minimum_maker_commitment: 100_000_000, minimum_commitment_slots: 100, commitment_expiry_slot: 1_000,
+            collateral_mint: address(1),
+            clearing_vault: address(2),
+            long_market: address(3),
+            short_market: address(4),
+            long_reserve_vault: address(5),
+            short_reserve_vault: address(6),
+            long_maker_vault: address(7),
+            short_maker_vault: address(8),
+            maker_a: address(9),
+            maker_b: address(10),
+            leverage_bps: PILOT_LEVERAGE_BPS,
+            floor_bps: 100,
+            aggregate_capital_cap: 1_000_000_000,
+            side_capital_cap: 1_000_000_000,
+            maximum_up_move_bps: 5_000,
+            maximum_down_move_bps: 5_000,
+            unwind_bps: 100,
+            minimum_reserve_per_side: 2_000_000,
+            minimum_maker_commitment: 100_000_000,
+            minimum_commitment_slots: 100,
+            commitment_expiry_slot: 1_000,
         }
     }
 
     fn locked() -> RiskVaultState {
         RiskVaultState {
-            mode: RiskVenueMode::Locked, long_capital: 0, short_capital: 0, long_reserve: 20_000_000,
-            short_reserve: 20_000_000, long_maker_funding: 500_000_000, short_maker_loss_collateral: 500_000_000,
-            long_unwind_capacity: 2_000_000_000, short_unwind_capacity: 2_000_000_000, epoch: 0,
+            mode: RiskVenueMode::Locked,
+            long_capital: 0,
+            short_capital: 0,
+            long_reserve: 20_000_000,
+            short_reserve: 20_000_000,
+            long_maker_funding: 500_000_000,
+            short_maker_loss_collateral: 500_000_000,
+            long_unwind_capacity: 2_000_000_000,
+            short_unwind_capacity: 2_000_000_000,
+            epoch: 0,
         }
     }
 
-    fn active() -> RiskVaultState { admit_risk_vault(&config(), locked(), 100).expect("funded admission") }
+    fn active() -> RiskVaultState {
+        admit_risk_vault(&config(), locked(), 100).expect("funded admission")
+    }
 
     fn position(side: Side, capital: u64) -> VaultState {
         let reserve = capital.checked_div(100).unwrap_or_default();
-        VaultState { mode: crate::VaultMode::Active, side, leverage_bps: PILOT_LEVERAGE_BPS, nav: capital,
-            reference_nav: capital, exposure: capital.saturating_mul(2), reserve, standby_bps: 100, epoch: 0 }
+        VaultState {
+            mode: crate::VaultMode::Active,
+            side,
+            leverage_bps: PILOT_LEVERAGE_BPS,
+            nav: capital,
+            reference_nav: capital,
+            exposure: capital.saturating_mul(2),
+            reserve,
+            standby_bps: 100,
+            epoch: 0,
+        }
     }
 
     #[test]
     fn rejects_aliased_accounts_and_single_maker() {
         let mut candidate = config();
         candidate.maker_b = candidate.maker_a;
-        assert_eq!(validate_risk_vault_config(&candidate), Err(Error::InvalidConfiguration));
+        assert_eq!(
+            validate_risk_vault_config(&candidate),
+            Err(Error::InvalidConfiguration)
+        );
     }
 
     #[test]
     fn admission_requires_funded_reserves_makers_and_horizon() {
-        assert_eq!(admit_risk_vault(&config(), locked(), 100).map(|value| value.mode), Ok(RiskVenueMode::Active));
+        assert_eq!(
+            admit_risk_vault(&config(), locked(), 100).map(|value| value.mode),
+            Ok(RiskVenueMode::Active)
+        );
         let mut unfunded = locked();
         unfunded.short_maker_loss_collateral = 0;
-        assert_eq!(admit_risk_vault(&config(), unfunded, 100), Err(Error::CapExceeded));
-        assert_eq!(admit_risk_vault(&config(), locked(), 901), Err(Error::CapExceeded));
+        assert_eq!(
+            admit_risk_vault(&config(), unfunded, 100),
+            Err(Error::CapExceeded)
+        );
+        assert_eq!(
+            admit_risk_vault(&config(), locked(), 901),
+            Err(Error::CapExceeded)
+        );
     }
 
     #[test]
     fn equal_pair_has_no_active_residual_but_retains_exit_escrow() {
-        let quote = quote_pair_open(&config(), &active(), 100_000_000, 100_000_000, 200).expect("paired quote");
+        let quote = quote_pair_open(&config(), &active(), 100_000_000, 100_000_000, 200)
+            .expect("paired quote");
         assert_eq!(quote.matched_exposure, 200_000_000);
         assert_eq!(quote.unmatched_long_exposure, 0);
         assert_eq!(quote.unmatched_short_exposure, 0);
@@ -383,14 +479,16 @@ mod tests {
 
     #[test]
     fn unmatched_long_needs_prepaid_extra_funding() {
-        let quote = quote_open(&config(), &active(), Side::Long, 100_000_000, 200).expect("long quote");
+        let quote =
+            quote_open(&config(), &active(), Side::Long, 100_000_000, 200).expect("long quote");
         assert_eq!(quote.unmatched_long_exposure, 200_000_000);
         assert_eq!(quote.required_long_maker_funding, 100_000_000);
     }
 
     #[test]
     fn unmatched_short_needs_bounded_loss_collateral() {
-        let quote = quote_open(&config(), &active(), Side::Short, 100_000_000, 200).expect("short quote");
+        let quote =
+            quote_open(&config(), &active(), Side::Short, 100_000_000, 200).expect("short quote");
         assert_eq!(quote.unmatched_short_exposure, 200_000_000);
         assert_eq!(quote.required_short_loss_collateral, 100_000_000);
     }
@@ -399,12 +497,18 @@ mod tests {
     fn mint_fails_before_using_unfunded_capacity() {
         let mut state = active();
         state.short_maker_loss_collateral = 99_999_999;
-        assert_eq!(apply_open(&config(), state, Side::Short, 100_000_000, 200), Err(Error::CapExceeded));
+        assert_eq!(
+            apply_open(&config(), state, Side::Short, 100_000_000, 200),
+            Err(Error::CapExceeded)
+        );
     }
 
     #[test]
     fn expired_commitment_stops_new_mints() {
-        assert_eq!(quote_open(&config(), &active(), Side::Long, 1, 1_001), Err(Error::QuoteExpired));
+        assert_eq!(
+            quote_open(&config(), &active(), Side::Long, 1, 1_001),
+            Err(Error::QuoteExpired)
+        );
     }
 
     #[test]
@@ -412,13 +516,23 @@ mod tests {
         let mut state = active();
         state.long_capital = 600_000_000;
         state.short_capital = 400_000_000;
-        assert_eq!(apply_open(&config(), state, Side::Long, 1, 200), Err(Error::CapExceeded));
+        assert_eq!(
+            apply_open(&config(), state, Side::Long, 1, 200),
+            Err(Error::CapExceeded)
+        );
     }
 
     #[test]
     fn settlement_reconciles_balanced_pair_without_external_pnl() {
-        let settled = reconcile_pair_settlement(&config(), position(Side::Long, 100_000_000), position(Side::Short, 100_000_000), 1_000, 0, 0)
-            .expect("balanced pair");
+        let settled = reconcile_pair_settlement(
+            &config(),
+            position(Side::Long, 100_000_000),
+            position(Side::Short, 100_000_000),
+            1_000,
+            0,
+            0,
+        )
+        .expect("balanced pair");
         assert_eq!(settled.long.pnl, 20_000_000);
         assert_eq!(settled.short.pnl, -20_000_000);
         assert_eq!(settled.expected_external_pnl, 0);
@@ -427,15 +541,29 @@ mod tests {
     #[test]
     fn settlement_rejects_unreconciled_external_delta() {
         assert_eq!(
-            reconcile_pair_settlement(&config(), position(Side::Long, 100_000_000), position(Side::Short, 50_000_000), 1_000, 0, 1),
+            reconcile_pair_settlement(
+                &config(),
+                position(Side::Long, 100_000_000),
+                position(Side::Short, 50_000_000),
+                1_000,
+                0,
+                1
+            ),
             Err(Error::SlippageExceeded)
         );
     }
 
     #[test]
     fn adverse_boundary_enters_funded_standby() {
-        let settled = reconcile_pair_settlement(&config(), position(Side::Long, 100_000_000), position(Side::Short, 100_000_000), -5_000, 0, 0)
-            .expect("funded floor");
+        let settled = reconcile_pair_settlement(
+            &config(),
+            position(Side::Long, 100_000_000),
+            position(Side::Short, 100_000_000),
+            -5_000,
+            0,
+            0,
+        )
+        .expect("funded floor");
         assert_eq!(settled.long.state.mode, crate::VaultMode::Standby);
         assert_eq!(settled.long.state.exposure, 0);
     }
@@ -443,7 +571,14 @@ mod tests {
     #[test]
     fn settlement_outside_funded_epoch_bound_fails_closed() {
         assert_eq!(
-            reconcile_pair_settlement(&config(), position(Side::Long, 100_000_000), position(Side::Short, 100_000_000), 5_001, 0, 0),
+            reconcile_pair_settlement(
+                &config(),
+                position(Side::Long, 100_000_000),
+                position(Side::Short, 100_000_000),
+                5_001,
+                0,
+                0
+            ),
             Err(Error::InvalidOracle)
         );
     }
