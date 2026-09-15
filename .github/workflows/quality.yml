@@ -20,10 +20,14 @@ jobs:
         with:
           node-version: 22.19.0
           cache: pnpm
+      - uses: dtolnay/rust-toolchain@1.85.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm test:protocol
       - run: pnpm test:risk
       - run: pnpm test:backing
+      - run: cargo test --workspace --locked
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo fmt --all -- --check
       - run: pnpm test:security
       - run: pnpm test:ui
       - run: pnpm test:audit-package

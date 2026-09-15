@@ -1,0 +1,15 @@
+[workspace]
+members = ["programs/levplay-core"]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "BUSL-1.1"
+rust-version = "1.85"
+
+[profile.release]
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+
