@@ -2,13 +2,24 @@
 
 Status date: 2026-09-15. **GO means every Critical gate below has independently reproducible evidence for the exact release hash.** A configuration value, screenshot, preview result or internal review cannot satisfy a Critical gate. The application unlocks signing only when its machine-readable release checks also pass.
 
+## Priority execution order
+
+1. **Backing and solvency:** select the exact long/short venue, adapter accounts, capacity, funding and deterministic unwind model for isolated `AAPL2L`/`AAPL2S`.
+2. **Executable Solana program:** implement the frozen interface against that adapter, then produce reproducible SBF/IDL/SBOM artifacts.
+3. **Adversarial proof and independent audit:** local-validator, property, fuzz, differential and economic tests; external Solana audit and retest.
+4. **Production control plane:** governance/guardian/treasury multisigs, three RPC providers, permissionless keepers, monitoring and wind-down drills.
+5. **Legal launch controls:** counsel approval, eligibility/sanctions/geofence rules, issuer permissions, market-data rights and customer disclosures.
+6. **Capped mainnet canary:** $1,000 aggregate across audited `AAPL2L` and `AAPL2S`, reconciliation, seven-day observation and explicit multisig GO vote.
+
+Catalog expansion is not a launch-gate substitute. The 15 Hong Kong references added on 2026-09-15 remain signing-disabled until separately admitted by oracle, backing-capacity, audit and risk votes after the two-market canary.
+
 ## Current completion
 
 | Gate | Severity | Current evidence | State |
 |---|---:|---|---|
 | Wallet-direct fee-on-top flow | Critical | UI/model: $500 capital + $2.50 fee = $502.50 debit; Max reserves fee | Passed at model/UI level |
 | Funded Standby model | Critical | Integer reference engine plus 588 adversarial long/short intervals; fake dust fails insolvent | Passed at model level |
-| Read-only market and wallet verification | High | Pinned xStock mints, Token-2022 checks, dual-feed registry, mainnet genesis | Passed |
+| Read-only market and wallet verification | High | 35 pinned xStock mints (15 US, 15 Hong Kong, 5 commodity), Token-2022 checks, dual-feed registry, mainnet genesis | Passed |
 | Executable Solana program | Critical | Interface and threat model only; no Rust/SBF artifact | Pending |
 | Leverage backing venue | Critical | xStocks spot/RFQ researched; no audited long leverage adapter or separately proven short route/capacity | Pending |
 | Independent program audit and retest | Critical | Internal source review only | Pending |
@@ -62,7 +73,7 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 
 ## D. Oracle and xStocks — Critical
 
-- [x] Pin all 15 xStock mint addresses and verify Token-2022 ownership, scaled UI extension, pause and transfer-hook state in read paths.
+- [x] Pin all 35 curated xStock mint addresses and verify Token-2022 ownership, scaled UI extension, pause and transfer-hook state in read paths; Hong Kong entries additionally require issuer country `HK` and exchange MIC `XHKG`.
 - [x] Confirm Pyth and Chainlink registry entries for ten stock candidates; keep commodities blocked without equivalent evidence.
 - [ ] Verify both oracle account owners and feed IDs inside every value-moving instruction.
 - [ ] Enforce publish time, confidence, publisher count and cross-feed deviation onchain.

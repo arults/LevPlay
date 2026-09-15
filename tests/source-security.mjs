@@ -27,6 +27,8 @@ assert.ok(page.includes("AbortSignal.timeout(12_000)"), "market and protocol rea
 assert.match(markets, /!halted\)/, "issuer halt must be part of market verification");
 assert.match(markets, /pause\?\.paused !== true/, "Token-2022 pause must block a market");
 assert.match(markets, /!hook\?\.programId/, "unexpected transfer hooks must block a market");
+assert.match(markets, /\(!quoteAvailable && !marketClosed\)/, "a missing quote may only be represented as a closed market, never a verified market");
+assert.match(markets, /quoteAvailable && mintState\?\.valid/, "settlement readiness must require an actual positive quote");
 assert.match(markets, /provider === "Pyth"/, "Pyth registry entry must be required");
 assert.match(markets, /provider === "Chainlink"/, "Chainlink registry entry must be required");
 assert.match(markets, /api\.dexscreener\.com\/latest\/dex\/tokens/, "pre-IPO display references must use a pinned HTTPS market-data endpoint");
@@ -95,4 +97,4 @@ for (const header of [
   "X-Frame-Options",
 ]) assert.ok(config.includes(header), `${header} must be configured`);
 
-console.log("LevPlay source security: 68 fail-closed assertions passed");
+console.log("LevPlay source security: 70 fail-closed assertions passed");

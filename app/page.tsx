@@ -35,7 +35,7 @@ export default function LandingPage() {
       </div>
     </section>
 
-    <section className="ticker-band" aria-label="Product facts"><span>15 public stocks</span><i/><span>7 live-priced pre-IPO references</span><i/><span>2× and 3× · Long and short</span><i/><span>0.5% disclosed entry fee</span></section>
+    <section className="ticker-band" aria-label="Product facts"><span>15 US + 15 Hong Kong stocks</span><i/><span>7 live-priced pre-IPO references</span><i/><span>2× and 3× · Long and short</span><i/><span>0.5% disclosed entry fee</span></section>
 
     <section className="landing-section" id="why">
       <div className="section-heading"><span className="eyebrow">Why LevPlay</span><h2>Leverage without managing margin.</h2><p>LevPlay turns a managed leverage strategy into a token you can hold in your Solana wallet.</p></div>
@@ -47,7 +47,7 @@ export default function LandingPage() {
     </section>
 
     <section className="dark-section" id="mechanics">
-      <div className="mechanics-intro"><span className="eyebrow">One simple position</span><h2>Leveraged stock tokens, made clear.</h2><p>Each LevPlay market packages a managed daily leverage target into a token. xStocks provide public-stock references; PreStocks add pre-IPO research references. The ticket shows the exact provider, product, fee, target exposure and settlement status.</p></div>
+      <div className="mechanics-intro"><span className="eyebrow">One simple position</span><h2>Leveraged stock tokens, made clear.</h2><p>Each LevPlay market packages a managed daily leverage target into a token. xStocks provide US and Hong Kong public-stock references; PreStocks add pre-IPO research references. The ticket shows the exact provider, product, fee, target exposure and settlement status.</p></div>
       <div className="mechanics-flow">
         <article><span>1</span><Wallet/><h3>Use wallet USDC</h3><p>No LevPlay balance or separate deposit. Choose position capital and review the 0.5% fee added on top.</p></article>
         <article><span>2</span><Coins/><h3>Receive LevPlay tokens</h3><p>The isolated vault mints leveraged-token shares from conservative net asset value.</p></article>

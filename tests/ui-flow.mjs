@@ -23,6 +23,8 @@ assert.match(app, /Funded Standby floor/, "trade UI must explain the residual-va
 assert.match(app, /\[2, 3\]\.map/, "the expanded catalog must expose only 2x and 3x leverage choices");
 assert.ok(!app.includes("[2, 3, 5].map"), "5x must not remain selectable");
 assert.match(app, /TabsTrigger value="Pre-IPO"/, "pre-IPO references must have a distinct market category");
+assert.match(app, /TabsTrigger value="Hong Kong"/, "Hong Kong xStocks must have a distinct market category");
+assert.match(app, /"Market closed"/, "a closed HKEX session must not be mislabeled as a provider outage");
 assert.match(app, /value - exitPosition\.costBasis/, "realized P\/L must include the entry fee");
 assert.match(app, /totalValue - totalInvested/, "unrealized P\/L must include the entry fee");
 assert.match(app, /const totalDebit = amount \+ fee/, "entry fee must be added on top of chosen position capital");
@@ -45,4 +47,4 @@ assert.match(css, /\.position-card\{grid-template-columns:1fr 1fr/, "positions m
 assert.match(css, /\.history-head\{display:none\}/, "dense table headers must be removed on mobile");
 assert.match(css, /\.workspace-tabs\{width:100%\}/, "mobile activity tabs must use the available width");
 
-console.log("LevPlay UI flow: 42 lifecycle, wallet, branding, catalog, Standby disclosure and responsive assertions passed");
+console.log("LevPlay UI flow: 44 lifecycle, wallet, branding, catalog, Standby disclosure and responsive assertions passed");

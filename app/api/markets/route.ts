@@ -88,26 +88,29 @@ export async function GET() {
       });
       const quote = Number(price.quote);
       const mintState = liveMints[market.symbol];
-      if (!solana || solana.address !== market.mint || !Number.isFinite(quote) || quote <= 0) throw new Error("Incomplete or mismatched market data");
+      const trading = asset.trading as Json | undefined;
+      const marketClosed = trading?.currentPeriod === "closed" && trading?.openNow !== true;
+      const quoteAvailable = Number.isFinite(quote) && quote > 0;
+      if (!solana || solana.address !== market.mint || (!quoteAvailable && !marketClosed)) throw new Error("Incomplete or mismatched market data");
       const activation = Number(multiplier.activationDateTime || 0);
       const insideCorporateActionWindow = activation > 0 && Math.abs(Date.now() - activation * 1000) <= 15 * 60 * 1000;
       const dualOracle = oracles.some((item) => item.provider === "Pyth") && oracles.some((item) => item.provider === "Chainlink");
-      const halted = asset.isTradingHalted === true || (asset.trading as Json | undefined)?.isTradingHalted === true;
+      const halted = asset.isTradingHalted === true || trading?.isTradingHalted === true;
       return {
         ...market,
-        price: quote,
+        price: quoteAvailable ? quote : undefined,
         mint: market.mint,
         atomic: solana.supportsAtomicSwaps === true,
         halted,
-        marketOpen: (asset.trading as Json | undefined)?.openNow === true,
-        period: String((asset.trading as Json | undefined)?.currentPeriod || "unknown"),
+        marketOpen: trading?.openNow === true,
+        period: String(trading?.currentPeriod || "unknown"),
         multiplier: Number(multiplier.currentMultiplier || 1),
         pendingMultiplier: Number(multiplier.newMultiplier || 0),
         multiplierActivation: Number(multiplier.activationDateTime || 0),
         logo: typeof asset.logo === "string" && asset.logo.startsWith("https://xstocks-metadata.backed.fi/") ? asset.logo : undefined,
         oracles,
         issuerControls: mintState?.hasPermanentDelegate ? ["mint", "freeze", "pause", "permanent delegate"] : [],
-        verified: Boolean(mintState?.valid && solana.supportsAtomicSwaps === true && dualOracle && !insideCorporateActionWindow && !halted),
+        verified: Boolean(quoteAvailable && mintState?.valid && solana.supportsAtomicSwaps === true && dualOracle && !insideCorporateActionWindow && !halted),
       };
     } catch {
       return { ...market, unavailable: true, verified: false };

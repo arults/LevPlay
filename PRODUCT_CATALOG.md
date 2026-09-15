@@ -6,6 +6,10 @@ Status: research and paper-preview catalog. Listing here does not authorize a re
 
 Fifteen xStocks references are pinned: Apple, Microsoft, NVIDIA, Alphabet, Amazon, Meta, Tesla, MicroStrategy, Coinbase, Robinhood, Netflix, AMD, Broadcom, JPMorgan Chase and Palantir.
 
+## Hong Kong public-stock references
+
+Fifteen HKEX-listed xStocks references are pinned from the live xStocks API: Tencent, Xiaomi, Meituan, BYD, Hong Kong Exchanges and Clearing, AIA, China Construction Bank, ICBC, Bank of China, Ping An Insurance, ANTA Sports, Pop Mart, Geely Automobile, Cathay Pacific Airways and Kuaishou Technology. Each entry uses the issuer-reported Solana deployment address and remains fail-closed unless its mint state, trading status, atomic-swap capability and independent settlement feeds pass.
+
 Each reference has four candidate LevPlay products: `2L`, `2S`, `3L` and `3S`, for 60 public-stock candidates. Each product requires its own manifest entry, market PDA, product mint, vault, adapter market, caps, nonce domain, oracle accounts and solvency evidence. Approval of one product does not approve another.
 
 ## Pre-IPO references

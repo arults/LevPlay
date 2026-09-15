@@ -38,7 +38,9 @@ assert.match(invariants, /A residual NAV floor cannot be synthesized/);
 
 const marketSource = await read("lib/markets.ts");
 assert.equal([...marketSource.matchAll(/category: "Stocks"/g)].length, 15, "exactly 15 public-stock references must be pinned");
+assert.equal([...marketSource.matchAll(/category: "Hong Kong"/g)].length, 15, "exactly 15 Hong Kong public-stock references must be pinned");
 assert.equal([...marketSource.matchAll(/category: "Pre-IPO"/g)].length, 7, "the observed PreStocks catalog must contain seven live-priced pinned references");
+for (const name of ["Tencent", "Xiaomi", "Meituan", "BYD", "Hong Kong Exchanges and Clearing", "AIA", "China Construction Bank", "Industrial and Commercial Bank of China", "Bank of China", "Ping An Insurance", "ANTA Sports", "Pop Mart", "Geely Automobile", "Cathay Pacific Airways", "Kuaishou Technology"]) assert.ok(marketSource.includes(`name: "${name}"`), `${name} Hong Kong xStock must be pinned`);
 for (const name of ["Anthropic", "OpenAI", "Anduril", "Neuralink", "Kalshi", "Polymarket", "SpaceX"]) assert.ok(marketSource.includes(`name: "${name}"`), `${name} PreStocks reference must be pinned`);
 
 console.log("LevPlay audit package: scope, evidence index, schema and invariants passed");

@@ -14,7 +14,7 @@ Deterministic checks were rerun on 2026-09-15 against the production build. Brow
 |---|---|
 | Protocol-model invariants | 18/18 passed, including fee-on-top, Max-balance safety and opposite-signed 2× long/short outcomes |
 | Standby risk-engine vectors | Integer-only funded-floor model passed deterministic cases plus 588 adversarial long/short intervals; unfunded floors are reported insolvent |
-| Curated xStocks assets | 20/20 exact pinned Solana mints matched: 15 stocks and 5 commodity ETFs |
+| Curated xStocks assets | 35 exact pinned Solana mints: 15 US stocks, 15 Hong Kong stocks and 5 commodity ETFs; live verification is enforced by CI |
 | Token program and extensions | 20/20 Token-2022 mints verified, including scaled UI, pause state and transfer-hook guard |
 | Stock oracle registry | 10/10 stock markets expose both Pyth and Chainlink entries |
 | Commodity launch gate | 5/5 remain blocked until equivalent oracle/backing evidence exists |
