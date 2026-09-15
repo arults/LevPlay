@@ -431,10 +431,7 @@ fn apply_pair_queued_close_total(
     })
 }
 
-fn settle_queued_claim_total(
-    state: RiskVaultState,
-    paid_liability: u64,
-) -> Result<RiskVaultState> {
+fn settle_queued_claim_total(state: RiskVaultState, paid_liability: u64) -> Result<RiskVaultState> {
     if paid_liability == 0 || paid_liability > state.queued_claim_liability {
         return Err(Error::InvalidAmount);
     }
