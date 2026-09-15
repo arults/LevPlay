@@ -356,6 +356,8 @@ pub fn consume_nonce(stored_nonce: u64, supplied_nonce: u64) -> Result<u64> {
 
 #[cfg(test)]
 mod tests {
+    extern crate std;
+
     use super::*;
 
     fn address(value: u8) -> Address {
