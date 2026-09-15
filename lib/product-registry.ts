@@ -18,8 +18,8 @@ const ondo = (symbol: string, ticker: string, name: string, assetClass: "stock" 
   sourceUrl: `https://app.ondo.finance/assets/${symbol.toLowerCase()}`,
 });
 
-const prestock = (symbol: string, ticker: string, name: string): SourceAsset => ({
-  provider: "prestocks", symbol, ticker, name, assetClass: "pre-ipo",
+const prestock = (symbol: string, ticker: string, name: string, publishedMint: string): SourceAsset => ({
+  provider: "prestocks", symbol, ticker, name, assetClass: "pre-ipo", publishedMint,
   sourceUrl: "https://prestocks.com/products",
 });
 
@@ -51,14 +51,23 @@ export const ONDO_COMMODITIES = [
 ] as const satisfies readonly SourceAsset[];
 
 export const PRESTOCKS = [
-  prestock("ANTHROPIC", "ANTH", "Anthropic"),
-  prestock("OPENAI", "OPENAI", "OpenAI"),
-  prestock("ANDURIL", "ANDURIL", "Anduril"),
-  prestock("NEURALINK", "NEURAL", "Neuralink"),
-  prestock("KALSHI", "KALSHI", "Kalshi"),
-  prestock("POLYMARKET", "POLY", "Polymarket"),
-  prestock("SPACEX", "SPACEX", "SpaceX"),
+  prestock("ANTHROPIC", "ANTH", "Anthropic", "Pren1FvFX6J3E4kXhJuCiAD5aDmGEb7qJRncwA8Lkhw"),
+  prestock("OPENAI", "OPENAI", "OpenAI", "PreweJYECqtQwBtpxHL171nL2K6umo692gTm7Q3rpgF"),
+  prestock("ANDURIL", "ANDURIL", "Anduril", "PresTj4Yc2bAR197Er7wz4UUKSfqt6FryBEdAriBoQB"),
+  prestock("NEURALINK", "NEURAL", "Neuralink", "PrekqLJvJ3qVdXmBGDiexvwUTF4rLFDa6HWS4HJbw9S"),
+  prestock("FIGUREAI", "FIGURE", "Figure AI", "PreZad18qfPtbxNpMtMuAuX2zVpvkEU8DnJx56faCWd"),
+  prestock("KALSHI", "KALSHI", "Kalshi", "PreLWGkkeqG1s4HEfFZSy9moCrJ7btsHuUtfcCeoRua"),
+  prestock("POLYMARKET", "POLY", "Polymarket", "Pre8AREmFPtoJFT8mQSXQLh56cwJmM7CFDRuoGBZiUP"),
+  prestock("SPACEX", "SPACEX", "SpaceX", "PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh"),
 ] as const satisfies readonly SourceAsset[];
+
+export const PRESTOCKS_CATALOG_SNAPSHOT = {
+  observedAt: "2026-09-15",
+  sourceUrl: "https://prestocks.com/products",
+  productCount: 8,
+  excludedSymbols: ["XAI"],
+  symbols: PRESTOCKS.map((asset) => asset.symbol),
+} as const;
 
 export const SOURCE_ASSETS = [...ONDO_STOCKS, ...ONDO_COMMODITIES, ...PRESTOCKS] as const;
 export const XSTOCKS_STATE = "shelved" as const;
@@ -93,6 +102,8 @@ export type ProductAdmissionManifest = {
   feeVault: string;
   primaryOracle: string;
   secondaryOracle: string;
+  primaryOracleProviderId: string;
+  secondaryOracleProviderId: string;
   sourceRegistryHash: string;
   providerApprovalHash: string;
   legalApprovalHash: string;
@@ -119,11 +130,19 @@ export type ProductAdmissionManifest = {
   permissionlessRebalance: boolean;
   sourceOutageMode: "close-only-pro-rata";
   rpcDomains: string[];
+  rpcProviderIds: string[];
   keeperAuthorities: string[];
+  keeperOperatorIds: string[];
   governanceMultisig: string;
   guardianMultisig: string;
+  governanceSigners: string[];
+  guardianSigners: string[];
+  governanceThreshold: number;
+  guardianThreshold: number;
   primaryExitOperator: string;
   emergencyExitOperator: string;
+  primaryExitOperatorId: string;
+  emergencyExitOperatorId: string;
   upgradeDelaySeconds: number;
   expiresAtUnix: number;
 };
@@ -142,7 +161,8 @@ export function assessProductAdmission(manifest: ProductAdmissionManifest, nowUn
     ["collateral vault", manifest.collateralVault], ["fee vault", manifest.feeVault],
     ["primary oracle", manifest.primaryOracle], ["secondary oracle", manifest.secondaryOracle],
   ]) if (!BASE58.test(value)) reasons.push(`${label} is not pinned`);
-  if (manifest.primaryOracle === manifest.secondaryOracle) reasons.push("oracle failure domains are not independent");
+  if (manifest.primaryOracle === manifest.secondaryOracle) reasons.push("oracle accounts are not independent");
+  if (!manifest.primaryOracleProviderId.trim() || !manifest.secondaryOracleProviderId.trim() || manifest.primaryOracleProviderId === manifest.secondaryOracleProviderId) reasons.push("oracle providers are not independent");
   for (const [label, value] of [
     ["source registry", manifest.sourceRegistryHash], ["provider approval", manifest.providerApprovalHash],
     ["legal approval", manifest.legalApprovalHash], ["product audit", manifest.productAuditHash],
@@ -169,13 +189,21 @@ export function assessProductAdmission(manifest: ProductAdmissionManifest, nowUn
   if (!manifest.permissionlessRebalance) reasons.push("rebalancing depends on privileged keepers");
   if (manifest.sourceOutageMode !== "close-only-pro-rata") reasons.push("source outage does not force close-only pro-rata mode");
   if (manifest.rpcDomains.length < 3 || new Set(manifest.rpcDomains).size !== manifest.rpcDomains.length || manifest.rpcDomains.some((domain) => !domain.trim())) reasons.push("fewer than three independent RPC domains are pinned");
+  if (manifest.rpcProviderIds.length !== manifest.rpcDomains.length || new Set(manifest.rpcProviderIds).size < 3 || manifest.rpcProviderIds.some((provider) => !provider.trim())) reasons.push("RPC endpoints do not span three independent providers");
   if (manifest.keeperAuthorities.length < 3 || new Set(manifest.keeperAuthorities).size !== manifest.keeperAuthorities.length || manifest.keeperAuthorities.some((authority) => !BASE58.test(authority))) reasons.push("keeper set lacks three independent authorities");
+  if (manifest.keeperOperatorIds.length !== manifest.keeperAuthorities.length || new Set(manifest.keeperOperatorIds).size < 3 || manifest.keeperOperatorIds.some((operator) => !operator.trim())) reasons.push("keeper authorities do not span three independent operators");
   for (const [label, value] of [
     ["governance multisig", manifest.governanceMultisig], ["guardian multisig", manifest.guardianMultisig],
     ["primary exit operator", manifest.primaryExitOperator], ["emergency exit operator", manifest.emergencyExitOperator],
   ]) if (!BASE58.test(value)) reasons.push(`${label} is not pinned`);
   if (manifest.governanceMultisig === manifest.guardianMultisig) reasons.push("governance and guardian share one authority");
-  if (manifest.primaryExitOperator === manifest.emergencyExitOperator) reasons.push("primary and emergency exits share one operator");
+  const validSignerSet = (signers: string[]) => signers.length >= 3 && new Set(signers).size === signers.length && signers.every((signer) => BASE58.test(signer));
+  if (!validSignerSet(manifest.governanceSigners) || !validSignerSet(manifest.guardianSigners)) reasons.push("multisig signer sets are not independently pinned");
+  if (manifest.governanceSigners.some((signer) => manifest.guardianSigners.includes(signer))) reasons.push("governance and guardian signer sets overlap");
+  if (!Number.isSafeInteger(manifest.governanceThreshold) || manifest.governanceThreshold < 2 || manifest.governanceThreshold > manifest.governanceSigners.length) reasons.push("governance threshold is unsafe");
+  if (!Number.isSafeInteger(manifest.guardianThreshold) || manifest.guardianThreshold < 2 || manifest.guardianThreshold > manifest.guardianSigners.length) reasons.push("guardian threshold is unsafe");
+  if (manifest.primaryExitOperator === manifest.emergencyExitOperator) reasons.push("primary and emergency exits share one authority");
+  if (!manifest.primaryExitOperatorId.trim() || !manifest.emergencyExitOperatorId.trim() || manifest.primaryExitOperatorId === manifest.emergencyExitOperatorId) reasons.push("primary and emergency exits share one operator");
   if (!Number.isSafeInteger(manifest.upgradeDelaySeconds) || manifest.upgradeDelaySeconds < 172_800) reasons.push("program upgrades lack a two-day minimum delay");
   if (!Number.isSafeInteger(manifest.expiresAtUnix) || manifest.expiresAtUnix <= nowUnix) reasons.push("product admission is expired");
   return { admitted: reasons.length === 0, productId: product.id, reasons };
@@ -204,6 +232,7 @@ export function parseProductManifest(source: Record<string, unknown>): ProductAd
     productMint: String(source.productMint || ""), marketPda: String(source.marketPda || ""),
     collateralVault: String(source.collateralVault || ""), feeVault: String(source.feeVault || ""),
     primaryOracle: String(source.primaryOracle || ""), secondaryOracle: String(source.secondaryOracle || ""),
+    primaryOracleProviderId: String(source.primaryOracleProviderId || ""), secondaryOracleProviderId: String(source.secondaryOracleProviderId || ""),
     sourceRegistryHash: String(source.sourceRegistryHash || ""), providerApprovalHash: String(source.providerApprovalHash || ""),
     legalApprovalHash: String(source.legalApprovalHash || ""), productAuditHash: String(source.productAuditHash || ""),
     economicAuditHash: String(source.economicAuditHash || ""), auditorRetestHash: String(source.auditorRetestHash || ""),
@@ -217,9 +246,13 @@ export function parseProductManifest(source: Record<string, unknown>): ProductAd
     isolatedCollateral: source.isolatedCollateral === true, usesBorrowOrMargin: source.usesBorrowOrMargin === true,
     mintsDisabledOnHalt: source.mintsDisabledOnHalt === true, permissionlessRebalance: source.permissionlessRebalance === true,
     sourceOutageMode: String(source.sourceOutageMode || "") as "close-only-pro-rata", rpcDomains: strings(source.rpcDomains),
-    keeperAuthorities: strings(source.keeperAuthorities), governanceMultisig: String(source.governanceMultisig || ""),
-    guardianMultisig: String(source.guardianMultisig || ""), primaryExitOperator: String(source.primaryExitOperator || ""),
-    emergencyExitOperator: String(source.emergencyExitOperator || ""), upgradeDelaySeconds: Number(source.upgradeDelaySeconds),
+    rpcProviderIds: strings(source.rpcProviderIds), keeperAuthorities: strings(source.keeperAuthorities),
+    keeperOperatorIds: strings(source.keeperOperatorIds), governanceMultisig: String(source.governanceMultisig || ""),
+    guardianMultisig: String(source.guardianMultisig || ""), governanceSigners: strings(source.governanceSigners),
+    guardianSigners: strings(source.guardianSigners), governanceThreshold: Number(source.governanceThreshold),
+    guardianThreshold: Number(source.guardianThreshold), primaryExitOperator: String(source.primaryExitOperator || ""),
+    emergencyExitOperator: String(source.emergencyExitOperator || ""), primaryExitOperatorId: String(source.primaryExitOperatorId || ""),
+    emergencyExitOperatorId: String(source.emergencyExitOperatorId || ""), upgradeDelaySeconds: Number(source.upgradeDelaySeconds),
     expiresAtUnix: Number(source.expiresAtUnix),
   };
 }

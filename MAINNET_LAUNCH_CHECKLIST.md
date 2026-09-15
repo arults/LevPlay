@@ -11,7 +11,7 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 5. **Legal launch controls:** counsel approval, eligibility/sanctions/geofence rules, issuer permissions, market-data rights and customer disclosures.
 6. **Capped mainnet canary:** $1,000 aggregate across audited `AAPL2L` and `AAPL2S`, reconciliation, seven-day observation and explicit multisig GO vote.
 
-Catalog expansion is not a launch-gate substitute. The catalog now contains 134 Ondo/PreStocks candidates, while xStocks and Hong Kong products are shelved. Every product remains signing-disabled until separately admitted after the initial canary.
+Catalog expansion is not a launch-gate substitute. The catalog now contains 136 Ondo/PreStocks candidates, while xStocks and Hong Kong products are shelved. Every product remains signing-disabled until separately admitted after the initial canary.
 
 ## Current completion
 
@@ -21,9 +21,9 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 134 
 | Funded Standby model | Critical | Integer reference engine plus 588 adversarial long/short intervals; fake dust fails insolvent | Passed at model level |
 | Backing admission model | Critical | Fixed-account admission checks plus the Rust LevPlay Risk Vault v1 core for paired exposure, contingency escrow, expiry, caps and settlement reconciliation | Passed at economic-core level; no onchain instance admitted |
 | Rust protocol kernel | Critical | Pinned Rust 1.85 `no_std` core; 11 unit/adversarial tests, Clippy arithmetic denial and rustfmt in CI | Passed at core level; not an SBF program |
-| Read-only market and wallet verification | High | 35 pinned xStock mints (15 US, 15 Hong Kong, 5 commodity), Token-2022 checks, dual-feed registry, mainnet genesis | Passed |
+| Read-only market and wallet verification | High | Frozen 15-stock, 5-commodity and 8-PreStocks catalog; pinned known mints, Token-2022 checks, dual-feed registry and mainnet genesis | Passed at read-only level |
 | Executable Solana program | Critical | Interface and threat model only; no Rust/SBF artifact | Pending |
-| Leverage backing venue | Critical | xStocks spot/RFQ researched; no audited long leverage adapter or separately proven short route/capacity | Pending |
+| Leverage backing venue | Critical | Ondo and PreStocks source routes researched; no audited long adapter or separately proven prepaid short route/capacity | Pending |
 | Independent program audit and retest | Critical | Internal source review only | Pending |
 | Governance, guardian and fee multisigs | Critical | Runbook exists; addresses and signers not supplied | Pending |
 | Mainnet RPC/authority quorum | Critical | Fail-closed verifier implemented; production endpoints/accounts not configured | Pending |
@@ -39,7 +39,7 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 134 
 - [x] Select LevPlay Risk Vault v1 as the canary venue architecture and freeze its economic admission model.
 - [x] Select Ondo Stocks on Solana as the candidate AAPL2L spot route; pin the published GM program, Jupiter Order Engine, AAPLon mint, Token-2022 program and solver set.
 - [x] Add a fail-closed venue-manifest gate covering legal eligibility, explicit wrapper approval, audit/retest, collateral, expiry and independent exits.
-- [x] Define 134 independently admitted candidates: 15 Ondo stocks and 5 commodity-linked ETFs at 2x/3x/5x L/S, plus 7 PreStocks at 2x L/S; shelf xStocks and HK products.
+- [x] Define 136 independently admitted candidates: 15 Ondo stocks and 5 commodity-linked ETFs at 2x/3x/5x L/S, plus 8 launch-approved PreStocks at 2x L/S; explicitly exclude xAI; shelf xStocks and HK products.
 - [x] Encode leverage-specific long capital, bounded short payout collateral, real Standby floor, maximum redemption liability and independent exit liquidity.
 - [x] Require three RPC domains, three keepers plus permissionless rebalance, distinct multisigs and exit operators, 48-hour upgrades and close-only pro-rata source-outage mode.
 - [ ] Implement and admit the exact SBF risk-vault program, accounts and fixed hedge adapters for the canary market.

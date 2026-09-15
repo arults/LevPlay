@@ -30,6 +30,7 @@ export const PREIPO_MARKETS = [
   { symbol: "OPENAI", ticker: "OPENAI", name: "OpenAI", category: "Pre-IPO", tone: "#10a37f", mint: "PreweJYECqtQwBtpxHL171nL2K6umo692gTm7Q3rpgF", provider: "PreStocks" },
   { symbol: "ANDURIL", ticker: "ANDURIL", name: "Anduril", category: "Pre-IPO", tone: "#83745f", mint: "PresTj4Yc2bAR197Er7wz4UUKSfqt6FryBEdAriBoQB", provider: "PreStocks" },
   { symbol: "NEURALINK", ticker: "NEURAL", name: "Neuralink", category: "Pre-IPO", tone: "#8b5cf6", mint: "PrekqLJvJ3qVdXmBGDiexvwUTF4rLFDa6HWS4HJbw9S", provider: "PreStocks" },
+  { symbol: "FIGUREAI", ticker: "FIGURE", name: "Figure AI", category: "Pre-IPO", tone: "#2563eb", mint: "PreZad18qfPtbxNpMtMuAuX2zVpvkEU8DnJx56faCWd", provider: "PreStocks" },
   { symbol: "KALSHI", ticker: "KALSHI", name: "Kalshi", category: "Pre-IPO", tone: "#0ca678", mint: "PreLWGkkeqG1s4HEfFZSy9moCrJ7btsHuUtfcCeoRua", provider: "PreStocks" },
   { symbol: "POLYMARKET", ticker: "POLY", name: "Polymarket", category: "Pre-IPO", tone: "#4c6fff", mint: "Pre8AREmFPtoJFT8mQSXQLh56cwJmM7CFDRuoGBZiUP", provider: "PreStocks" },
   { symbol: "SPACEX", ticker: "SPACEX", name: "SpaceX", category: "Pre-IPO", tone: "#69727d", mint: "PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh", provider: "PreStocks" },
