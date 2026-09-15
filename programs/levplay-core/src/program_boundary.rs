@@ -214,20 +214,14 @@ fn validate_rules(actual: &[AccountDescriptor], expected: &[AccountRule]) -> Res
         {
             return Err(Error::InvalidAccounts);
         }
-        let mut other = index
-            .checked_add(1)
-            .ok_or(Error::ArithmeticOverflow)?;
+        let mut other = index.checked_add(1).ok_or(Error::ArithmeticOverflow)?;
         while other < actual.len() {
             if account.key == actual[other].key {
                 return Err(Error::InvalidAccounts);
             }
-            other = other
-                .checked_add(1)
-                .ok_or(Error::ArithmeticOverflow)?;
+            other = other.checked_add(1).ok_or(Error::ArithmeticOverflow)?;
         }
-        index = index
-            .checked_add(1)
-            .ok_or(Error::ArithmeticOverflow)?;
+        index = index.checked_add(1).ok_or(Error::ArithmeticOverflow)?;
     }
     Ok(())
 }
@@ -238,7 +232,13 @@ pub fn validate_open_accounts(
 ) -> Result<()> {
     let expected = [
         rule(bindings.user, bindings.system_program, true, true, false),
-        rule(bindings.user_usdc, bindings.token_program, false, true, false),
+        rule(
+            bindings.user_usdc,
+            bindings.token_program,
+            false,
+            true,
+            false,
+        ),
         rule(
             bindings.user_product,
             bindings.token_program,
@@ -262,7 +262,13 @@ pub fn validate_open_accounts(
             true,
             false,
         ),
-        rule(bindings.fee_vault, bindings.token_program, false, true, false),
+        rule(
+            bindings.fee_vault,
+            bindings.token_program,
+            false,
+            true,
+            false,
+        ),
         rule(
             bindings.reserve_vault,
             bindings.token_program,
@@ -349,9 +355,7 @@ pub fn consume_nonce(stored_nonce: u64, supplied_nonce: u64) -> Result<u64> {
     if supplied_nonce != stored_nonce {
         return Err(Error::Replay);
     }
-    stored_nonce
-        .checked_add(1)
-        .ok_or(Error::ArithmeticOverflow)
+    stored_nonce.checked_add(1).ok_or(Error::ArithmeticOverflow)
 }
 
 #[cfg(test)]
@@ -402,21 +406,111 @@ mod tests {
 
     fn accounts(value: &OpenAccountBindings) -> [AccountDescriptor; 15] {
         [
-            AccountDescriptor { key: value.user, owner: value.system_program, is_signer: true, is_writable: true, executable: false },
-            AccountDescriptor { key: value.user_usdc, owner: value.token_program, is_signer: false, is_writable: true, executable: false },
-            AccountDescriptor { key: value.user_product, owner: value.token_program, is_signer: false, is_writable: true, executable: false },
-            AccountDescriptor { key: value.config, owner: value.program_id, is_signer: false, is_writable: false, executable: false },
-            AccountDescriptor { key: value.market, owner: value.program_id, is_signer: false, is_writable: true, executable: false },
-            AccountDescriptor { key: value.product_mint, owner: value.token_program, is_signer: false, is_writable: true, executable: false },
-            AccountDescriptor { key: value.clearing_vault, owner: value.token_program, is_signer: false, is_writable: true, executable: false },
-            AccountDescriptor { key: value.fee_vault, owner: value.token_program, is_signer: false, is_writable: true, executable: false },
-            AccountDescriptor { key: value.reserve_vault, owner: value.token_program, is_signer: false, is_writable: false, executable: false },
-            AccountDescriptor { key: value.primary_oracle, owner: value.primary_oracle_program, is_signer: false, is_writable: false, executable: false },
-            AccountDescriptor { key: value.secondary_oracle, owner: value.secondary_oracle_program, is_signer: false, is_writable: false, executable: false },
-            AccountDescriptor { key: value.adapter_program, owner: value.bpf_loader, is_signer: false, is_writable: false, executable: true },
-            AccountDescriptor { key: value.adapter_market, owner: value.adapter_program, is_signer: false, is_writable: true, executable: false },
-            AccountDescriptor { key: value.token_program, owner: value.bpf_loader, is_signer: false, is_writable: false, executable: true },
-            AccountDescriptor { key: value.instructions_sysvar, owner: value.sysvar_owner, is_signer: false, is_writable: false, executable: false },
+            AccountDescriptor {
+                key: value.user,
+                owner: value.system_program,
+                is_signer: true,
+                is_writable: true,
+                executable: false,
+            },
+            AccountDescriptor {
+                key: value.user_usdc,
+                owner: value.token_program,
+                is_signer: false,
+                is_writable: true,
+                executable: false,
+            },
+            AccountDescriptor {
+                key: value.user_product,
+                owner: value.token_program,
+                is_signer: false,
+                is_writable: true,
+                executable: false,
+            },
+            AccountDescriptor {
+                key: value.config,
+                owner: value.program_id,
+                is_signer: false,
+                is_writable: false,
+                executable: false,
+            },
+            AccountDescriptor {
+                key: value.market,
+                owner: value.program_id,
+                is_signer: false,
+                is_writable: true,
+                executable: false,
+            },
+            AccountDescriptor {
+                key: value.product_mint,
+                owner: value.token_program,
+                is_signer: false,
+                is_writable: true,
+                executable: false,
+            },
+            AccountDescriptor {
+                key: value.clearing_vault,
+                owner: value.token_program,
+                is_signer: false,
+                is_writable: true,
+                executable: false,
+            },
+            AccountDescriptor {
+                key: value.fee_vault,
+                owner: value.token_program,
+                is_signer: false,
+                is_writable: true,
+                executable: false,
+            },
+            AccountDescriptor {
+                key: value.reserve_vault,
+                owner: value.token_program,
+                is_signer: false,
+                is_writable: false,
+                executable: false,
+            },
+            AccountDescriptor {
+                key: value.primary_oracle,
+                owner: value.primary_oracle_program,
+                is_signer: false,
+                is_writable: false,
+                executable: false,
+            },
+            AccountDescriptor {
+                key: value.secondary_oracle,
+                owner: value.secondary_oracle_program,
+                is_signer: false,
+                is_writable: false,
+                executable: false,
+            },
+            AccountDescriptor {
+                key: value.adapter_program,
+                owner: value.bpf_loader,
+                is_signer: false,
+                is_writable: false,
+                executable: true,
+            },
+            AccountDescriptor {
+                key: value.adapter_market,
+                owner: value.adapter_program,
+                is_signer: false,
+                is_writable: true,
+                executable: false,
+            },
+            AccountDescriptor {
+                key: value.token_program,
+                owner: value.bpf_loader,
+                is_signer: false,
+                is_writable: false,
+                executable: true,
+            },
+            AccountDescriptor {
+                key: value.instructions_sysvar,
+                owner: value.sysvar_owner,
+                is_signer: false,
+                is_writable: false,
+                executable: false,
+            },
         ]
     }
 
@@ -434,7 +528,10 @@ mod tests {
         );
         let mut trailing = valid.clone();
         trailing.push(0);
-        assert_eq!(decode_instruction(&trailing), Err(Error::InvalidInstruction));
+        assert_eq!(
+            decode_instruction(&trailing),
+            Err(Error::InvalidInstruction)
+        );
         assert_eq!(
             decode_instruction(&open_bytes(99, &[])),
             Err(Error::InvalidInstruction)
@@ -532,12 +629,7 @@ mod tests {
             Err(Error::InvalidTransaction)
         );
         assert_eq!(
-            validate_transaction_shape(
-                3,
-                &[compute, compute, compute, levplay],
-                levplay,
-                compute
-            ),
+            validate_transaction_shape(3, &[compute, compute, compute, levplay], levplay, compute),
             Err(Error::InvalidTransaction)
         );
     }
