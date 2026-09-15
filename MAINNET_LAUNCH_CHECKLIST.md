@@ -62,7 +62,8 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 136 
 - [x] Compile the frozen ABI decoder behind a pinned Solana entrypoint that remains deliberately execution-locked.
 - [ ] Implement the frozen [instruction interface](./programs/levplay/INTERFACE.md) with program-owned state and value-moving handlers.
 - [x] Freeze exact versioned config and market byte layouts with strict initialization, reserved-byte, bounds and address-isolation checks.
-- [ ] Enforce canonical config/market PDA seeds, ownership and bumps in the SBF processor; isolate backing and accounting PDAs.
+- [x] Enforce program ownership, exact privileges and canonical identity-bound config/market PDA seeds and bumps in SBF loaders.
+- [ ] Isolate backing, reserve, fee, position and claim accounting PDAs and bind their token-account authorities.
 - [ ] Use checked integer arithmetic and explicit decimal/exponent normalization; no floats.
 - [ ] Enforce capital, fee, wallet, transaction, TVL, daily mint and daily redemption caps onchain.
 - [ ] Pin every mint, token program, oracle, fee recipient, treasury owner, adapter program, adapter market and writable account.
