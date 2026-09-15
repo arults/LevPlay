@@ -110,7 +110,14 @@ pub fn mul_div_floor(a: u64, b: u64, denominator: u64) -> Result<u64> {
     if denominator == 0 {
         return Err(Error::DivisionByZero);
     }
-    checked_u64(u128::from(a).checked_mul(u128::from(b)).ok_or(Error::ArithmeticOverflow)? / u128::from(denominator))
+    let product = u128::from(a)
+        .checked_mul(u128::from(b))
+        .ok_or(Error::ArithmeticOverflow)?;
+    checked_u64(
+        product
+            .checked_div(u128::from(denominator))
+            .ok_or(Error::DivisionByZero)?,
+    )
 }
 
 pub fn mul_div_ceil(a: u64, b: u64, denominator: u64) -> Result<u64> {
@@ -119,7 +126,11 @@ pub fn mul_div_ceil(a: u64, b: u64, denominator: u64) -> Result<u64> {
     }
     let product = u128::from(a).checked_mul(u128::from(b)).ok_or(Error::ArithmeticOverflow)?;
     let adjusted = product.checked_add(u128::from(denominator).checked_sub(1).ok_or(Error::ArithmeticOverflow)?).ok_or(Error::ArithmeticOverflow)?;
-    checked_u64(adjusted / u128::from(denominator))
+    checked_u64(
+        adjusted
+            .checked_div(u128::from(denominator))
+            .ok_or(Error::DivisionByZero)?,
+    )
 }
 
 pub fn entry_fee(capital: u64, fee_bps: u16) -> Result<u64> {
