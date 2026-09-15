@@ -18,6 +18,8 @@ const required = [
   "programs/levplay-core/src/lib.rs",
   "programs/levplay-core/src/risk_vault.rs",
   "programs/levplay-core/src/program_boundary.rs",
+  "programs/levplay-core/src/state_accounts.rs",
+  "PROGRAM_STATE_V1.md",
   "programs/levplay-sbf/Cargo.toml",
   "programs/levplay-sbf/src/lib.rs",
   "programs/levplay-sbf/README.md",
@@ -94,6 +96,12 @@ assert.match(rustCore, /#!\[no_std\]/, "Rust core must remain SBF-compatible at 
 assert.match(rustCore, /#!\[forbid\(unsafe_code\)\]/, "unsafe Rust is forbidden");
 assert.ok(!/\bf(32|64)\b/.test(rustCore), "protocol arithmetic must not use floating-point values");
 for (const primitive of ["checked_add", "checked_sub", "checked_mul", "checked_div"]) assert.ok(rustCore.includes(primitive), `${primitive} must remain explicit`);
+
+const stateSource = files.find(([path]) => path === "programs/levplay-core/src/state_accounts.rs")[1];
+assert.match(stateSource, /CONFIG_STATE_LEN: usize = 208/);
+assert.match(stateSource, /MARKET_STATE_LEN: usize = 296/);
+assert.match(stateSource, /reader\.zeroes/);
+assert.match(stateSource, /validate_addresses/);
 
 const sbfManifest = files.find(([path]) => path === "programs/levplay-sbf/Cargo.toml")[1];
 assert.match(sbfManifest, /solana-program = "=2\.2\.0"/, "Solana SDK must remain exactly pinned");
