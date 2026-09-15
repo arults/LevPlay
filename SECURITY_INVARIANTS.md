@@ -23,5 +23,8 @@ These invariants apply independently to `AAPL2L` and `AAPL2S`.
 19. Standby sets directional exposure to zero, disables minting and preserves only pro-rata claims backed by identifiable assets in the isolated market and reserve vaults.
 20. A residual NAV floor cannot be synthesized from token precision, UI rounding, a reverse split or an oracle-only price change; insufficient reserve produces an explicit insolvent state.
 21. Standby resumption requires settled recapitalization, sustained oracle agreement, available adapter capacity and delayed governance authorization without diluting existing holders.
+22. Long leverage is fully funded by non-recourse, non-recallable capital through the wind-down horizon; short leverage has a finite onchain maximum loss backed by locked collateral.
+23. A primary route and emergency exit route have independent failure domains and full capped unwind capacity; duplicating one program or operator is not redundancy.
+24. Capacity degradation disables new mints before exits and cannot be represented as available liquidity by the frontend, keeper or adapter.
 
 Each invariant requires at least one positive test, one negative test and one adversarial mutation test in the final evidence bundle.

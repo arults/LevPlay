@@ -8,6 +8,9 @@ const required = [
   "SECURITY_INVARIANTS.md",
   "SECURITY.md",
   "PROTOCOL_SPEC.md",
+  "BACKING_VENUE_DECISION.md",
+  "lib/backing-engine.ts",
+  "tests/backing-engine.mjs",
   "lib/risk-engine.ts",
   "tests/risk-engine.mjs",
   "programs/levplay/INTERFACE.md",
@@ -35,6 +38,11 @@ assert.match(invariants, /share no vault, product mint, adapter market, nonce na
 assert.match(invariants, /No instruction accepts generic CPI bytes/);
 assert.match(invariants, /Short exposure additionally proves available borrow\/perpetual capacity/);
 assert.match(invariants, /A residual NAV floor cannot be synthesized/);
+
+const venueDecision = files.find(([path]) => path === "BACKING_VENUE_DECISION.md")[1];
+assert.match(venueDecision, /No production backing route is admitted/);
+assert.match(venueDecision, /AAPL2S.*bounded-loss derivative/s);
+assert.match(venueDecision, /independent emergency exit route/);
 
 const marketSource = await read("lib/markets.ts");
 assert.equal([...marketSource.matchAll(/category: "Stocks"/g)].length, 15, "exactly 15 public-stock references must be pinned");

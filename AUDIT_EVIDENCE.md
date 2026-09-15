@@ -14,9 +14,14 @@ Every row must link to immutable evidence for the same release commit. `Missing`
 | Economic model tests | [`tests/protocol-model.mjs`](./tests/protocol-model.mjs) | Present |
 | Standby reference engine | [`lib/risk-engine.ts`](./lib/risk-engine.ts) | Present |
 | Standby/adversarial vectors | [`tests/risk-engine.mjs`](./tests/risk-engine.mjs) | Present |
+| Backing-venue decision record | [`BACKING_VENUE_DECISION.md`](./BACKING_VENUE_DECISION.md) | Present; no venue admitted |
+| Backing admission reference engine | [`lib/backing-engine.ts`](./lib/backing-engine.ts) | Present |
+| Backing admission/capacity tests | [`tests/backing-engine.mjs`](./tests/backing-engine.mjs) | Present |
 | Solana Rust program source | — | **Missing** |
 | Fixed long adapter source | — | **Missing** |
 | Fixed short adapter source | — | **Missing** |
+| Signed venue capacity/production terms | — | **Missing** |
+| Independent emergency exit route | — | **Missing** |
 | Cargo/Anchor lockfiles | — | **Missing** |
 | Reproducible SBF/IDL/SBOM | — | **Missing** |
 | Local-validator/property/fuzz evidence | — | **Missing** |

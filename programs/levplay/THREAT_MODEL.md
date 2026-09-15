@@ -17,6 +17,9 @@ Status: pre-implementation security requirements. This is not an external audit.
 | RPC/front-end compromise | Wallet displays decoded instruction/accounts; two independent RPCs must agree; program enforces every critical condition again. |
 | xStocks issuer control | Pause, freeze, permanent delegate, multiplier activation and redemption availability are explicit external trust boundaries. |
 | Backing venue failure | Per-market caps, adapter pause, unwind limits, continuous solvency monitoring and tested orderly wind-down. |
+| Recallable leverage funding | Long risk capital must be prepaid, non-recourse and locked through the wind-down horizon; any margin call or recall right makes the route inadmissible. |
+| Unbounded short loss | Short route must expose a finite maximum loss and lock collateral for it plus Standby/unwind reserves; naked borrow and ordinary margin accounts fail admission. |
+| False redundancy | Primary and emergency routes must use separately evidenced failure domains and cannot be the same program/market or operator under another label. |
 | Token-2022 extensions | Reject unapproved hooks/authorities/extensions and test scaled-UI multiplier changes without float arithmetic. |
 
 ## Release rule

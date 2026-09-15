@@ -11,6 +11,7 @@
     "build": "node scripts/run-framework.mjs build",
     "test:protocol": "node tests/protocol-model.mjs",
     "test:risk": "node --experimental-strip-types tests/risk-engine.mjs",
+    "test:backing": "node --experimental-strip-types tests/backing-engine.mjs",
     "test:live": "node tests/live-integrations.mjs",
     "test:security": "node tests/source-security.mjs",
     "test:ui": "node tests/ui-flow.mjs",
