@@ -22,6 +22,7 @@ const required = [
   "PROGRAM_STATE_V1.md",
   "programs/levplay-sbf/Cargo.toml",
   "programs/levplay-sbf/src/lib.rs",
+  "programs/levplay-sbf/src/account_validation.rs",
   "programs/levplay-sbf/README.md",
   ".github/workflows/sbf-build.yml",
   "lib/backing-engine.ts",
@@ -109,6 +110,11 @@ const sbfSource = files.find(([path]) => path === "programs/levplay-sbf/src/lib.
 assert.match(sbfSource, /EXECUTION_LOCKED_ERROR/);
 assert.match(sbfSource, /decode_instruction\(instruction_data\)/);
 assert.ok(!sbfSource.includes("invoke("), "SBF shell must not gain an unaudited CPI path");
+const accountValidation = files.find(([path]) => path === "programs/levplay-sbf/src/account_validation.rs")[1];
+assert.match(accountValidation, /account\.owner != program_id/);
+assert.match(accountValidation, /canonical_config_address/);
+assert.match(accountValidation, /canonical_market_address/);
+assert.match(accountValidation, /account\.is_writable != writable/);
 const sbfWorkflow = files.find(([path]) => path === ".github/workflows/sbf-build.yml")[1];
 assert.match(sbfWorkflow, /AGAVE_VERSION: v4\.2\.1/);
 assert.match(sbfWorkflow, /AGAVE_ARCHIVE_SHA256: [a-f0-9]{64}/);
