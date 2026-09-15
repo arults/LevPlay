@@ -26,5 +26,6 @@ These invariants apply independently to `AAPL2L` and `AAPL2S`.
 22. Long leverage is fully funded by non-recourse, non-recallable capital through the wind-down horizon; short leverage has a finite onchain maximum loss backed by locked collateral.
 23. A primary route and emergency exit route have independent failure domains and full capped unwind capacity; duplicating one program or operator is not redundancy.
 24. Capacity degradation disables new mints before exits and cannot be represented as available liquidity by the frontend, keeper or adapter.
+25. Long/short matching may reduce active hedge usage but never reduces either side's independently escrowed close and unwind capacity; collateral cannot depend on the opposite holder remaining open.
 
 Each invariant requires at least one positive test, one negative test and one adversarial mutation test in the final evidence bundle.

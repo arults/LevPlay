@@ -1,11 +1,12 @@
 # LevPlay backing venue decision record
 
-Status date: 2026-09-15. Decision state: **No production backing route is admitted.** This is a fail-closed architecture decision, not a completed launch gate.
+Status date: 2026-09-15. Decision state: **LevPlay Risk Vault v1 is the selected venue architecture. No production backing route is admitted.** The checked Rust core is a candidate, not onchain capacity or a completed launch gate.
 
 ## Verified market boundary
 
 | Candidate | Verifiable capability | Admission decision |
 |---|---|---|
+| LevPlay Risk Vault v1 | Checked-integer paired exposure, segregated maker escrow, independent-exit capacity, funded reserves, expiry and settlement reconciliation | Selected architecture; implementation is an economic core only until the SBF wrapper, exact accounts, funded escrows, audit and legal evidence pass |
 | xStocks on Solana | 1:1-backed, transferable spot tokenized equities; xStocks describes the assets as redeemable for cash value or underlying and subject to jurisdiction restrictions | Eligible as a pinned `AAPLx` spot asset only; it does not create the second unit of long exposure or any short exposure |
 | Jupiter Perps | The official current product route identifies SOL, BTC and ETH perpetuals | Rejected for the Apple pilot: no fixed `AAPL` market or production capacity evidence |
 | Drift | The official site describes leveraged perpetual markets and a liquidation engine; Drift's June 2026 recovery update says the protocol is being rebuilt for relaunch after user losses | Rejected for the Apple pilot: no verified `AAPL` market, fixed adapter terms, isolated non-recourse capacity or deterministic exit evidence; a margin-liquidated backing account would not satisfy this design |
@@ -57,3 +58,4 @@ The live-capacity rule disables new mints before exits. Reduced capacity may per
 - Reproducible devnet stress ledger proving complete and partial exits with the primary venue unavailable.
 - Independent quantitative approval of gap size, capacity haircut, reserve size, volatility drag, market-hours and corporate-action behavior.
 - Legal approval for the eligible jurisdictions and program-controlled use of `AAPLx`.
+

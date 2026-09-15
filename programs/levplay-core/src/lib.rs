@@ -1,6 +1,9 @@
 #![no_std]
 #![forbid(unsafe_code)]
 
+mod risk_vault;
+pub use risk_vault::*;
+
 pub const BPS: u64 = 10_000;
 pub const ENTRY_FEE_BPS: u16 = 50;
 pub const PILOT_LEVERAGE_BPS: u16 = 20_000;

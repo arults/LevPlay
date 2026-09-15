@@ -21,6 +21,7 @@ The aggregate mainnet canary ceiling is $1,000 across both products. `3×`, `5×
 - Initialization, open, close, rebalance, enter-Standby, recapitalize/resume, pause, claim and governance instructions.
 - PDA derivation, account ownership, signer/writable constraints and Token-2022 extension handling.
 - Integer NAV/share accounting, fee rounding, caps, nonce/expiry handling, reserve draws, Standby floors, insolvency disclosure and zero-supply transitions.
+- LevPlay Risk Vault admission, paired exposure, asymmetric-exit contingency escrow, commitment expiry, caps and settlement reconciliation.
 - Fixed long and short backing adapters, including CPI data construction and pre/post balance reconciliation.
 - Pyth and Chainlink account identity, freshness, confidence, publisher and deviation enforcement.
 - Issuer halt, multiplier/corporate-action, liquidity outage, gap, congestion and orderly-wind-down behavior.

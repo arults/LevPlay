@@ -19,6 +19,7 @@ Every row must link to immutable evidence for the same release commit. `Missing`
 | Backing admission/capacity tests | [`tests/backing-engine.mjs`](./tests/backing-engine.mjs) | Present |
 | Pinned Rust workspace/toolchain | [`Cargo.toml`](./Cargo.toml), [`Cargo.lock`](./Cargo.lock), [`rust-toolchain.toml`](./rust-toolchain.toml) | Present |
 | Checked `no_std` Rust protocol core | [`programs/levplay-core/src/lib.rs`](./programs/levplay-core/src/lib.rs) | Present; not an SBF program |
+| Fully collateralized risk-vault core | [`programs/levplay-core/src/risk_vault.rs`](./programs/levplay-core/src/risk_vault.rs), [`RISK_VAULT_V1.md`](./RISK_VAULT_V1.md) | Present; two-sided admission/capacity/settlement model, not an SBF program |
 | Rust core unit/adversarial tests | In-crate test module; CI runs test, Clippy and rustfmt | Present; instruction tests still missing |
 | Solana Rust program source | — | **Missing** |
 | Fixed long adapter source | — | **Missing** |

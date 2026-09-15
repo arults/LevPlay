@@ -19,7 +19,7 @@ Catalog expansion is not a launch-gate substitute. The 15 Hong Kong references a
 |---|---:|---|---|
 | Wallet-direct fee-on-top flow | Critical | UI/model: $500 capital + $2.50 fee = $502.50 debit; Max reserves fee | Passed at model/UI level |
 | Funded Standby model | Critical | Integer reference engine plus 588 adversarial long/short intervals; fake dust fails insolvent | Passed at model level |
-| Backing admission model | Critical | Fixed-account, non-recourse, capacity, bounded-loss and independent-exit checks with adversarial vectors | Passed at model level; no venue admitted |
+| Backing admission model | Critical | Fixed-account admission checks plus the Rust LevPlay Risk Vault v1 core for paired exposure, contingency escrow, expiry, caps and settlement reconciliation | Passed at economic-core level; no onchain instance admitted |
 | Rust protocol kernel | Critical | Pinned Rust 1.85 `no_std` core; 11 unit/adversarial tests, Clippy arithmetic denial and rustfmt in CI | Passed at core level; not an SBF program |
 | Read-only market and wallet verification | High | 35 pinned xStock mints (15 US, 15 Hong Kong, 5 commodity), Token-2022 checks, dual-feed registry, mainnet genesis | Passed |
 | Executable Solana program | Critical | Interface and threat model only; no Rust/SBF artifact | Pending |
@@ -36,7 +36,8 @@ Catalog expansion is not a launch-gate substitute. The 15 Hong Kong references a
 - [x] Charge 50 basis points only on opening position capital and add it on top; no LevPlay deposit/withdrawal fee.
 - [x] Start with wallet USDC, one signature and no persistent LevPlay cash balance.
 - [x] Freeze the audit scope to isolated `AAPL2L` and `AAPL2S` markets, $100 per wallet and $1,000 aggregate; 3×, 5×, commodities and other tickers remain disabled.
-- [ ] Select a leverage/backing venue and exact fixed CPI adapter for the canary market.
+- [x] Select LevPlay Risk Vault v1 as the canary venue architecture and freeze its economic admission model.
+- [ ] Implement and admit the exact SBF risk-vault program, accounts and fixed hedge adapters for the canary market.
 - [x] Encode fail-closed venue admission rules for pinned accounts, non-recourse funding, committed capacity, bounded short loss and an independent emergency exit.
 - [ ] Obtain written production access, limits, uptime terms and unwind procedures from that venue.
 - [ ] Prove short borrow/perpetual capacity, bounded funding and deterministic buy-to-cover without sharing the long vault or solvency pool.
