@@ -74,25 +74,17 @@ impl<'a> StateReader<'a> {
     }
 
     fn u16(&mut self) -> Result<u16> {
-        let bytes: [u8; 2] = self
-            .take(2)?
-            .try_into()
-            .map_err(|_| Error::InvalidState)?;
+        let bytes: [u8; 2] = self.take(2)?.try_into().map_err(|_| Error::InvalidState)?;
         Ok(u16::from_le_bytes(bytes))
     }
 
     fn u64(&mut self) -> Result<u64> {
-        let bytes: [u8; 8] = self
-            .take(8)?
-            .try_into()
-            .map_err(|_| Error::InvalidState)?;
+        let bytes: [u8; 8] = self.take(8)?.try_into().map_err(|_| Error::InvalidState)?;
         Ok(u64::from_le_bytes(bytes))
     }
 
     fn address(&mut self) -> Result<Address> {
-        self.take(32)?
-            .try_into()
-            .map_err(|_| Error::InvalidState)
+        self.take(32)?.try_into().map_err(|_| Error::InvalidState)
     }
 
     fn zeroes(&mut self, count: usize) -> Result<()> {
@@ -129,14 +121,8 @@ fn validate_addresses(addresses: &[Address]) -> Result<()> {
     Ok(())
 }
 
-fn read_header(
-    reader: &mut StateReader<'_>,
-    discriminator: &[u8; 8],
-) -> Result<u8> {
-    if reader.take(8)? != discriminator
-        || reader.u8()? != ACCOUNT_VERSION
-        || reader.u8()? == 0
-    {
+fn read_header(reader: &mut StateReader<'_>, discriminator: &[u8; 8]) -> Result<u8> {
+    if reader.take(8)? != discriminator || reader.u8()? != ACCOUNT_VERSION || reader.u8()? == 0 {
         return Err(Error::InvalidState);
     }
     let bump = reader.u8()?;
