@@ -8,8 +8,8 @@ Status date: 2026-09-15. This catalog defines isolated products for audit and pa
 |---|---:|---:|---:|
 | Ondo Stocks | 15 US stocks/ETFs | 2L, 2S, 3L, 3S, 5L, 5S | 90 |
 | Ondo commodity-linked ETFs | 5 | 2L, 2S, 3L, 3S, 5L, 5S | 30 |
-| PreStocks | 7 pre-IPO references | 2L, 2S | 14 |
-| **Total** | **27** | — | **134** |
+| PreStocks | 8 pre-IPO references (xAI excluded) | 2L, 2S | 16 |
+| **Total** | **28** | — | **136** |
 
 xStocks is shelved and is not an active integration or launch dependency. Hong Kong products are omitted because neither admitted source currently provides a verified HK catalog for this release.
 
@@ -25,13 +25,13 @@ Gold (`GLDon`), silver (`SLVon`), platinum (`PPLTon`), oil (`USOon`) and copper 
 
 ## PreStocks pre-IPO products
 
-Anthropic, OpenAI, Anduril, Neuralink, Kalshi, Polymarket and SpaceX. Each is limited to 2L and 2S at this stage. PreStocks provide economic exposure only—not shares, ownership, voting, dividend or information rights—and disclose total-loss and secondary-liquidity risk.
+Anthropic, OpenAI, Anduril, Neuralink, Figure AI, Kalshi, Polymarket and SpaceX. xAI is intentionally excluded from the launch catalog following its combination with SpaceX. Each is limited to 2L and 2S at this stage. PreStocks provide economic exposure only—not shares, ownership, voting, dividend or information rights—and disclose total-loss and secondary-liquidity risk.
 
 PreStocks admission requires an issuer-signed source registry, the exact mint and Token-2022 authority state, written wrapper permission, two manipulation-resistant settlement sources, market-specific liquidity and wind-down evidence, and legal approval. A DEX price alone can never settle a LevPlay mint, rebalance or redemption.
 
 ## Isolation and collateral rules
 
-Every one of the 134 candidates has a unique product ID, product mint, market PDA, collateral vault, fee vault, two oracle accounts, exposure cap, wallet cap and audit/deployment record. No product shares capital or bad debt with another.
+Every one of the 136 candidates has a unique product ID, product mint, market PDA, collateral vault, fee vault, two oracle accounts, exposure cap, wallet cap and audit/deployment record. No product shares capital or bad debt with another.
 
 - An `N×L` vault requires maker-funded long capital of at least `(N − 1) × aggregate capital cap`, in addition to holder capital.
 - An `N×S` vault is a bounded-payout, prepaid claim requiring short-gain collateral of at least `N × aggregate capital cap`; it may not depend on margin borrowing or a liquidatable perpetual position.
