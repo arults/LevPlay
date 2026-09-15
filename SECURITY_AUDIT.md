@@ -19,7 +19,7 @@ Validated on 2026-09-14 against the production build:
 | Commodity launch gate | 5/5 remain blocked until equivalent oracle/backing evidence exists |
 | Source security assertions | 38 fail-closed checks passed |
 | UI lifecycle assertions | 20 lifecycle and responsive checks passed |
-| Browser user-flow QA | Homepage → paper wallet → buy → fee-inclusive P/L → sell → history passed |
+| Browser user-flow QA | Homepage → paper wallet → buy → nominal value and percentage P/L → close → realized history passed |
 | Static analysis | ESLint passed |
 | Production build | Passed with all app and API routes emitted |
 | Production dependency scan | No known vulnerabilities reported by the package-manager advisory database |
