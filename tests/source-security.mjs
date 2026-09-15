@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
-const [page, markets, wallet, protocol, config] = await Promise.all([
+const [page, markets, wallet, protocol, products, config] = await Promise.all([
   read("app/trade/page.tsx"),
   read("app/api/markets/route.ts"),
   read("app/api/wallet/route.ts"),
   read("lib/protocol.ts"),
+  read("lib/product-registry.ts"),
   read("next.config.ts"),
 ]);
 
@@ -62,7 +63,7 @@ for (const gate of [
   "LEVPLAY_SVM_MARKETS_JSON",
   "LEVPLAY_SVM_PRODUCT_MANIFESTS_JSON",
   "LEVPLAY_SVM_EXECUTION_ENABLED",
-]) assert.ok(protocol.includes(gate), `${gate} release gate must exist`);
+]) assert.ok(`${protocol}\n${products}`.includes(gate), `${gate} release gate must exist`);
 assert.match(protocol, /item\?\.xStockMint !== expected\.mint/, "deployment xStock mint must match the curated market");
 assert.match(protocol, /item\?\.leverage !== leverage/, "deployment leverage must match its product ID");
 assert.match(protocol, /item\?\.side !== side/, "deployment side must match its long or short product ID");
