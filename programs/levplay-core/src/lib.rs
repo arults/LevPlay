@@ -1,7 +1,9 @@
 #![no_std]
 #![forbid(unsafe_code)]
 
+mod program_boundary;
 mod risk_vault;
+pub use program_boundary::*;
 pub use risk_vault::*;
 
 pub const BPS: u64 = 10_000;
@@ -35,6 +37,10 @@ pub enum Error {
     InvalidConfiguration,
     InvalidState,
     InvalidOracle,
+    InvalidInstruction,
+    InvalidAccounts,
+    InvalidTransaction,
+    Replay,
     QuoteExpired,
     CapExceeded,
     SlippageExceeded,
