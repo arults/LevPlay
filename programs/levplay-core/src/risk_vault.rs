@@ -84,6 +84,20 @@ pub struct CloseQuote {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ClaimQueueState {
+    pub next_sequence: u64,
+    pub next_payable_sequence: u64,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct QueuedClaim {
+    pub sequence: u64,
+    pub owner: Address,
+    pub original_amount: u64,
+    pub remaining_amount: u64,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PairSettlement {
     pub long: Settlement,
     pub short: Settlement,
@@ -397,7 +411,7 @@ pub fn apply_close(
     }
 }
 
-pub fn apply_pair_queued_close(
+fn apply_pair_queued_close_total(
     config: &RiskVaultConfig,
     state: RiskVaultState,
     long_capital_delta: u64,
@@ -417,7 +431,10 @@ pub fn apply_pair_queued_close(
     })
 }
 
-pub fn settle_queued_claim(state: RiskVaultState, paid_liability: u64) -> Result<RiskVaultState> {
+fn settle_queued_claim_total(
+    state: RiskVaultState,
+    paid_liability: u64,
+) -> Result<RiskVaultState> {
     if paid_liability == 0 || paid_liability > state.queued_claim_liability {
         return Err(Error::InvalidAmount);
     }
@@ -432,6 +449,90 @@ pub fn settle_queued_claim(state: RiskVaultState, paid_liability: u64) -> Result
             .ok_or(Error::ArithmeticOverflow)?,
         ..state
     })
+}
+
+fn enqueue_claim(
+    queue: ClaimQueueState,
+    owner: Address,
+    amount: u64,
+) -> Result<(ClaimQueueState, QueuedClaim)> {
+    if owner == [0_u8; 32] || amount == 0 {
+        return Err(Error::InvalidAmount);
+    }
+    let claim = QueuedClaim {
+        sequence: queue.next_sequence,
+        owner,
+        original_amount: amount,
+        remaining_amount: amount,
+    };
+    Ok((
+        ClaimQueueState {
+            next_sequence: queue
+                .next_sequence
+                .checked_add(1)
+                .ok_or(Error::ArithmeticOverflow)?,
+            ..queue
+        },
+        claim,
+    ))
+}
+
+pub fn apply_pair_queued_close(
+    config: &RiskVaultConfig,
+    state: RiskVaultState,
+    queue: ClaimQueueState,
+    owner: Address,
+    long_capital_delta: u64,
+    short_capital_delta: u64,
+    claim_liability: u64,
+) -> Result<(RiskVaultState, ClaimQueueState, QueuedClaim)> {
+    let closed = apply_pair_queued_close_total(
+        config,
+        state,
+        long_capital_delta,
+        short_capital_delta,
+        claim_liability,
+    )?;
+    let (queue_after, claim) = enqueue_claim(queue, owner, claim_liability)?;
+    Ok((closed, queue_after, claim))
+}
+
+pub fn settle_fifo_claim(
+    state: RiskVaultState,
+    queue: ClaimQueueState,
+    claim: QueuedClaim,
+    paid_liability: u64,
+) -> Result<(RiskVaultState, ClaimQueueState, QueuedClaim)> {
+    if claim.sequence != queue.next_payable_sequence
+        || paid_liability == 0
+        || paid_liability > claim.remaining_amount
+    {
+        return Err(Error::InvalidState);
+    }
+    let state_after = settle_queued_claim_total(state, paid_liability)?;
+    let remaining_amount = claim
+        .remaining_amount
+        .checked_sub(paid_liability)
+        .ok_or(Error::ArithmeticOverflow)?;
+    let queue_after = if remaining_amount == 0 {
+        ClaimQueueState {
+            next_payable_sequence: queue
+                .next_payable_sequence
+                .checked_add(1)
+                .ok_or(Error::ArithmeticOverflow)?,
+            ..queue
+        }
+    } else {
+        queue
+    };
+    Ok((
+        state_after,
+        queue_after,
+        QueuedClaim {
+            remaining_amount,
+            ..claim
+        },
+    ))
 }
 
 pub fn begin_wind_down(state: RiskVaultState) -> Result<RiskVaultState> {
@@ -855,15 +956,60 @@ mod tests {
         let mut state = active();
         state.long_capital = 100;
         let winding = begin_wind_down(state).expect("wind-down transition");
-        let queued = apply_pair_queued_close(&config(), winding, 100, 0, 90)
-            .expect("illiquid exit becomes a funded claim");
+        let queue = ClaimQueueState {
+            next_sequence: 0,
+            next_payable_sequence: 0,
+        };
+        let (queued, queue, claim) =
+            apply_pair_queued_close(&config(), winding, queue, address(11), 100, 0, 90)
+                .expect("illiquid exit becomes a funded claim");
         assert_eq!(queued.long_capital, 0);
         assert_eq!(queued.queued_claim_liability, 90);
+        assert_eq!(claim.sequence, 0);
         assert!(!maker_escrow_releasable(&queued));
-        let partially_paid = settle_queued_claim(queued, 50).expect("partial claim payment");
+        let (partially_paid, queue, claim) =
+            settle_fifo_claim(queued, queue, claim, 50).expect("partial claim payment");
+        assert_eq!(queue.next_payable_sequence, 0);
         assert!(!maker_escrow_releasable(&partially_paid));
-        let paid = settle_queued_claim(partially_paid, 40).expect("final claim payment");
+        let (paid, queue, claim) =
+            settle_fifo_claim(partially_paid, queue, claim, 40).expect("final claim payment");
+        assert_eq!(claim.remaining_amount, 0);
+        assert_eq!(queue.next_payable_sequence, 1);
         assert!(maker_escrow_releasable(&paid));
+    }
+
+    #[test]
+    fn fifo_claims_cannot_be_skipped_or_overpaid() {
+        let mut state = active();
+        state.long_capital = 200;
+        let winding = begin_wind_down(state).expect("wind-down transition");
+        let queue = ClaimQueueState {
+            next_sequence: 0,
+            next_payable_sequence: 0,
+        };
+        let (state, queue, first) =
+            apply_pair_queued_close(&config(), winding, queue, address(11), 100, 0, 90)
+                .expect("first claim");
+        let (state, queue, second) =
+            apply_pair_queued_close(&config(), state, queue, address(12), 100, 0, 80)
+                .expect("second claim");
+        assert_eq!(
+            settle_fifo_claim(state, queue, second, 80),
+            Err(Error::InvalidState)
+        );
+        assert_eq!(
+            settle_fifo_claim(state, queue, first, 91),
+            Err(Error::InvalidState)
+        );
+        let (state, queue, first) =
+            settle_fifo_claim(state, queue, first, 90).expect("first claim settles");
+        assert_eq!(first.remaining_amount, 0);
+        let (state, queue, second) =
+            settle_fifo_claim(state, queue, second, 80).expect("second claim settles");
+        assert_eq!(second.remaining_amount, 0);
+        assert_eq!(queue.next_payable_sequence, 2);
+        assert_eq!(state.queued_claim_liability, 0);
+        assert!(maker_escrow_releasable(&state));
     }
 
     #[test]
