@@ -65,7 +65,7 @@ assert.match(ondoAdapter, /must never accept an arbitrary Ondo program/);
 assert.match(ondoAdapter, /Close and pro-rata wind-down remain permissionless/);
 
 const multiVenue = files.find(([path]) => path === "MULTI_VENUE_PRODUCT_LAYER.md")[1];
-assert.match(multiVenue, /134-product audit candidate/);
+assert.match(multiVenue, /136-product audit candidate/);
 assert.match(multiVenue, /three independent RPC domains/);
 assert.match(multiVenue, /external issuer\/provider trust boundaries/);
 
@@ -78,7 +78,7 @@ for (const primitive of ["checked_add", "checked_sub", "checked_mul", "checked_d
 const marketSource = await read("lib/markets.ts");
 assert.equal([...marketSource.matchAll(/market\("[A-Z]+on"[^\n]+"Stocks"/g)].length, 15, "exactly 15 Ondo stock references must be selected");
 assert.equal([...marketSource.matchAll(/market\("[A-Z]+on"[^\n]+"Commodities"/g)].length, 5, "exactly five Ondo commodity-linked references must be selected");
-assert.equal([...marketSource.matchAll(/category: "Pre-IPO"/g)].length, 7, "the observed PreStocks catalog must contain seven live-priced pinned references");
+assert.equal([...marketSource.matchAll(/category: "Pre-IPO"/g)].length, 8, "the frozen PreStocks launch catalog must contain eight pinned references");
 assert.ok(!marketSource.includes("xStocks"), "xStocks must remain shelved from the active market source");
 for (const name of ["Anthropic", "OpenAI", "Anduril", "Neuralink", "Kalshi", "Polymarket", "SpaceX"]) assert.ok(marketSource.includes(`name: "${name}"`), `${name} PreStocks reference must be pinned`);
 
