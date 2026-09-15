@@ -1,13 +1,50 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://levplay.example/audit/deployment-manifest.schema.json",
+  "$id": "https://levplay.app/audit/deployment-manifest.schema.json",
   "title": "LevPlay AAPL 2x pilot deployment",
   "type": "object",
   "additionalProperties": false,
-  "required": ["releaseCommit", "programId", "feeRecipient", "treasuryAuthority", "governance", "guardian", "multisigProgram", "markets"],
+  "required": [
+    "releaseCommit",
+    "releaseArtifacts",
+    "programId",
+    "programDataAddress",
+    "programLoader",
+    "upgradePolicy",
+    "upgradeAuthority",
+    "upgradeTimelockSeconds",
+    "feeRecipient",
+    "treasuryAuthority",
+    "governance",
+    "guardian",
+    "multisigProgram",
+    "markets"
+  ],
   "properties": {
     "releaseCommit": { "type": "string", "pattern": "^[a-fA-F0-9]{40}$" },
+    "releaseArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceSha256", "sbfSha256", "idlSha256", "sbomSha256", "toolchainImageDigest"],
+      "properties": {
+        "sourceSha256": { "$ref": "#/$defs/hash" },
+        "sbfSha256": { "$ref": "#/$defs/hash" },
+        "idlSha256": { "$ref": "#/$defs/hash" },
+        "sbomSha256": { "$ref": "#/$defs/hash" },
+        "toolchainImageDigest": { "type": "string", "pattern": "^sha256:[a-fA-F0-9]{64}$" }
+      }
+    },
     "programId": { "$ref": "#/$defs/address" },
+    "programDataAddress": { "$ref": "#/$defs/address" },
+    "programLoader": { "$ref": "#/$defs/address" },
+    "upgradePolicy": { "enum": ["frozen", "timelocked"] },
+    "upgradeAuthority": {
+      "oneOf": [
+        { "$ref": "#/$defs/address" },
+        { "type": "null" }
+      ]
+    },
+    "upgradeTimelockSeconds": { "type": "integer", "minimum": 0 },
     "feeRecipient": { "$ref": "#/$defs/address" },
     "treasuryAuthority": { "$ref": "#/$defs/address" },
     "governance": { "$ref": "#/$defs/address" },
@@ -23,20 +60,61 @@
       }
     }
   },
+  "allOf": [
+    {
+      "if": { "properties": { "upgradePolicy": { "const": "frozen" } }, "required": ["upgradePolicy"] },
+      "then": {
+        "properties": {
+          "upgradeAuthority": { "type": "null" },
+          "upgradeTimelockSeconds": { "const": 0 }
+        }
+      },
+      "else": {
+        "properties": {
+          "upgradeAuthority": { "$ref": "#/$defs/address" },
+          "upgradeTimelockSeconds": { "type": "integer", "minimum": 172800 }
+        }
+      }
+    }
+  ],
   "$defs": {
     "address": { "type": "string", "pattern": "^[1-9A-HJ-NP-Za-km-z]{32,44}$" },
     "hash": { "type": "string", "pattern": "^(0x)?[a-fA-F0-9]{64}$" },
     "baseMarket": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["marketState", "vault", "reserveVault", "standbyBps", "productMint", "xStockMint", "pythAccount", "pythOwner", "pythFeedId", "chainlinkAccount", "chainlinkOwner", "chainlinkFeedId", "adapterProgram", "adapterMarket", "leverage", "side"],
+      "required": [
+        "marketState",
+        "vault",
+        "reserveVault",
+        "standbyBps",
+        "productMint",
+        "sourceProvider",
+        "sourceAssetSymbol",
+        "sourceMint",
+        "sourceRegistryHash",
+        "pythAccount",
+        "pythOwner",
+        "pythFeedId",
+        "chainlinkAccount",
+        "chainlinkOwner",
+        "chainlinkFeedId",
+        "adapterProgram",
+        "adapterMarket",
+        "adapterBinaryHash",
+        "leverage",
+        "side"
+      ],
       "properties": {
         "marketState": { "$ref": "#/$defs/address" },
         "vault": { "$ref": "#/$defs/address" },
         "reserveVault": { "$ref": "#/$defs/address" },
         "standbyBps": { "type": "integer", "minimum": 1, "maximum": 500 },
         "productMint": { "$ref": "#/$defs/address" },
-        "xStockMint": { "const": "XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp" },
+        "sourceProvider": { "const": "ondo" },
+        "sourceAssetSymbol": { "const": "AAPLon" },
+        "sourceMint": { "$ref": "#/$defs/address" },
+        "sourceRegistryHash": { "$ref": "#/$defs/hash" },
         "pythAccount": { "$ref": "#/$defs/address" },
         "pythOwner": { "$ref": "#/$defs/address" },
         "pythFeedId": { "$ref": "#/$defs/hash" },
@@ -45,11 +123,22 @@
         "chainlinkFeedId": { "$ref": "#/$defs/hash" },
         "adapterProgram": { "$ref": "#/$defs/address" },
         "adapterMarket": { "$ref": "#/$defs/address" },
+        "adapterBinaryHash": { "$ref": "#/$defs/hash" },
         "leverage": { "const": 2 },
         "side": { "enum": ["long", "short"] }
       }
     },
-    "longMarket": { "allOf": [{ "$ref": "#/$defs/baseMarket" }, { "properties": { "side": { "const": "long" } } }] },
-    "shortMarket": { "allOf": [{ "$ref": "#/$defs/baseMarket" }, { "properties": { "side": { "const": "short" } } }] }
+    "longMarket": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMarket" },
+        { "properties": { "side": { "const": "long" } } }
+      ]
+    },
+    "shortMarket": {
+      "allOf": [
+        { "$ref": "#/$defs/baseMarket" },
+        { "properties": { "side": { "const": "short" } } }
+      ]
+    }
   }
 }

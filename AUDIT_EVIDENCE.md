@@ -9,8 +9,9 @@ Every row must link to immutable evidence for the same release commit. `Missing`
 | Threat model | [`programs/levplay/THREAT_MODEL.md`](./programs/levplay/THREAT_MODEL.md) | Present |
 | Security invariants | [`SECURITY_INVARIANTS.md`](./SECURITY_INVARIANTS.md) | Present |
 | Audit scope | [`AUDIT_SCOPE.md`](./AUDIT_SCOPE.md) | Present |
-| Deployment manifest schema | [`audit/deployment-manifest.schema.json`](./audit/deployment-manifest.schema.json) | Present |
+| Deployment manifest schema | [`audit/deployment-manifest.schema.json`](./audit/deployment-manifest.schema.json) | Present; current Ondo source boundary plus source/SBF/IDL/SBOM/toolchain hashes required |
 | TypeScript release-gate tests | [`tests/source-security.mjs`](./tests/source-security.mjs) | Present |
+| Release artifact evidence generator | [`lib/release-evidence.mjs`](./lib/release-evidence.mjs), [`scripts/generate-release-evidence.mjs`](./scripts/generate-release-evidence.mjs), [`tests/release-evidence.mjs`](./tests/release-evidence.mjs) | Present; rejects missing, empty, oversized, duplicated or unpinned inputs |
 | Economic model tests | [`tests/protocol-model.mjs`](./tests/protocol-model.mjs) | Present |
 | Standby reference engine | [`lib/risk-engine.ts`](./lib/risk-engine.ts) | Present |
 | Standby/adversarial vectors | [`tests/risk-engine.mjs`](./tests/risk-engine.mjs) | Present |

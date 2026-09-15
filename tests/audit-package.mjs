@@ -16,15 +16,22 @@ const required = [
   "rust-toolchain.toml",
   "programs/levplay-core/Cargo.toml",
   "programs/levplay-core/src/lib.rs",
+  "programs/levplay-core/src/risk_vault.rs",
+  "programs/levplay-core/src/program_boundary.rs",
   "lib/backing-engine.ts",
   "lib/venue-registry.ts",
   "lib/product-registry.ts",
   "tests/backing-engine.mjs",
   "tests/venue-registry.mjs",
   "tests/product-registry.mjs",
+  "lib/release-evidence.mjs",
+  "scripts/generate-release-evidence.mjs",
+  "tests/release-evidence.mjs",
   "lib/risk-engine.ts",
   "tests/risk-engine.mjs",
   "programs/levplay/INTERFACE.md",
+  "RISK_VAULT_V1.md",
+  "PROGRAM_BOUNDARY.md",
   "programs/levplay/THREAT_MODEL.md",
   "audit/deployment-manifest.schema.json"
 ];
@@ -46,6 +53,15 @@ assert.equal(schema.$defs.baseMarket.additionalProperties, false);
 assert.equal(schema.$defs.baseMarket.properties.leverage.const, 2);
 assert.ok(schema.$defs.baseMarket.required.includes("reserveVault"));
 assert.deepEqual([schema.$defs.baseMarket.properties.standbyBps.minimum, schema.$defs.baseMarket.properties.standbyBps.maximum], [1, 500]);
+assert.equal(schema.$defs.baseMarket.properties.sourceProvider.const, "ondo");
+assert.equal(schema.$defs.baseMarket.properties.sourceAssetSymbol.const, "AAPLon");
+assert.ok(schema.$defs.baseMarket.required.includes("sourceMint"));
+assert.ok(schema.$defs.baseMarket.required.includes("sourceRegistryHash"));
+assert.ok(schema.$defs.baseMarket.required.includes("adapterBinaryHash"));
+assert.ok(!("xStockMint" in schema.$defs.baseMarket.properties), "shelved xStocks must not remain in deployment schema");
+assert.deepEqual(schema.properties.releaseArtifacts.required, ["sourceSha256", "sbfSha256", "idlSha256", "sbomSha256", "toolchainImageDigest"]);
+assert.equal(schema.properties.upgradePolicy.enum.includes("frozen"), true);
+assert.equal(schema.properties.upgradePolicy.enum.includes("timelocked"), true);
 
 const invariants = files.find(([path]) => path === "SECURITY_INVARIANTS.md")[1];
 assert.match(invariants, /share no vault, product mint, adapter market, nonce namespace or solvency accounting/);
