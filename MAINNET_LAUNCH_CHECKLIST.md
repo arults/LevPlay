@@ -69,7 +69,8 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 136 
 - [ ] Burn shares before redemption assets leave the vault; preserve FIFO claims when immediate liquidity is unavailable.
 - [ ] Make rebalancing permissionless, deterministic and non-custodial; emergency action may only lower absolute exposure.
 - [ ] Implement `enter_standby` and `resume_from_standby`; prove Standby has zero exposure and cannot resume from an oracle-only price change.
-- [ ] Produce a reproducible SBF build, IDL, SBOM, source commit and binary hashes.
+- [x] Require source/SBF/IDL/SBOM/toolchain hashes in the deployment schema and provide a fail-closed artifact hashing CLI.
+- [ ] Produce the actual reproducible SBF build, IDL, SBOM, source archive and independently matched binary hashes.
 - [ ] Deploy and verify devnet, then mainnet program/account IDs; freeze the audited canary release or use an audited timelocked upgrade path.
 
 ## C. Atomic wallet execution — Critical
