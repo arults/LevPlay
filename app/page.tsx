@@ -67,7 +67,7 @@ export default function LandingPage() {
     </section>
 
     <section className="landing-section preipo-section">
-      <div><span className="eyebrow">Private markets, explicit limits</span><h2>Pre-IPO leverage—researched, not presumed.</h2><p>LevPlay includes paper models for currently priced Anthropic, OpenAI, Anduril, Neuralink, Figure AI, Kalshi, Polymarket and SpaceX PreStocks references. Unpriced catalog entries stay hidden instead of displaying a misleading market.</p></div>
+      <div><span className="eyebrow">Private markets, explicit limits</span><h2>Pre-IPO leverage—researched, not presumed.</h2><p>LevPlay includes paper models for currently priced Anthropic, OpenAI, Anduril, Neuralink, Figure AI, Kalshi, Polymarket and SpaceX PreStocks references. Unavailable references remain visibly blocked instead of displaying a misleading price.</p></div>
       <div className="preipo-proof"><strong>Why execution is locked</strong><p>PreStocks provide bearer tokens tracking private-company economic exposure, not company shares or ownership rights. They may have no guaranteed secondary liquidity and retain administrative controls. A LevPlay market remains blocked until two independent settlement feeds, an audited 2× long route, a separately funded short route, capacity and deterministic unwind are proven.</p><span><LockKeyhole size={15}/>Paper preview available · real-money signing disabled</span></div>
     </section>
 

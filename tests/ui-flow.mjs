@@ -23,6 +23,8 @@ assert.match(app, /Funded Standby floor/, "trade UI must explain the residual-va
 assert.match(app, /\[2, 3, 5\]/, "Ondo stocks and commodity-linked products must expose 2x, 3x and 5x choices");
 assert.match(app, /selected\.category === "Pre-IPO" \? \[2\]/, "PreStocks must remain limited to 2x");
 assert.match(app, /TabsTrigger value="Pre-IPO"/, "pre-IPO references must have a distinct market category");
+assert.match(app, /markets\.find\(\(market\) => market\.category === next\)/, "changing categories must select a visible market");
+assert.match(app, /settlement-ready.*display references online/, "footer must distinguish settlement admission from display-price availability");
 assert.ok(!app.includes('TabsTrigger value="Hong Kong"'), "Hong Kong products must remain shelved");
 assert.match(app, /Public stocks \+ commodities via Ondo/, "active providers must be clear");
 assert.match(app, /value - exitPosition\.costBasis/, "realized P\/L must include the entry fee");

@@ -233,6 +233,7 @@ export default function TradingApp() {
   const visible = useMemo(() => markets.filter((market) => market.category === category && `${market.ticker} ${market.name}`.toLowerCase().includes(query.toLowerCase())), [markets, category, query]);
   const categoryCounts = useMemo(() => ({ Stocks: markets.filter((market) => market.category === "Stocks").length, "Pre-IPO": markets.filter((market) => market.category === "Pre-IPO").length, Commodities: markets.filter((market) => market.category === "Commodities").length }), [markets]);
   const verifiedCount = markets.filter((market) => market.verified).length;
+  const displayCount = markets.filter((market) => Boolean(market.price)).length;
   const oracles = selected.oracles || [];
   const review = () => {
     if (!walletAddress && !paperMode) { setNotice("Connect a wallet or use paper preview first."); return; }
@@ -286,7 +287,7 @@ export default function TradingApp() {
     <section className="trading-grid">
       <div className="market-panel">
         <div className="panel-tools">
-          <Tabs value={category} onValueChange={(value) => setCategory(value as MarketCategory)}><TabsList className="category-tabs"><TabsTrigger value="Stocks"><Landmark size={15}/>US <span>{categoryCounts.Stocks}</span></TabsTrigger><TabsTrigger value="Pre-IPO"><Sparkles size={15}/>Pre-IPO <span>{categoryCounts["Pre-IPO"]}</span></TabsTrigger><TabsTrigger value="Commodities"><Gem size={15}/>Commodities <span>{categoryCounts.Commodities}</span></TabsTrigger></TabsList></Tabs>
+          <Tabs value={category} onValueChange={(value) => { const next = value as MarketCategory; setCategory(next); const first = markets.find((market) => market.category === next); if (first) { setSelectedSymbol(first.symbol); if (next === "Pre-IPO") setLeverage(2); } }}><TabsList className="category-tabs"><TabsTrigger value="Stocks"><Landmark size={15}/>US <span>{categoryCounts.Stocks}</span></TabsTrigger><TabsTrigger value="Pre-IPO"><Sparkles size={15}/>Pre-IPO <span>{categoryCounts["Pre-IPO"]}</span></TabsTrigger><TabsTrigger value="Commodities"><Gem size={15}/>Commodities <span>{categoryCounts.Commodities}</span></TabsTrigger></TabsList></Tabs>
           <label className="search"><Search size={16}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search" aria-label="Search markets"/></label>
           <button className="refresh" onClick={() => void refresh()} aria-label="Refresh verified market data"><RefreshCw className={loadingMarkets ? "spin" : ""} size={16}/></button>
         </div>
@@ -367,7 +368,7 @@ export default function TradingApp() {
       <div className="footer-brand"><span><LogoMark/>LevPlay</span><p>Liquidation-free leveraged stocks on Solana. Experimental software; not investment advice.</p></div>
       <nav><strong>Protocol</strong><a href="#how-it-works">How it works</a><a href="#oracles">Oracle policy</a><a href="#risk">Risk disclosure</a><a href="#security">Security gates</a></nav>
       <nav><strong>Resources</strong><a href="https://docs.ondo.finance/ondo-stocks" target="_blank" rel="noreferrer">Ondo docs <ExternalLink size={11}/></a><a href="https://solana.com/docs" target="_blank" rel="noreferrer">Solana docs <ExternalLink size={11}/></a><a href="https://hackathons.solana.com/hackathons/stocklana" target="_blank" rel="noreferrer">Stocklana <ExternalLink size={11}/></a></nav>
-      <nav><strong>Launch status</strong><span>{protocol.executionEnabled ? "Mainnet gates passed" : "Preview · signing locked"}</span><span>{verifiedCount}/{markets.length} references pass live data checks</span><span>2×, 3× and 5× · long and short · individually gated</span></nav>
+      <nav><strong>Launch status</strong><span>{protocol.executionEnabled ? "Mainnet gates passed" : "Preview · signing locked"}</span><span>{verifiedCount}/{markets.length} settlement-ready · {displayCount}/{markets.length} display references online</span><span>2×, 3× and 5× · long and short · individually gated</span></nav>
       <div className="footer-legal"><span>© 2026 LevPlay</span><p>Ondo and PreStocks are tokenized economic exposures subject to issuer controls, liquidity risks and jurisdiction restrictions. PreStocks confer no equity ownership rights. Availability does not imply eligibility.</p></div>
     </footer>
 
