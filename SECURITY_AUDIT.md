@@ -14,12 +14,14 @@ Deterministic checks were rerun on 2026-09-15 against the production build. Brow
 |---|---|
 | Protocol-model invariants | 18/18 passed, including fee-on-top, Max-balance safety and opposite-signed 2× long/short outcomes |
 | Standby risk-engine vectors | Integer-only funded-floor model passed deterministic cases plus 588 adversarial long/short intervals; unfunded floors are reported insolvent |
+| Rust protocol kernel | Pinned Rust 1.85 `no_std` core passed 11 unit/adversarial tests, zero-warning Clippy with arithmetic-side-effect denial, and rustfmt |
+| Backing admission vectors | 11 fixed admission cases and 256 capacity-boundary vectors passed; no production venue is inferred or admitted |
 | Curated xStocks assets | 35 exact pinned Solana mints: 15 US stocks, 15 Hong Kong stocks and 5 commodity ETFs; live verification is enforced by CI |
 | Token program and extensions | 20/20 Token-2022 mints verified, including scaled UI, pause state and transfer-hook guard |
 | Stock oracle registry | 10/10 stock markets expose both Pyth and Chainlink entries |
 | Commodity launch gate | 5/5 remain blocked until equivalent oracle/backing evidence exists |
-| Source security assertions | 68 fail-closed checks passed |
-| UI lifecycle assertions | 33 lifecycle, catalog, Standby-disclosure and responsive checks passed |
+| Source security assertions | 72 fail-closed checks passed |
+| UI lifecycle assertions | 44 lifecycle, catalog, Standby-disclosure and responsive checks passed |
 | Audit-package assertions | Scope, evidence index, schema and invariant checks passed |
 | Browser user-flow QA | Long flow retained; short flow verified as AAPL2S → $50 capital + $0.25 fee → +5% reference move → $45 proceeds → −$5.25 fee-inclusive P/L → close/history. No application console errors. |
 | Static analysis | ESLint passed |
@@ -27,7 +29,7 @@ Deterministic checks were rerun on 2026-09-15 against the production build. Brow
 | Production dependency scan | No known vulnerabilities reported by the package-manager advisory database |
 | Mainnet release verification | Requires two independent RPCs to validate program, treasury and multisig account state; environment strings alone cannot unlock signing |
 
-These results prove the interface, read paths and modeled safety rules. They do not prove a Solana program that does not yet exist, economic solvency, backing-liquidity availability, oracle behavior under attack, or legal eligibility.
+These results prove the interface, read paths, deterministic Rust kernel and modeled safety rules. They do not prove a value-moving Solana program that does not yet exist, economic solvency, backing-liquidity availability, oracle account parsing under attack, or legal eligibility.
 
 ## Remediated findings — 2026-09-15
 
@@ -81,14 +83,14 @@ The live AAPLx mint exposes mint, freeze, pause and permanent-delegate authoriti
 
 ## Open critical blockers
 
-1. The integer-only reference engine and audit vectors exist, but no LevPlay Rust/SBF program is deployed.
+1. The checked Rust protocol kernel and audit vectors exist, but no Solana entrypoint, account processor, Token-2022 CPI layer or SBF program is deployed.
 2. The vault/execution adapter has not been implemented against a confirmed liquid backing venue for every market.
 3. No independent audit, fuzz suite, local-validator integration suite or mainnet-fork economic stress test has completed.
 4. No governance multisig, guardian multisig or fee treasury has been supplied.
 5. No production RPC quorum, monitoring, incident response or permissionless keeper set is live.
 6. Securities-law and xStocks jurisdiction controls are not integrated.
 7. A 5× product requires dependable leverage liquidity and faster emergency deleveraging; it must not launch merely because the UI can model it.
-8. The current environment has no Solana/Anchor toolchain, deployer authority or funded deployment wallet; no reproducible program binary can be built or deployed here.
+8. Clean GitHub CI has the pinned Rust compiler, but the current local environment has no Solana/Anchor toolchain, deployer authority or funded deployment wallet; no reproducible SBF binary can yet be built or deployed here.
 9. The owner has created the private `arults/LevPlay` GitHub repository; the verified source snapshot must be synchronized after every release.
 10. No dedicated Codex Security or Solana audit service is connected in this environment. Internal automated review and GitHub CI do not replace the required independent audit.
 11. GitHub branch protection and signed-commit enforcement are not enabled; the repository owner must apply the policy before mainnet release provenance can pass.

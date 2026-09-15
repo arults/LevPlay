@@ -20,6 +20,7 @@ Catalog expansion is not a launch-gate substitute. The 15 Hong Kong references a
 | Wallet-direct fee-on-top flow | Critical | UI/model: $500 capital + $2.50 fee = $502.50 debit; Max reserves fee | Passed at model/UI level |
 | Funded Standby model | Critical | Integer reference engine plus 588 adversarial long/short intervals; fake dust fails insolvent | Passed at model level |
 | Backing admission model | Critical | Fixed-account, non-recourse, capacity, bounded-loss and independent-exit checks with adversarial vectors | Passed at model level; no venue admitted |
+| Rust protocol kernel | Critical | Pinned Rust 1.85 `no_std` core; 11 unit/adversarial tests, Clippy arithmetic denial and rustfmt in CI | Passed at core level; not an SBF program |
 | Read-only market and wallet verification | High | 35 pinned xStock mints (15 US, 15 Hong Kong, 5 commodity), Token-2022 checks, dual-feed registry, mainnet genesis | Passed |
 | Executable Solana program | Critical | Interface and threat model only; no Rust/SBF artifact | Pending |
 | Leverage backing venue | Critical | xStocks spot/RFQ researched; no audited long leverage adapter or separately proven short route/capacity | Pending |
@@ -47,6 +48,7 @@ Catalog expansion is not a launch-gate substitute. The 15 Hong Kong references a
 
 ## B. Solana program — Critical
 
+- [x] Compile and test a dependency-free `no_std` Rust kernel for fees, shares, caps, oracle agreement, isolation, Standby, insolvency and capacity.
 - [ ] Implement the frozen [instruction interface](./programs/levplay/INTERFACE.md) in a pinned Solana/Anchor toolchain.
 - [ ] Isolate each market in separate state, backing and accounting PDAs.
 - [ ] Use checked integer arithmetic and explicit decimal/exponent normalization; no floats.

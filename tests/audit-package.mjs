@@ -9,6 +9,11 @@ const required = [
   "SECURITY.md",
   "PROTOCOL_SPEC.md",
   "BACKING_VENUE_DECISION.md",
+  "Cargo.toml",
+  "Cargo.lock",
+  "rust-toolchain.toml",
+  "programs/levplay-core/Cargo.toml",
+  "programs/levplay-core/src/lib.rs",
   "lib/backing-engine.ts",
   "tests/backing-engine.mjs",
   "lib/risk-engine.ts",
@@ -19,7 +24,10 @@ const required = [
 ];
 
 const files = await Promise.all(required.map(async (path) => [path, await read(path)]));
-for (const [path, content] of files) assert.ok(content.trim().length > 200, `${path} must be substantive`);
+for (const [path, content] of files) {
+  const minimumLength = path === "Cargo.lock" || path === "rust-toolchain.toml" ? 40 : 200;
+  assert.ok(content.trim().length > minimumLength, `${path} must be substantive`);
+}
 
 const scope = files.find(([path]) => path === "AUDIT_SCOPE.md")[1];
 assert.match(scope, /AAPL2L/);
@@ -43,6 +51,12 @@ const venueDecision = files.find(([path]) => path === "BACKING_VENUE_DECISION.md
 assert.match(venueDecision, /No production backing route is admitted/);
 assert.match(venueDecision, /AAPL2S.*bounded-loss derivative/s);
 assert.match(venueDecision, /independent emergency exit route/);
+
+const rustCore = files.find(([path]) => path === "programs/levplay-core/src/lib.rs")[1];
+assert.match(rustCore, /#!\[no_std\]/, "Rust core must remain SBF-compatible at the language boundary");
+assert.match(rustCore, /#!\[forbid\(unsafe_code\)\]/, "unsafe Rust is forbidden");
+assert.ok(!/\bf(32|64)\b/.test(rustCore), "protocol arithmetic must not use floating-point values");
+for (const primitive of ["checked_add", "checked_sub", "checked_mul", "checked_div"]) assert.ok(rustCore.includes(primitive), `${primitive} must remain explicit`);
 
 const marketSource = await read("lib/markets.ts");
 assert.equal([...marketSource.matchAll(/category: "Stocks"/g)].length, 15, "exactly 15 public-stock references must be pinned");

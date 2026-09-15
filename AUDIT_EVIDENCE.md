@@ -17,12 +17,15 @@ Every row must link to immutable evidence for the same release commit. `Missing`
 | Backing-venue decision record | [`BACKING_VENUE_DECISION.md`](./BACKING_VENUE_DECISION.md) | Present; no venue admitted |
 | Backing admission reference engine | [`lib/backing-engine.ts`](./lib/backing-engine.ts) | Present |
 | Backing admission/capacity tests | [`tests/backing-engine.mjs`](./tests/backing-engine.mjs) | Present |
+| Pinned Rust workspace/toolchain | [`Cargo.toml`](./Cargo.toml), [`Cargo.lock`](./Cargo.lock), [`rust-toolchain.toml`](./rust-toolchain.toml) | Present |
+| Checked `no_std` Rust protocol core | [`programs/levplay-core/src/lib.rs`](./programs/levplay-core/src/lib.rs) | Present; not an SBF program |
+| Rust core unit/adversarial tests | In-crate test module; CI runs test, Clippy and rustfmt | Present; instruction tests still missing |
 | Solana Rust program source | — | **Missing** |
 | Fixed long adapter source | — | **Missing** |
 | Fixed short adapter source | — | **Missing** |
 | Signed venue capacity/production terms | — | **Missing** |
 | Independent emergency exit route | — | **Missing** |
-| Cargo/Anchor lockfiles | — | **Missing** |
+| Solana/Anchor dependency lockfiles | Workspace lock present; Solana program dependencies absent | **Incomplete** |
 | Reproducible SBF/IDL/SBOM | — | **Missing** |
 | Local-validator/property/fuzz evidence | — | **Missing** |
 | Devnet deployment and test ledger | — | **Missing** |
