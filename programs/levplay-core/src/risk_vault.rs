@@ -6,8 +6,8 @@
 //! inputs to fixed PDAs, token accounts and audited adapters.
 
 use crate::{
-    mul_div_ceil, settle_interval, Address, Error, Result, Settlement, Side, VaultState, BPS,
-    PILOT_LEVERAGE_BPS,
+    mul_div_ceil, mul_div_floor, Address, Error, Result, Settlement, Side, VaultMode, VaultState,
+    BPS, PILOT_LEVERAGE_BPS,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -128,8 +128,7 @@ pub fn validate_risk_vault_config(config: &RiskVaultConfig) -> Result<()> {
         || config.side_capital_cap > config.aggregate_capital_cap
         || config.maximum_up_move_bps == 0
         || config.maximum_up_move_bps > 10_000
-        || config.maximum_down_move_bps == 0
-        || config.maximum_down_move_bps > 10_000
+        || config.maximum_down_move_bps != 10_000
         || config.unwind_bps > 1_000
         || config.minimum_reserve_per_side == 0
         || config.minimum_maker_commitment == 0
@@ -341,17 +340,11 @@ pub fn reconcile_pair_settlement(
     if long.side != Side::Long || short.side != Side::Short {
         return Err(Error::NotIsolated);
     }
-    let move_outside_funded_envelope = if move_bps.is_negative() {
-        move_bps.unsigned_abs() > u32::from(config.maximum_down_move_bps)
-    } else {
-        u32::try_from(move_bps).map_err(|_| Error::ArithmeticOverflow)?
-            > u32::from(config.maximum_up_move_bps)
-    };
-    if move_outside_funded_envelope {
+    if move_bps < -10_000 {
         return Err(Error::InvalidOracle);
     }
-    let long_result = settle_interval(long, move_bps)?;
-    let short_result = settle_interval(short, move_bps)?;
+    let long_result = settle_nonrecourse_interval(long, move_bps)?;
+    let short_result = settle_nonrecourse_interval(short, move_bps)?;
     let expected_external_pnl = long_result
         .pnl
         .checked_add(short_result.pnl)
@@ -367,6 +360,84 @@ pub fn reconcile_pair_settlement(
         short: short_result,
         expected_external_pnl,
         reported_external_pnl,
+    })
+}
+
+fn settle_nonrecourse_interval(current: VaultState, move_bps: i32) -> Result<Settlement> {
+    if current.mode != VaultMode::Active {
+        return Ok(Settlement {
+            state: current,
+            pnl: 0,
+            reserve_draw: 0,
+            uncovered_deficit: 0,
+        });
+    }
+    if move_bps < -10_000 {
+        return Err(Error::InvalidOracle);
+    }
+    let direction = if current.side == Side::Long {
+        1_i128
+    } else {
+        -1_i128
+    };
+    let raw_pnl = i128::from(current.exposure)
+        .checked_mul(i128::from(move_bps))
+        .ok_or(Error::ArithmeticOverflow)?
+        .checked_mul(direction)
+        .ok_or(Error::ArithmeticOverflow)?
+        .checked_div(i128::from(BPS))
+        .ok_or(Error::DivisionByZero)?;
+    let raw_nav = i128::from(current.nav)
+        .checked_add(raw_pnl)
+        .ok_or(Error::ArithmeticOverflow)?;
+
+    // Non-recourse settlement clips the holder claim at zero. The counterparty
+    // cannot collect a negative balance after the holder's capital is exhausted.
+    let holder_claim = if raw_nav <= 0 {
+        0
+    } else {
+        u64::try_from(raw_nav).map_err(|_| Error::ArithmeticOverflow)?
+    };
+    let floor = mul_div_ceil(current.reference_nav, u64::from(current.standby_bps), BPS)?;
+    let required_floor_reserve = floor.saturating_sub(holder_claim);
+    let reserve_draw = required_floor_reserve.min(current.reserve);
+    let nav = holder_claim
+        .checked_add(reserve_draw)
+        .ok_or(Error::ArithmeticOverflow)?;
+    let uncovered_deficit = floor.saturating_sub(nav);
+    let mode = if uncovered_deficit > 0 {
+        VaultMode::Insolvent
+    } else if holder_claim <= floor {
+        VaultMode::Standby
+    } else {
+        VaultMode::Active
+    };
+    let exposure = if mode == VaultMode::Active {
+        mul_div_floor(nav, u64::from(current.leverage_bps), BPS)?
+    } else {
+        0
+    };
+    let effective_pnl = i128::from(holder_claim)
+        .checked_sub(i128::from(current.nav))
+        .ok_or(Error::ArithmeticOverflow)?;
+    Ok(Settlement {
+        state: VaultState {
+            mode,
+            nav,
+            exposure,
+            reserve: current
+                .reserve
+                .checked_sub(reserve_draw)
+                .ok_or(Error::ArithmeticOverflow)?,
+            epoch: current
+                .epoch
+                .checked_add(1)
+                .ok_or(Error::ArithmeticOverflow)?,
+            ..current
+        },
+        pnl: effective_pnl,
+        reserve_draw,
+        uncovered_deficit,
     })
 }
 
@@ -395,7 +466,7 @@ mod tests {
             aggregate_capital_cap: 1_000_000_000,
             side_capital_cap: 1_000_000_000,
             maximum_up_move_bps: 5_000,
-            maximum_down_move_bps: 5_000,
+            maximum_down_move_bps: 10_000,
             unwind_bps: 100,
             minimum_reserve_per_side: 2_000_000,
             minimum_maker_commitment: 100_000_000,
@@ -474,7 +545,7 @@ mod tests {
         assert_eq!(quote.unmatched_long_exposure, 0);
         assert_eq!(quote.unmatched_short_exposure, 0);
         assert_eq!(quote.required_long_maker_funding, 100_000_000);
-        assert_eq!(quote.required_short_loss_collateral, 100_000_000);
+        assert_eq!(quote.required_short_loss_collateral, 200_000_000);
     }
 
     #[test]
@@ -490,7 +561,7 @@ mod tests {
         let quote =
             quote_open(&config(), &active(), Side::Short, 100_000_000, 200).expect("short quote");
         assert_eq!(quote.unmatched_short_exposure, 200_000_000);
-        assert_eq!(quote.required_short_loss_collateral, 100_000_000);
+        assert_eq!(quote.required_short_loss_collateral, 200_000_000);
     }
 
     #[test]
@@ -569,13 +640,30 @@ mod tests {
     }
 
     #[test]
-    fn settlement_outside_funded_epoch_bound_fails_closed() {
+    fn price_jump_clips_short_loss_without_trapping_settlement() {
+        let settled = reconcile_pair_settlement(
+            &config(),
+            position(Side::Long, 100_000_000),
+            position(Side::Short, 100_000_000),
+            15_000,
+            200_000_000,
+            0,
+        )
+        .expect("non-recourse gap settlement");
+        assert_eq!(settled.short.pnl, -100_000_000);
+        assert_eq!(settled.short.state.nav, 1_000_000);
+        assert_eq!(settled.short.state.mode, crate::VaultMode::Standby);
+        assert_eq!(settled.expected_external_pnl, 200_000_000);
+    }
+
+    #[test]
+    fn impossible_negative_stock_price_is_rejected() {
         assert_eq!(
             reconcile_pair_settlement(
                 &config(),
                 position(Side::Long, 100_000_000),
                 position(Side::Short, 100_000_000),
-                5_001,
+                -10_001,
                 0,
                 0
             ),

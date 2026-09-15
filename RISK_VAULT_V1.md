@@ -23,7 +23,7 @@ matched exposure     = min(E_L, E_S)
 unmatched long       = E_L - matched exposure
 unmatched short      = E_S - matched exposure
 long maker funding   = full long exposure × (L - 1) / L
-short loss collateral= full short exposure × maximum funded down-move per epoch
+short gain collateral= full short exposure × 100% maximum stock decline
 ```
 
 The two sides retain distinct market, reserve and maker-collateral accounts. Matching reduces active hedge usage, but does not reduce required escrow: either side may close first, so the remaining side must be independently fundable. Matching is a contractual PnL transfer inside the clearing venue, not authority to seize another market's vault. A side cannot create an unfunded claim against the other side.
@@ -35,7 +35,7 @@ The venue starts `Locked`. `admit_risk_vault` can move it to `Active` only when:
 1. all mints, markets, reserve vaults, maker vaults and maker identities are nonzero and unique;
 2. two distinct maker identities are pinned;
 3. both isolated reserves meet the configured minimum;
-4. long extra funding and short maximum-loss collateral are already escrowed;
+4. long extra funding and enough short-gain collateral for a 100% stock decline are already escrowed;
 5. both unwind capacities are sufficient;
 6. the commitment remains valid through the minimum wind-down horizon; and
 7. immutable side and aggregate caps are valid.
@@ -44,7 +44,7 @@ New minting stops on expiry, insufficient funding, insufficient reserve, insuffi
 
 ## Settlement
 
-The existing checked-integer settlement kernel calculates each side independently. Pair reconciliation requires the external backing PnL to agree with the net long-plus-short PnL within an explicit integer tolerance. A move outside the funded epoch envelope fails closed; the SBF wrapper must enter Standby and reduce exposure rather than settling an unfunded claim.
+The checked-integer non-recourse settlement kernel calculates each side independently. Pair reconciliation requires external backing PnL to agree with the net long-plus-short effective PnL within an explicit integer tolerance. Holder losses are contractually clipped at contributed NAV: a gap beyond the knockout threshold cannot create a negative wallet balance or block settlement. The isolated reserve funds the residual Standby floor. A price below zero is rejected as invalid, while positive gaps remain settleable; this is why the short-gain escrow covers the stock's full possible 100% decline.
 
 Standby is zero directional exposure at a funded residual NAV. It cannot recover from price movement alone. Recapitalization, valid oracles and restored capacity are required before a timelocked resume.
 
@@ -57,3 +57,4 @@ Open must atomically transfer capital, transfer the 50 bps entry fee, reconcile 
 ## Truth boundary
 
 The vault makes holder positions non-margin-liquidatable. It does not guarantee principal, continuous 2x tracking, issuer availability or recovery from Standby. Exact tracking is available only inside the funded and audited settlement envelope. xStocks issuer, oracle, liquidity, legal and smart-contract risks remain external trust boundaries.
+

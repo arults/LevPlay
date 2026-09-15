@@ -26,7 +26,7 @@ Deliverable: signed approval/terms and a technical onboarding package. Never sen
 - Capital must settle into program-controlled USDC escrow before it counts as capacity. A letter or API limit alone is insufficient.
 - Maker keys must not control governance, guardian, treasury or user backing.
 
-Provisional $1,000 canary envelope at 2x: a completely unmatched $1,000 long requires approximately $1,000 of additional prepaid long funding, plus its isolated floor/unwind reserve. A completely unmatched short requires the configured maximum-loss collateral plus its isolated reserve. The final amounts must come from the independent quantitative review and be committed separately for both failure directions.
+Provisional $1,000 canary envelope at 2x: a completely unmatched $1,000 long requires approximately $1,000 of additional prepaid long funding, plus its isolated floor/unwind reserve. A completely unmatched $1,000 short requires $2,000 of prepaid counterparty collateral to fund the maximum 2x gain on a 100% stock decline, plus its isolated floor/unwind reserve. Holder loss is capped at contributed NAV if the stock rises through the Standby threshold. The final amounts must come from the independent quantitative review and be committed separately for both failure directions.
 
 ## 4. Governance and treasury signers
 
@@ -63,3 +63,4 @@ Deliverable: tested runbooks and machine-verifiable endpoints/alerts, without co
 - Observe and reconcile for seven days before any cohort or cap expansion.
 
 Until every deliverable is present, the execution switch remains false by design.
+
