@@ -217,20 +217,13 @@ mod tests {
         let mut lamports = 1;
         let account = account_info(&key, &spl_token::ID, true, &mut lamports, &mut data);
         assert!(validate_legacy_token_account(&account, &mint, &authority, true).is_ok());
-        assert!(validate_legacy_token_account(
-            &account,
-            &Pubkey::new_unique(),
-            &authority,
-            true
-        )
-        .is_err());
-        assert!(validate_legacy_token_account(
-            &account,
-            &mint,
-            &Pubkey::new_unique(),
-            true
-        )
-        .is_err());
+        assert!(
+            validate_legacy_token_account(&account, &Pubkey::new_unique(), &authority, true)
+                .is_err()
+        );
+        assert!(
+            validate_legacy_token_account(&account, &mint, &Pubkey::new_unique(), true).is_err()
+        );
 
         token.delegate = COption::Some(delegate);
         token.delegated_amount = 1;
@@ -260,14 +253,7 @@ mod tests {
         let mut lamports = 1;
         let account = account_info(&key, &spl_token_2022::ID, true, &mut lamports, &mut data);
         assert!(validate_product_mint(&account, &key, &authority, 6, true).is_ok());
-        assert!(validate_product_mint(
-            &account,
-            &key,
-            &Pubkey::new_unique(),
-            6,
-            true
-        )
-        .is_err());
+        assert!(validate_product_mint(&account, &key, &Pubkey::new_unique(), 6, true).is_err());
 
         let wrong_program = spl_token::ID;
         let mut lamports = 1;
