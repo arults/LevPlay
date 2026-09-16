@@ -335,13 +335,7 @@ mod tests {
         let authority = Pubkey::new_unique();
         let mut lamports = 1;
         let mut data = [0_u8; 9];
-        let account = account_info(
-            &key,
-            &spl_token_2022::ID,
-            false,
-            &mut lamports,
-            &mut data,
-        );
+        let account = account_info(&key, &spl_token_2022::ID, false, &mut lamports, &mut data);
         assert_eq!(
             validate_product_mint(&account, &key, &authority, 6, false),
             Err(ProgramError::InvalidAccountData)
