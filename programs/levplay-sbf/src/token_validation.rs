@@ -258,13 +258,7 @@ mod tests {
         let mut data = vec![0_u8; Token2022Mint::LEN];
         Token2022Mint::pack(mint, &mut data).unwrap();
         let mut lamports = 1;
-        let account = account_info(
-            &key,
-            &spl_token_2022::ID,
-            true,
-            &mut lamports,
-            &mut data,
-        );
+        let account = account_info(&key, &spl_token_2022::ID, true, &mut lamports, &mut data);
         assert!(validate_product_mint(&account, &key, &authority, 6, true).is_ok());
         assert!(validate_product_mint(
             &account,
@@ -302,13 +296,7 @@ mod tests {
         let mut data = vec![0_u8; Token2022Account::LEN];
         Token2022Account::pack(token, &mut data).unwrap();
         let mut lamports = 1;
-        let account = account_info(
-            &key,
-            &spl_token_2022::ID,
-            true,
-            &mut lamports,
-            &mut data,
-        );
+        let account = account_info(&key, &spl_token_2022::ID, true, &mut lamports, &mut data);
         assert!(validate_product_token_account(&account, &mint, &authority, true).is_ok());
 
         token.state = Token2022AccountState::Frozen;
@@ -316,13 +304,7 @@ mod tests {
         let mut data = vec![0_u8; Token2022Account::LEN];
         Token2022Account::pack(token, &mut data).unwrap();
         let mut lamports = 1;
-        let account = account_info(
-            &key,
-            &spl_token_2022::ID,
-            true,
-            &mut lamports,
-            &mut data,
-        );
+        let account = account_info(&key, &spl_token_2022::ID, true, &mut lamports, &mut data);
         assert_eq!(
             validate_product_token_account(&account, &mint, &authority, true),
             Err(ProgramError::InvalidAccountData)
