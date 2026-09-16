@@ -23,6 +23,7 @@ const required = [
   "programs/levplay-sbf/Cargo.toml",
   "programs/levplay-sbf/src/lib.rs",
   "programs/levplay-sbf/src/account_validation.rs",
+  "programs/levplay-sbf/src/token_validation.rs",
   "programs/levplay-sbf/README.md",
   ".github/workflows/sbf-build.yml",
   "lib/backing-engine.ts",
@@ -107,7 +108,9 @@ assert.match(stateSource, /reader\.zeroes/);
 assert.match(stateSource, /validate_addresses/);
 
 const sbfManifest = files.find(([path]) => path === "programs/levplay-sbf/Cargo.toml")[1];
-assert.match(sbfManifest, /solana-program = "=2\.2\.0"/, "Solana SDK must remain exactly pinned");
+assert.match(sbfManifest, /solana-program = "=2\.2\.1"/, "Solana SDK must remain exactly pinned");
+assert.match(sbfManifest, /spl-token = \{ version = "=8\.0\.0"/, "legacy SPL parser must remain exactly pinned");
+assert.match(sbfManifest, /spl-token-2022 = \{ version = "=8\.0\.1"/, "Token-2022 parser must remain exactly pinned");
 const sbfSource = files.find(([path]) => path === "programs/levplay-sbf/src/lib.rs")[1];
 assert.match(sbfSource, /EXECUTION_LOCKED_ERROR/);
 assert.match(sbfSource, /decode_instruction\(instruction_data\)/);
@@ -117,6 +120,13 @@ assert.match(accountValidation, /account\.owner != program_id/);
 assert.match(accountValidation, /canonical_config_address/);
 assert.match(accountValidation, /canonical_market_address/);
 assert.match(accountValidation, /account\.is_writable != writable/);
+const tokenValidation = files.find(([path]) => path === "programs/levplay-sbf/src/token_validation.rs")[1];
+assert.match(tokenValidation, /validate_legacy_mint/);
+assert.match(tokenValidation, /validate_product_mint/);
+assert.match(tokenValidation, /ExtensionType::ImmutableOwner/);
+assert.match(tokenValidation, /extensions\.is_empty\(\)/);
+assert.match(tokenValidation, /delegate != COption::None/);
+assert.match(tokenValidation, /close_authority != COption::None/);
 const boundarySource = files.find(([path]) => path === "programs/levplay-core/src/program_boundary.rs")[1];
 assert.match(boundarySource, /usdc_token_program/);
 assert.match(boundarySource, /product_token_program/);
