@@ -11,6 +11,7 @@ const required = [
   "BACKING_VENUE_DECISION.md",
   "ONDO_ADAPTER_SPEC.md",
   "MULTI_VENUE_PRODUCT_LAYER.md",
+  "docs/VALUE_MOVEMENT_ARCHITECTURE.md",
   "Cargo.toml",
   "Cargo.lock",
   "rust-toolchain.toml",
@@ -97,6 +98,14 @@ const multiVenue = files.find(([path]) => path === "MULTI_VENUE_PRODUCT_LAYER.md
 assert.match(multiVenue, /136-product audit candidate/);
 assert.match(multiVenue, /three RPC endpoints spanning three named providers/);
 assert.match(multiVenue, /external issuer\/provider trust boundaries/);
+
+const valueMovement = files.find(([path]) => path === "docs/VALUE_MOVEMENT_ARCHITECTURE.md")[1];
+assert.match(valueMovement, /audit-facing design; not implemented and not deployment evidence/);
+assert.match(valueMovement, /`Open` and `Close` must reach the audit boundary together/);
+assert.match(valueMovement, /native Pyth receiver\/update account/);
+assert.match(valueMovement, /Long and short collateral are not interchangeable/);
+assert.match(valueMovement, /A partial deposit-only deployment is prohibited/);
+assert.match(valueMovement, /current SBF shell moves funds or is ready for a deposit/);
 
 const rustCore = files.find(([path]) => path === "programs/levplay-core/src/lib.rs")[1];
 assert.match(rustCore, /#!\[no_std\]/, "Rust core must remain SBF-compatible at the language boundary");

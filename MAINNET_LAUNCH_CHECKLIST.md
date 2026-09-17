@@ -2,6 +2,11 @@
 
 Status date: 2026-09-17. **GO means every Critical gate below has independently reproducible evidence for the exact release hash.** A configuration value, screenshot, preview result or internal review cannot satisfy a Critical gate. The application unlocks signing only when its machine-readable release checks also pass.
 
+The audit-facing [value-movement architecture](./docs/VALUE_MOVEMENT_ARCHITECTURE.md)
+defines the required state, account boundary, atomic `Open`/`Close` invariants, oracle and
+session gates, long/short collateral distinction and evidence sequence. It is a design and
+does not satisfy any unchecked gate below.
+
 ## Priority execution order
 
 1. **Backing and solvency:** select the exact long/short venue, adapter accounts, capacity, funding and deterministic unwind model for isolated `AAPL2L`/`AAPL2S`.
@@ -60,7 +65,7 @@ Catalog expansion is not a launch-gate substitute. The auditable catalog contain
 - [x] Compile and test a dependency-free `no_std` Rust kernel for fees, shares, caps, oracle agreement, isolation, Standby, insolvency and capacity.
 - [x] Freeze and test the versioned wire format, exact open-account layout, top-level transaction composition and nonce rules in the dependency-free core.
 - [x] Compile the frozen ABI decoder behind a pinned Solana entrypoint that remains deliberately execution-locked.
-- [ ] Implement the frozen [instruction interface](./programs/levplay/INTERFACE.md) with program-owned state and value-moving handlers.
+- [ ] Implement the frozen [instruction interface](./programs/levplay/INTERFACE.md) and [value-movement architecture](./docs/VALUE_MOVEMENT_ARCHITECTURE.md) with program-owned state and value-moving handlers; `Open` and `Close` must reach the audit boundary together.
 - [x] Freeze exact versioned config and market byte layouts with strict initialization, reserved-byte, bounds and address-isolation checks.
 - [x] Enforce program ownership, exact privileges and canonical identity-bound config/market PDA seeds and bumps in SBF loaders.
 - [ ] Isolate backing, reserve, fee, position and claim accounting PDAs and bind their token-account authorities.
