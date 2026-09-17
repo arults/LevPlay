@@ -262,7 +262,7 @@ mod tests {
         );
         let owner = program_id;
         let mut lamports = 1;
-        let mut data = market_data(bump, [19_u8; 32]);
+        let mut data = market_data(bump, [21_u8; 32]);
         let account = AccountInfo::new(
             &key,
             false,
