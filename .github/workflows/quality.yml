@@ -27,6 +27,8 @@ jobs:
       - run: pnpm test:backing
       - run: pnpm test:venue
       - run: pnpm test:products
+      - run: pnpm test:oracles
+      - run: pnpm test:xstocks
       - run: cargo test --workspace --locked
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo fmt --all -- --check
