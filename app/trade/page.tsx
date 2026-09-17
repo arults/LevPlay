@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ALL_MARKETS, SOLANA_USDC_MINT, type MarketCategory } from "@/lib/markets";
+import { MarketDecisionChart, type DisplayPriceUpdate } from "@/components/market-decision-chart";
 
 type Oracle = { provider: string; feedId: string; minPublishers: number };
 type ReferenceStatus = "live" | "stale" | "provider_unconfigured" | "provider_offline" | "not_admitted" | "timestamp_unavailable";
@@ -108,6 +109,20 @@ export default function TradingApp() {
   const [eligibilityChecks, setEligibilityChecks] = useState<Record<EligibilityCheck, boolean>>(EMPTY_ELIGIBILITY_CHECKS);
   const [eligibilityAttestation, setEligibilityAttestation] = useState<EligibilityAttestation | null>(null);
   const paperHydrated = useRef(false);
+
+  const applyDisplayPrice = useCallback((update: DisplayPriceUpdate) => {
+    setMarkets((current) => current.map((market) => market.symbol === update.symbol ? {
+      ...market,
+      price: update.price,
+      unavailable: false,
+      referenceStatus: "live",
+      referenceLabel: update.label,
+      referenceTimestamp: update.timestamp,
+      period: update.period,
+      marketOpen: update.marketOpen,
+      verificationNote: "Public chart reference available for research; it is never accepted for settlement",
+    } : market));
+  }, []);
 
   const selected = markets.find((market) => market.symbol === selectedSymbol) || markets[0];
   const productId = marketId(selected, leverage, direction);
@@ -333,7 +348,7 @@ export default function TradingApp() {
         {category === "Pre-IPO" && <div className="provider-switch" aria-label="Pre-IPO source"><button className={preIpoProvider === "PreStocks" ? "active" : ""} onClick={() => { setPreIpoProvider("PreStocks"); const first = markets.find((market) => market.category === "Pre-IPO" && market.provider === "PreStocks"); if (first) setSelectedSymbol(first.symbol); }}>PreStocks <span>8</span></button><button className={preIpoProvider === "Tessera" ? "active" : ""} onClick={() => { setPreIpoProvider("Tessera"); const first = markets.find((market) => market.category === "Pre-IPO" && market.provider === "Tessera"); if (first) setSelectedSymbol(first.symbol); }}>Tessera <span>2</span></button></div>}
         <div className="table-head"><span>Market</span><span>Reference</span><span>Status</span><span>Feeds</span></div>
         <div className="market-list">
-          {visible.map((market) => <button key={market.symbol} className={market.symbol === selectedSymbol ? "market-row selected" : "market-row"} onClick={() => { setSelectedSymbol(market.symbol); if (market.category === "Pre-IPO") setLeverage(2); }}><span className="asset"><AssetLogo market={market}/><span><strong>{market.ticker}</strong><small>{market.name}</small></span></span><strong className="price">{market.price ? formatUsd(market.price) : loadingMarkets ? "Checking…" : market.referenceLabel || "Reference unavailable"}</strong><span className={market.marketOpen ? "session open" : "session"}>{market.referenceStatus === "live" ? "Fresh" : market.referenceStatus === "stale" ? "Stale" : market.referenceStatus === "timestamp_unavailable" ? "No time" : "Blocked"}</span><span className={market.verified ? "feed verified" : market.price ? "feed display" : "feed blocked"}>{market.verified ? <><Check size={13}/>2/2</> : market.price ? <><Eye size={13}/>Display</> : <><LockKeyhole size={13}/>Block</>}</span></button>)}
+          {visible.map((market) => <button key={market.symbol} className={market.symbol === selectedSymbol ? "market-row selected" : "market-row"} onClick={() => { setSelectedSymbol(market.symbol); if (market.category === "Pre-IPO") setLeverage(2); }}><span className="asset"><AssetLogo market={market}/><span><strong>{market.ticker}</strong><small>{market.name}</small></span></span><strong className="price">{market.price ? formatUsd(market.price) : loadingMarkets ? "Checking…" : market.referenceLabel || "Reference unavailable"}</strong><span className={market.marketOpen ? "session open" : "session"}>{market.referenceStatus === "live" ? "Fresh" : market.referenceStatus === "stale" ? "Stale" : market.referenceStatus === "timestamp_unavailable" ? "No time" : market.category !== "Pre-IPO" ? "Chart" : "Blocked"}</span><span className={market.verified ? "feed verified" : market.price || market.category !== "Pre-IPO" ? "feed display" : "feed blocked"}>{market.verified ? <><Check size={13}/>2/2</> : market.price ? <><Eye size={13}/>Display</> : market.category !== "Pre-IPO" ? <><BarChart3 size={13}/>On select</> : <><LockKeyhole size={13}/>Block</>}</span></button>)}
           {visible.length === 0 && <div className="empty">No matching markets.</div>}
         </div>
         <div className="source-line"><span>{checkedAt ? `Checked ${new Date(checkedAt).toLocaleTimeString()}` : "Checking reference providers"}</span><span><a href="https://docs.ondo.finance/ondo-stocks" target="_blank" rel="noreferrer"><PartnerLogo name="Ondo" domain="ondo.finance"/>Ondo</a><a href="https://prestocks.com/products" target="_blank" rel="noreferrer"><PartnerLogo name="PreStocks" domain="prestocks.com"/>PreStocks</a><a href="https://docs.tessera.pe/overview/how-do-tessera-token-work" target="_blank" rel="noreferrer"><PartnerLogo name="Tessera" domain="tessera.pe"/>Tessera <ExternalLink size={12}/></a></span></div>
@@ -343,6 +358,7 @@ export default function TradingApp() {
         <div className="detail-top"><div className="selected-asset"><AssetLogo market={selected} size={58}/><div><small>LevPlay · {selected.category}</small><h2>{selected.ticker}<em>{leverage}{direction === "Long" ? "L" : "S"}</em></h2><p>Liquidation-free holder structure</p></div></div><div className="selected-price"><small>{selected.category === "Pre-IPO" ? `${selected.provider} market reference` : "Underlying Ondo reference"}</small><strong>{selected.price ? formatUsd(selected.price) : selected.referenceLabel || "Reference unavailable"}</strong><span>{selected.referenceLabel || "Checking reference provider"} · settlement {selected.verified ? "ready" : "locked"}</span></div></div>
         <div className="oracle-strip"><span><ShieldCheck size={18}/><span><small>Settlement guard</small><strong>{selected.verified ? "Dual-source ready" : "Fail-closed"}</strong></span></span>{selected.category === "Pre-IPO" ? <span><Eye size={18}/><span><small>Display source</small><strong>{selected.referenceLabel || "Checking provider"}</strong></span></span> : oracles.slice(0, 2).map((oracle) => <span key={oracle.provider}><i className={oracle.provider.toLowerCase()}/><span><small>{oracle.provider}</small><strong>{oracle.feedId ? short(oracle.feedId) : "Unavailable"}</strong></span></span>)}</div>
         <div className="truth-panel" aria-label="Market truth"><span><small>Market state</small><strong className={marketState.toLowerCase()}>{marketState}</strong></span><span><small>Reference use</small><strong>{selected.verified ? "Settlement admitted" : "Display only"}</strong></span><span><small>Source mint</small><strong>{selected.sourceMintVerified ? "Verified onchain" : "Not admitted"}</strong></span><span><small>Backing + hedge</small><strong>{marketConfigured ? "Manifest supplied" : "Not admitted"}</strong></span></div>
+        <MarketDecisionChart symbol={selected.symbol} name={selected.name} category={selected.category} onDisplayPrice={applyDisplayPrice}/>
         <div className="curve-card"><div><span className="eyebrow">Outcome preview</span><h3>{leverage}× {direction.toLowerCase()} daily target</h3><p>The vault rebalances exposure; returns compound and will not equal {leverage}× over longer periods.</p></div><ExposureCurve leverage={leverage} direction={direction}/></div>
         <div className="mechanic-grid"><span><Activity size={17}/><small>Rebalance band</small><strong>±10% target drift</strong></span><span><Layers3 size={17}/><small>Underlying</small><strong>{selected.symbol} on Solana</strong></span><span><Zap size={17}/><small>Keeper model</small><strong>Permissionless calls</strong></span></div>
       </div>
