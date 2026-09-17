@@ -337,8 +337,16 @@ mod tests {
         let owner = Pubkey::new_unique();
         let mut lamports = 1;
         let mut data = observation(i64::MAX, MAX_ABS_EXPONENT, 1, 1_000, 5);
-        let account =
-            AccountInfo::new(&key, false, false, &mut lamports, &mut data, &owner, false, 0);
+        let account = AccountInfo::new(
+            &key,
+            false,
+            false,
+            &mut lamports,
+            &mut data,
+            &owner,
+            false,
+            0,
+        );
         assert_eq!(
             validate_observation_account(&account, &key, &owner, 1_000),
             Err(ProgramError::InvalidAccountData)
