@@ -169,9 +169,9 @@ export function parseVenueManifest(source: string): VenueAdmissionManifest {
 export function venueStatusFromEnvironment(nowUnix = Math.floor(Date.now() / 1_000)): VenueAdmission {
   try {
     const source = process.env.LEVPLAY_SVM_VENUE_MANIFEST_JSON;
-    if (!source) return { admitted: false, venueId: null, reasons: ["signed venue admission manifest is missing"] };
+    if (!source) return { admitted: false, venueId: null, reasons: ["venue admission manifest is missing"] };
     return assessVenueAdmission(parseVenueManifest(source), nowUnix);
   } catch {
-    return { admitted: false, venueId: null, reasons: ["signed venue admission manifest is invalid"] };
+    return { admitted: false, venueId: null, reasons: ["venue admission manifest is invalid"] };
   }
 }
