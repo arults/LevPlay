@@ -29,8 +29,38 @@ export const ONDO_SETTLEMENT = {
   ],
 } as const;
 
-export const AAPL_SETTLEMENT_GATE = {
+export const PRESTOCKS_REFERENCE = {
+  provider: "PreStocks",
+  displayApiIsOracle: false,
+  status: "display-only",
+} as const;
+
+export const TESSERA_REFERENCE = {
+  provider: "Tessera",
+  displayApiIsOracle: false,
+  status: "display-only",
+} as const;
+
+/**
+ * Public policy used by the API and release checks. A provider API or DEX mark
+ * may improve discovery and UX, but it can never become a settlement source by
+ * configuration alone. Exact feed identity and an onchain verifier are required.
+ */
+export const ORACLE_POLICY = {
+  primaryPreference: "pyth",
   requiredIndependentSources: 2,
+  displayOnlyProviderIds: ["ondo-api", "prestocks-api", "prestocks-dex", "tessera-api"],
+  unselectedProviders: ["chainlink"],
+} as const;
+
+export function isDisplayOnlyProvider(providerId: string) {
+  return ORACLE_POLICY.displayOnlyProviderIds.includes(
+    providerId as (typeof ORACLE_POLICY.displayOnlyProviderIds)[number],
+  );
+}
+
+export const AAPL_SETTLEMENT_GATE = {
+  requiredIndependentSources: ORACLE_POLICY.requiredIndependentSources,
   sources: [
     {
       id: "pyth-aapl",

@@ -30,7 +30,7 @@ Missing second source:
 - No independent Solana AAPL verifier program and feed account has yet been verified from an official provider source.
 - Ondo's latest-price API is display-only and Ondo explicitly says not to use it as an oracle.
 - Ondo states that its official oracle is still in development.
-- Chainlink's public AAPL/USD feed evidence found for Polygon does not establish a Solana verifier/feed and is not admitted.
+- No second provider is preselected. Historical research found a Chainlink AAPL/USD feed on Polygon, but that does not establish a Solana verifier/feed and it remains unadmitted.
 
 Therefore the AAPL settlement gate remains fail-closed at one of two required sources. Never duplicate Pyth through two accounts and call it independent. Never relay a server API value under a LevPlay key and call it an oracle.
 
