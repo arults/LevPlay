@@ -4,13 +4,15 @@ import { readFile } from "node:fs/promises";
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const stockTickers = ["aapl", "msft", "nvda", "googl", "amzn", "tsla", "amd", "nflx", "spy", "dis", "uber", "hood", "sofi", "orcl", "qqq"];
 const additionalLogos = ["gld", "slv", "pplt", "uso", "copx", "anth", "openai", "anduril", "neural", "figure", "kalshi", "poly", "spacex", "ondo", "prestocks", "solana"];
-const [landing, layout, docs, proof, proxy, app, css, markets, marketApi, stockLogos, otherLogos] = await Promise.all([
+const [landing, layout, docs, proof, proxy, app, chart, historyApi, css, markets, marketApi, stockLogos, otherLogos] = await Promise.all([
   read("app/page.tsx"),
   read("app/layout.tsx"),
   read("app/docs/page.tsx"),
   read("app/proof/page.tsx"),
   read("proxy.ts"),
   read("app/trade/page.tsx"),
+  read("components/market-decision-chart.tsx"),
+  read("app/api/markets/history/route.ts"),
   read("app/globals.css"),
   read("lib/markets.ts"),
   read("app/api/markets/route.ts"),
@@ -50,6 +52,16 @@ assert.match(app, /markets\.find\(\(market\) => market\.category === next && \(n
 assert.match(app, /PreStocks.*Tessera/s, "pre-IPO view must expose both admitted reference providers");
 assert.match(app, /aria-label="Market truth"/, "each market must expose its execution, pricing, mint and backing truth without another click");
 assert.match(app, /aria-label="Reference and execution status"/, "the order ticket must expose reference source, freshness, session and execution state on mobile");
+assert.match(app, /MarketDecisionChart/, "selected markets must expose a decision chart before order entry");
+for (const range of ["24H", "1W", "1M", "1Y", "ALL"]) assert.ok(chart.includes(`"${range}"`), `${range} chart range must be available`);
+assert.match(chart, /candlestick-chart/, "chart must render true OHLC candlesticks");
+assert.match(chart, /RSI · 14/, "chart must expose RSI");
+assert.match(chart, /Annualized volatility/, "chart must expose volatility");
+assert.match(chart, /Max drawdown/, "chart must expose drawdown");
+assert.match(chart, /settlement data/, "display charts must disclose that they cannot settle trades");
+assert.match(historyApi, /const ALLOWED = new Map\(CURATED_MARKETS/, "history requests must be restricted to curated markets");
+assert.match(historyApi, /readJsonResponseBounded\(response, 2_000_000\)/, "history payloads must be bounded");
+assert.match(historyApi, /settlementEligible: false/, "history data must never be marked settlement eligible");
 for (const label of ["Reference", "Freshness", "Session", "Trading blocked"]) assert.ok(app.includes(label), `${label} must appear at the point of action`);
 assert.match(app, /selected\.verificationNote \|\| selected\.referenceLabel/, "blocked orders must explain the provider-specific reason without inventing readiness");
 for (const label of ["Market state", "Reference use", "Source mint", "Backing \\+ hedge"]) assert.match(app, new RegExp(label), `${label} must be visible in the market truth panel`);
