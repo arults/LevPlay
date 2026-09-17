@@ -104,7 +104,7 @@ export async function GET(request: Request) {
       const low = quote.low?.[index];
       const close = quote.close?.[index];
       const volume = quote.volume?.[index] ?? 0;
-      if (![open, high, low, close].every(finite) || !finite(volume)) return [];
+      if (!finite(open) || !finite(high) || !finite(low) || !finite(close) || !finite(volume)) return [];
       return [{ timestamp: timestamp * 1_000, open, high, low, close, volume }];
     });
 
