@@ -1,306 +1,108 @@
-import { ALL_MARKETS, SOLANA_USDC_MINT, TOKEN_2022_PROGRAM, TOKEN_PROGRAM } from "@/lib/markets";
-import { venueStatusFromEnvironment } from "@/lib/venue-registry";
-import { productStatusFromEnvironment } from "@/lib/product-registry";
+import { SOLANA_USDC_MINT, TOKEN_2022_PROGRAM, TOKEN_PROGRAM } from "./markets.ts";
+import { BodyTooLargeError, readJsonResponseBounded } from "./http-safety.ts";
+import { assessProductAdmission, parseProductManifest } from "./product-registry.ts";
+import { parseReleaseManifestV2, type ReleaseManifestV2, type ReleaseMarket } from "./release-manifest.ts";
+import { assessVenueAdmission, parseVenueManifest } from "./venue-registry.ts";
 
-const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-const HASH = /^[a-fA-F0-9]{64}$/;
 const MAINNET_GENESIS = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
-const PROGRAM_LOADERS = new Set([
-  "BPFLoaderUpgradeab1e11111111111111111111111",
-  "BPFLoader2111111111111111111111111111111111",
-]);
 const UPGRADEABLE_LOADER = "BPFLoaderUpgradeab1e11111111111111111111111";
+const PROGRAM_LOADERS = new Set([UPGRADEABLE_LOADER, "BPFLoader2111111111111111111111111111111111"]);
 const BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-
-export function isSolanaAddress(value: unknown): value is string {
-  return typeof value === "string" && BASE58.test(value);
-}
-
-export function isSafeRpcUrl(value: unknown): value is string {
-  if (typeof value !== "string" || !/^https:\/\/[^@\s]+$/.test(value)) return false;
-  try {
-    const parsed = new URL(value);
-    const host = parsed.hostname.toLowerCase();
-    return parsed.protocol === "https:" && !parsed.username && !parsed.password && !parsed.port &&
-      host !== "localhost" && !host.endsWith(".local") && !/^\d+\.\d+\.\d+\.\d+$/.test(host) && !host.includes(":");
-  } catch { return false; }
-}
-
-type Deployment = {
-  marketState: string;
-  vault: string;
-  reserveVault: string;
-  productMint: string;
-  xStockMint: string;
-  primaryOracleAccount: string;
-  primaryOracleOwner: string;
-  primaryOracleFeedId: string;
-  primaryOracleProviderId: string;
-  secondaryOracleAccount: string;
-  secondaryOracleOwner: string;
-  secondaryOracleFeedId: string;
-  secondaryOracleProviderId: string;
-  adapterProgram: string;
-  adapterMarket: string;
-  leverage: 2 | 3 | 5;
-  side: "long" | "short";
-  standbyBps: number;
-};
-
-type RpcAccount = { executable?: boolean; owner?: string; data?: unknown; lamports?: number };
+const ADDRESS = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const RPC_RESPONSE_LIMIT_BYTES = 12_000_000;
+const VALUE_MOVING_HANDLERS_IMPLEMENTED = false;
+const EXTERNAL_EVIDENCE_SIGNATURES_VERIFIED = false;
+type RpcAccount = { executable?: boolean; owner?: string; data?: unknown };
 type RpcResult = { result?: unknown; error?: { message?: string } };
 
-function hash(value: string) {
-  return HASH.test(value.replace(/^0x/, ""));
+export function isSolanaAddress(value: unknown): value is string { return typeof value === "string" && ADDRESS.test(value); }
+export function isSafeRpcUrl(value: unknown): value is string {
+  if (typeof value !== "string" || !/^https:\/\/[^@\s]+$/.test(value)) return false;
+  try { const parsed = new URL(value); const host = parsed.hostname.toLowerCase(); return parsed.protocol === "https:" && !parsed.username && !parsed.password && !parsed.port && host !== "localhost" && !host.endsWith(".local") && !/^\d+\.\d+\.\d+\.\d+$/.test(host) && !host.includes(":"); }
+  catch { return false; }
 }
-
 function configuredRpcs() {
-  try {
-    const value = JSON.parse(process.env.LEVPLAY_SVM_RPC_URLS_JSON || "[]") as unknown;
-    if (!Array.isArray(value)) return [];
-    const valid = value.filter(isSafeRpcUrl);
-    return [...new Map(valid.map((url) => [new URL(url).hostname, url])).values()].slice(0, 4);
-  } catch {
-    return [];
-  }
+  try { const value = JSON.parse(process.env.LEVPLAY_SVM_RPC_URLS_JSON || "[]") as unknown; if (!Array.isArray(value)) return []; const valid = value.filter(isSafeRpcUrl); return [...new Map(valid.map((url) => [new URL(url).hostname, url])).values()].slice(0, 4); }
+  catch { return []; }
 }
-
+async function sha256(value: string | Uint8Array) { const bytes = typeof value === "string" ? new TextEncoder().encode(value) : value; const payload = new Uint8Array(bytes.byteLength); payload.set(bytes); const digest = await crypto.subtle.digest("SHA-256", payload.buffer); return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join(""); }
 async function rpc(url: string, method: string, params: unknown[]) {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-    signal: AbortSignal.timeout(7_000),
-  });
-  if (Number(response.headers.get("content-length") || 0) > 2_000_000) throw new Error("Oversized RPC response");
-  const payload = await response.json() as RpcResult;
-  if (!response.ok || payload.error || payload.result === undefined) throw new Error(payload.error?.message || "RPC error");
-  return payload.result;
+  const response = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: AbortSignal.timeout(7_000) });
+  let payload: RpcResult;
+  try { payload = await readJsonResponseBounded(response, RPC_RESPONSE_LIMIT_BYTES) as RpcResult; }
+  catch (error) { if (error instanceof BodyTooLargeError) throw new Error("Oversized RPC response"); throw error; }
+  if (!response.ok || payload.error || payload.result === undefined) throw new Error(payload.error?.message || "RPC error"); return payload.result;
 }
+async function account(url: string, address: string, encoding: "base64" | "jsonParsed" = "base64") { const result = await rpc(url, "getAccountInfo", [address, { encoding, commitment: "finalized" }]) as { value?: RpcAccount | null }; if (!result.value) throw new Error("Missing account"); return result.value; }
+function accountBytes(value: RpcAccount) { if (!Array.isArray(value.data) || typeof value.data[0] !== "string") return null; try { return Uint8Array.from(atob(value.data[0]), (character) => character.charCodeAt(0)); } catch { return null; } }
+function base58(bytes: Uint8Array) { let zeros = 0; while (zeros < bytes.length && bytes[zeros] === 0) zeros += 1; const digits = [0]; for (let index = zeros; index < bytes.length; index += 1) { let carry = bytes[index]; for (let cursor = 0; cursor < digits.length; cursor += 1) { const value = digits[cursor] * 256 + carry; digits[cursor] = value % 58; carry = Math.floor(value / 58); } while (carry > 0) { digits.push(carry % 58); carry = Math.floor(carry / 58); } } return "1".repeat(zeros) + digits.reverse().map((digit) => BASE58_ALPHABET[digit]).join(""); }
+function addressAt(bytes: Uint8Array, offset: number) { return base58(bytes.slice(offset, offset + 32)); }
+function u16At(bytes: Uint8Array, offset: number) { return new DataView(bytes.buffer, bytes.byteOffset + offset, 2).getUint16(0, true); }
+function u64At(bytes: Uint8Array, offset: number) { const value = new DataView(bytes.buffer, bytes.byteOffset + offset, 8).getBigUint64(0, true); return value <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(value) : -1; }
+function header(bytes: Uint8Array, discriminator: string, length: number) { return bytes.length === length && new TextDecoder().decode(bytes.slice(0, 8)) === discriminator && bytes[8] === 1 && bytes[9] !== 0; }
+function parsedInfo(value: RpcAccount) { return (value.data as { parsed?: { type?: string; info?: Record<string, unknown> } })?.parsed; }
+function tokenAccount(value: RpcAccount, program: string, mintAddress: string, authority: string) { const parsed = parsedInfo(value); return value.owner === program && parsed?.type === "account" && parsed.info?.mint === mintAddress && parsed.info?.owner === authority && parsed.info?.state === "initialized" && parsed.info?.delegate == null && parsed.info?.closeAuthority == null && parsed.info?.isNative !== true && (parsed.info?.delegatedAmount == null || parsed.info.delegatedAmount === "0" || parsed.info.delegatedAmount === 0); }
+function validateProductMint(value: RpcAccount, authority: string) { const parsed = parsedInfo(value); const extensions = parsed?.info?.extensions; return value.owner === TOKEN_2022_PROGRAM && parsed?.type === "mint" && parsed.info?.isInitialized === true && parsed.info?.mintAuthority === authority && parsed.info?.freezeAuthority == null && Array.isArray(extensions) && extensions.length === 0; }
+async function exactAccountHash(value: RpcAccount, expected: string) { const bytes = accountBytes(value); return Boolean(bytes && await sha256(bytes) === expected.toLowerCase()); }
 
-async function account(url: string, address: string, encoding: "base64" | "jsonParsed" = "base64") {
-  const result = await rpc(url, "getAccountInfo", [address, { encoding, commitment: "finalized" }]) as { value?: RpcAccount | null };
-  if (!result.value) throw new Error("Missing account");
-  return result.value;
+function configEvidence(value: RpcAccount, manifest: ReleaseManifestV2) {
+  const bytes = accountBytes(value); return value.owner === manifest.programId && value.executable !== true && Boolean(bytes && header(bytes, "LVPCFG01", 208) && bytes.slice(11, 16).every((byte) => byte === 0) && addressAt(bytes, 16) === manifest.governance && addressAt(bytes, 48) === manifest.guardian && addressAt(bytes, 80) === manifest.treasuryAuthority && addressAt(bytes, 112) === manifest.feeRecipient && addressAt(bytes, 144) === SOLANA_USDC_MINT && addressAt(bytes, 176) === TOKEN_PROGRAM);
 }
-
-function accountBytes(value: RpcAccount) {
-  if (!Array.isArray(value.data) || typeof value.data[0] !== "string") return null;
-  try { return Uint8Array.from(atob(value.data[0]), (character) => character.charCodeAt(0)); }
-  catch { return null; }
+function marketStateEvidence(value: RpcAccount, item: ReleaseMarket, programId: string) {
+  const bytes = accountBytes(value); return value.owner === programId && value.executable !== true && Boolean(bytes && header(bytes, "LVPMKT01", 392) && bytes[11] === (item.side === "long" ? 0 : 1) && bytes[12] === 0 && bytes.slice(13, 16).every((byte) => byte === 0) && bytes.slice(70, 72).every((byte) => byte === 0) && u64At(bytes, 24) === item.transactionCap && u64At(bytes, 32) === item.walletCap && u64At(bytes, 40) === item.tvlCap && u64At(bytes, 48) === item.dailyMintCap && u64At(bytes, 56) === item.dailyRedeemCap && u16At(bytes, 64) === item.standbyBps && u16At(bytes, 66) === 20_000 && u16At(bytes, 68) === 50 && addressAt(bytes, 72) === item.productMint && addressAt(bytes, 104) === TOKEN_2022_PROGRAM && addressAt(bytes, 136) === item.clearingVault && addressAt(bytes, 168) === item.reserveVault && addressAt(bytes, 200) === item.adapterProgram && addressAt(bytes, 232) === item.adapterMarket && addressAt(bytes, 264) === item.primaryOracleAccount && addressAt(bytes, 296) === item.secondaryOracleAccount && addressAt(bytes, 328) === item.primaryOracleOwner && addressAt(bytes, 360) === item.secondaryOracleOwner);
 }
-
-function base58(bytes: Uint8Array) {
-  let zeros = 0;
-  while (zeros < bytes.length && bytes[zeros] === 0) zeros += 1;
-  const digits = [0];
-  for (let index = zeros; index < bytes.length; index += 1) {
-    let carry = bytes[index];
-    for (let cursor = 0; cursor < digits.length; cursor += 1) {
-      const value = digits[cursor] * 256 + carry;
-      digits[cursor] = value % 58;
-      carry = Math.floor(value / 58);
-    }
-    while (carry > 0) { digits.push(carry % 58); carry = Math.floor(carry / 58); }
-  }
-  return "1".repeat(zeros) + digits.reverse().map((digit) => BASE58_ALPHABET[digit]).join("");
+async function programEvidence(url: string, manifest: ReleaseManifestV2) {
+  const program = await account(url, manifest.programId); const programBytes = accountBytes(program);
+  if (program.owner !== UPGRADEABLE_LOADER || program.owner !== manifest.programLoader || program.executable !== true || !programBytes || programBytes.length < 36 || new DataView(programBytes.buffer, programBytes.byteOffset, 4).getUint32(0, true) !== 2 || base58(programBytes.slice(4, 36)) !== manifest.programDataAddress) return false;
+  const programData = await account(url, manifest.programDataAddress); const bytes = accountBytes(programData);
+  return programData.owner === UPGRADEABLE_LOADER && Boolean(bytes && bytes.length > 13 && new DataView(bytes.buffer, bytes.byteOffset, 4).getUint32(0, true) === 3 && bytes[12] === 0 && await sha256(bytes.slice(13)) === manifest.releaseArtifacts.sbfSha256.toLowerCase());
 }
-
-async function programIsFrozen(url: string, value: RpcAccount) {
-  if (value.owner !== UPGRADEABLE_LOADER) return value.executable === true && PROGRAM_LOADERS.has(String(value.owner || ""));
-  const bytes = accountBytes(value);
-  if (!bytes || bytes.length < 36 || new DataView(bytes.buffer, bytes.byteOffset, 4).getUint32(0, true) !== 2) return false;
-  const programDataAddress = base58(bytes.slice(4, 36));
-  const programData = await account(url, programDataAddress);
-  const programDataBytes = accountBytes(programData);
-  return programData.owner === UPGRADEABLE_LOADER && Boolean(programDataBytes && programDataBytes.length >= 13 &&
-    new DataView(programDataBytes.buffer, programDataBytes.byteOffset, 4).getUint32(0, true) === 3 && programDataBytes[12] === 0);
+async function executableProgramFrozen(url: string, value: RpcAccount) {
+  if (value.owner !== UPGRADEABLE_LOADER || value.executable !== true) return false;
+  const programBytes = accountBytes(value);
+  if (!programBytes || programBytes.length < 36 || new DataView(programBytes.buffer, programBytes.byteOffset, 4).getUint32(0, true) !== 2) return false;
+  const programData = await account(url, base58(programBytes.slice(4, 36))); const bytes = accountBytes(programData);
+  return programData.owner === UPGRADEABLE_LOADER && Boolean(bytes && bytes.length > 13 && new DataView(bytes.buffer, bytes.byteOffset, 4).getUint32(0, true) === 3 && bytes[12] === 0);
 }
-
-function tokenAccountEvidence(value: RpcAccount, treasuryAuthority: string) {
-  const parsed = value.data as { parsed?: { type?: string; info?: { mint?: string; owner?: string; state?: string } } };
-  return value.owner === TOKEN_PROGRAM && parsed?.parsed?.type === "account" &&
-    parsed.parsed.info?.mint === SOLANA_USDC_MINT && parsed.parsed.info?.owner === treasuryAuthority &&
-    parsed.parsed.info?.state === "initialized";
+async function marketEvidence(url: string, item: ReleaseMarket, programId: string) {
+  const [state, clearing, sourceVault, reserve, productMint, sourceMint, primary, secondary, adapterProgram, adapterMarket] = await Promise.all([account(url, item.marketState), account(url, item.clearingVault, "jsonParsed"), account(url, item.sourceVault, "jsonParsed"), account(url, item.reserveVault, "jsonParsed"), account(url, item.productMint, "jsonParsed"), account(url, item.sourceMint), account(url, item.primaryOracleAccount), account(url, item.secondaryOracleAccount), account(url, item.adapterProgram), account(url, item.adapterMarket)]);
+  const sourceBytes = accountBytes(sourceMint);
+  return marketStateEvidence(state, item, programId) && tokenAccount(clearing, TOKEN_PROGRAM, SOLANA_USDC_MINT, item.marketState) && tokenAccount(sourceVault, TOKEN_2022_PROGRAM, item.sourceMint, item.marketState) && tokenAccount(reserve, TOKEN_PROGRAM, SOLANA_USDC_MINT, item.marketState) && validateProductMint(productMint, item.marketState) && sourceMint.owner === TOKEN_2022_PROGRAM && Boolean(sourceBytes && sourceBytes.length >= 82 && sourceBytes[45] === 1 && await sha256(sourceBytes) === item.sourceMintAccountSha256.toLowerCase()) && primary.owner === item.primaryOracleOwner && primary.executable !== true && secondary.owner === item.secondaryOracleOwner && secondary.executable !== true && adapterProgram.executable === true && PROGRAM_LOADERS.has(String(adapterProgram.owner || "")) && adapterMarket.owner === item.adapterProgram && adapterMarket.executable !== true;
 }
-
-function parsedInfo(value: RpcAccount) {
-  return (value.data as { parsed?: { type?: string; info?: Record<string, unknown> } })?.parsed;
-}
-
-function tokenVaultEvidence(value: RpcAccount, mint: string, authority: string) {
-  const parsed = parsedInfo(value);
-  return value.owner === TOKEN_2022_PROGRAM && parsed?.type === "account" &&
-    parsed.info?.mint === mint && parsed.info?.owner === authority && parsed.info?.state === "initialized";
-}
-
-function reserveVaultEvidence(value: RpcAccount, authority: string) {
-  const parsed = parsedInfo(value);
-  return value.owner === TOKEN_PROGRAM && parsed?.type === "account" &&
-    parsed.info?.mint === SOLANA_USDC_MINT && parsed.info?.owner === authority && parsed.info?.state === "initialized";
-}
-
-function productMintEvidence(value: RpcAccount, authority: string) {
-  const parsed = parsedInfo(value);
-  return value.owner === TOKEN_2022_PROGRAM && parsed?.type === "mint" && parsed.info?.isInitialized === true &&
-    parsed.info?.mintAuthority === authority && parsed.info?.freezeAuthority == null;
-}
-
-async function marketEvidence(url: string, deployment: Deployment, programId: string) {
-  const [state, vault, reserveVault, productMint, xStockMint, primaryOracle, secondaryOracle, adapterProgram, adapterMarket] = await Promise.all([
-    account(url, deployment.marketState),
-    account(url, deployment.vault, "jsonParsed"),
-    account(url, deployment.reserveVault, "jsonParsed"),
-    account(url, deployment.productMint, "jsonParsed"),
-    account(url, deployment.xStockMint, "jsonParsed"),
-    account(url, deployment.primaryOracleAccount),
-    account(url, deployment.secondaryOracleAccount),
-    account(url, deployment.adapterProgram),
-    account(url, deployment.adapterMarket),
-  ]);
-  const xStockParsed = parsedInfo(xStockMint);
-  return state.owner === programId && state.executable !== true &&
-    tokenVaultEvidence(vault, deployment.xStockMint, deployment.marketState) &&
-    reserveVaultEvidence(reserveVault, deployment.marketState) &&
-    productMintEvidence(productMint, deployment.marketState) &&
-    xStockMint.owner === TOKEN_2022_PROGRAM && xStockParsed?.type === "mint" && xStockParsed.info?.isInitialized === true &&
-    primaryOracle.owner === deployment.primaryOracleOwner && primaryOracle.executable !== true &&
-    secondaryOracle.owner === deployment.secondaryOracleOwner && secondaryOracle.executable !== true &&
-    adapterProgram.executable === true && PROGRAM_LOADERS.has(String(adapterProgram.owner || "")) &&
-    adapterMarket.owner === deployment.adapterProgram && adapterMarket.executable !== true;
-}
-
-async function liveEvidence(url: string, values: { programId: string; feeRecipient: string; treasuryAuthority: string; governance: string; guardian: string; multisigProgram: string }, configuredMarkets: Record<string, Deployment>) {
-  const [genesis, program, treasury, governance, guardian, multisigProgram] = await Promise.all([
-    rpc(url, "getGenesisHash", []),
-    account(url, values.programId),
-    account(url, values.feeRecipient, "jsonParsed"),
-    account(url, values.governance),
-    account(url, values.guardian),
-    account(url, values.multisigProgram),
-  ]);
+async function liveEvidence(url: string, manifest: ReleaseManifestV2) {
+  const [genesis, program, config, treasury, governance, guardian, multisigProgram, markets] = await Promise.all([rpc(url, "getGenesisHash", []), programEvidence(url, manifest), account(url, manifest.configState), account(url, manifest.feeRecipient, "jsonParsed"), account(url, manifest.governance), account(url, manifest.guardian), account(url, manifest.multisigProgram), Promise.all(Object.entries(manifest.markets).map(async ([key, item]) => [key, await marketEvidence(url, item, manifest.programId)] as const))]);
   if (genesis !== MAINNET_GENESIS) throw new Error("Wrong Solana cluster");
-  const programLive = program.executable === true && PROGRAM_LOADERS.has(String(program.owner || ""));
-  const marketChecks = await Promise.all(Object.entries(configuredMarkets).map(async ([key, deployment]) => [key, await marketEvidence(url, deployment, values.programId)] as const));
-  return {
-    program: programLive,
-    frozen: programLive && await programIsFrozen(url, program),
-    treasury: tokenAccountEvidence(treasury, values.treasuryAuthority),
-    multisigs: governance.owner === values.multisigProgram && guardian.owner === values.multisigProgram &&
-      multisigProgram.executable === true && PROGRAM_LOADERS.has(String(multisigProgram.owner || "")),
-    markets: Object.fromEntries(marketChecks) as Record<string, boolean>,
-  };
+  return { program, config: configEvidence(config, manifest), treasury: tokenAccount(treasury, TOKEN_PROGRAM, SOLANA_USDC_MINT, manifest.treasuryAuthority), multisigs: governance.owner === manifest.multisigProgram && guardian.owner === manifest.multisigProgram && await exactAccountHash(governance, manifest.evidence.governanceAccountSha256) && await exactAccountHash(guardian, manifest.evidence.guardianAccountSha256) && await executableProgramFrozen(url, multisigProgram), markets: Object.fromEntries(markets) as Record<string, boolean> };
 }
 
-function deployments(allowedAdapters: Set<string>): Record<string, Deployment> {
+async function releaseInputs(nowUnix: number) {
+  const source = process.env.LEVPLAY_SVM_DEPLOYMENT_MANIFEST_JSON || ""; const expectedHash = process.env.LEVPLAY_SVM_DEPLOYMENT_MANIFEST_HASH || ""; const venueSource = process.env.LEVPLAY_SVM_VENUE_MANIFEST_JSON || ""; const productsSource = process.env.LEVPLAY_SVM_PRODUCT_MANIFESTS_JSON || "";
   try {
-    const value = JSON.parse(process.env.LEVPLAY_SVM_MARKETS_JSON || "{}") as Record<string, Deployment>;
-    const accepted: Record<string, Deployment> = {};
-    const vaults = new Set<string>();
-    const reserveVaults = new Set<string>();
-    const productMints = new Set<string>();
-    for (const [key, item] of Object.entries(value)) {
-      const match = key.match(/^([A-Z]+)(2|3)(L|S)$/);
-      const expected = match ? ALL_MARKETS.find((market) => market.ticker === match[1]) : undefined;
-      const leverage = Number(match?.[2]);
-      const side = match?.[3] === "S" ? "short" : "long";
-      if (!expected || item?.xStockMint !== expected.mint || item?.leverage !== leverage || item?.side !== side ||
-        !isSolanaAddress(item?.marketState) || !isSolanaAddress(item?.vault) || !isSolanaAddress(item?.reserveVault) || !isSolanaAddress(item?.productMint) ||
-        !isSolanaAddress(item?.adapterProgram) || !allowedAdapters.has(item.adapterProgram) || !isSolanaAddress(item?.adapterMarket) ||
-        !isSolanaAddress(item?.primaryOracleAccount) || !isSolanaAddress(item?.primaryOracleOwner) ||
-        !isSolanaAddress(item?.secondaryOracleAccount) || !isSolanaAddress(item?.secondaryOracleOwner) ||
-        !item.primaryOracleProviderId?.trim() || !item.secondaryOracleProviderId?.trim() ||
-        item.primaryOracleProviderId === item.secondaryOracleProviderId ||
-        item.primaryOracleAccount === item.secondaryOracleAccount ||
-        item.vault === item.productMint || item.vault === item.reserveVault || item.reserveVault === item.productMint ||
-        vaults.has(item.vault) || reserveVaults.has(item.reserveVault) || productMints.has(item.productMint) ||
-        !Number.isInteger(item.standbyBps) || item.standbyBps < 1 || item.standbyBps > 500 ||
-        typeof item?.primaryOracleFeedId !== "string" || !HASH.test(item.primaryOracleFeedId.replace(/^0x/, "")) ||
-        typeof item?.secondaryOracleFeedId !== "string" || !HASH.test(item.secondaryOracleFeedId.replace(/^0x/, ""))) continue;
-      vaults.add(item.vault);
-      reserveVaults.add(item.reserveVault);
-      productMints.add(item.productMint);
-      accepted[key] = item;
-    }
-    return accepted;
-  } catch {
-    return {};
-  }
+    const manifest = parseReleaseManifestV2(source); const [manifestHash, venueHash, productsHash] = await Promise.all([sha256(source), sha256(venueSource), sha256(productsSource)]);
+    if (manifestHash !== expectedHash.toLowerCase() || venueHash !== manifest.evidence.venueManifestSha256.toLowerCase() || productsHash !== manifest.evidence.productManifestsSha256.toLowerCase()) throw new Error("release or admission hash mismatch");
+    const venueManifest = parseVenueManifest(venueSource); const venue = assessVenueAdmission(venueManifest, nowUnix); const rawProducts = JSON.parse(productsSource) as unknown;
+    if (!Array.isArray(rawProducts) || rawProducts.length !== 2) throw new Error("pilot requires exactly two product manifests");
+    const parsedProducts = rawProducts.map((item) => parseProductManifest(item as Record<string, unknown>)); const admissions = parsedProducts.map((item) => assessProductAdmission(item, nowUnix)); const ids = admissions.map((item) => item.productId).sort();
+    if (!venue.admitted || admissions.some((item) => !item.admitted) || ids.join(",") !== "AAPL2L,AAPL2S") throw new Error("venue or exact pilot products are not admitted");
+    if (venueManifest.deploymentManifestHash.replace(/^0x/, "").toLowerCase() !== manifest.releaseArtifacts.sourceSha256.toLowerCase() || parsedProducts.some((item) => item.deploymentHash.replace(/^0x/, "").toLowerCase() !== manifest.releaseArtifacts.sourceSha256.toLowerCase())) throw new Error("admission manifests target a different release");
+    for (const product of parsedProducts) { const deployed = manifest.markets[product.productId as keyof typeof manifest.markets]; if (!deployed || product.sourceMint !== deployed.sourceMint || product.productMint !== deployed.productMint || product.marketPda !== deployed.marketState || product.collateralVault !== deployed.clearingVault || product.feeVault !== manifest.feeRecipient || product.primaryOracle !== deployed.primaryOracleAccount || product.secondaryOracle !== deployed.secondaryOracleAccount || product.primaryOracleProviderId !== deployed.primaryOracleProviderId || product.secondaryOracleProviderId !== deployed.secondaryOracleProviderId) throw new Error("product and deployment manifests disagree"); }
+    return { manifest, manifestHash, venue, productIds: ids as string[], reasons: [] as string[] };
+  } catch (error) { return { manifest: null, manifestHash: null, venue: { admitted: false, venueId: null, reasons: [] as string[] }, productIds: [] as string[], reasons: [error instanceof Error ? error.message : "release manifest is invalid"] }; }
 }
 
-async function sha256(value: string) {
-  const bytes = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-function adapterAllowlist() {
-  try {
-    const value = JSON.parse(process.env.LEVPLAY_SVM_ADAPTER_PROGRAMS_JSON || "[]") as unknown;
-    return new Set(Array.isArray(value) ? value.filter(isSolanaAddress) : []);
-  } catch {
-    return new Set<string>();
-  }
-}
-
-export async function protocolStatus() {
-  const venue = venueStatusFromEnvironment();
-  const products = productStatusFromEnvironment();
-  const programId = process.env.LEVPLAY_SVM_PROGRAM_ID || "";
-  const feeRecipient = process.env.LEVPLAY_SVM_FEE_RECIPIENT || "";
-  const treasuryAuthority = process.env.LEVPLAY_SVM_FEE_TREASURY_AUTHORITY || "";
-  const governance = process.env.LEVPLAY_SVM_GOVERNANCE_MULTISIG || "";
-  const guardian = process.env.LEVPLAY_SVM_GUARDIAN_MULTISIG || "";
-  const multisigProgram = process.env.LEVPLAY_SVM_MULTISIG_PROGRAM_ID || "";
-  const auditHash = process.env.LEVPLAY_SVM_AUDIT_HASH || "";
-  const releaseHash = process.env.LEVPLAY_SVM_RELEASE_HASH || "";
-  const backingHash = process.env.LEVPLAY_SVM_BACKING_ATTESTATION_HASH || "";
-  const reserveHash = process.env.LEVPLAY_SVM_RESERVE_ATTESTATION_HASH || "";
-  const manifestHash = process.env.LEVPLAY_SVM_MANIFEST_HASH || "";
-  const adapterSource = process.env.LEVPLAY_SVM_ADAPTER_PROGRAMS_JSON || "[]";
-  const marketSource = process.env.LEVPLAY_SVM_MARKETS_JSON || "{}";
-  const adapters = adapterAllowlist();
-  const markets = deployments(adapters);
-  const manifestMatches = hash(manifestHash) && await sha256(`${adapterSource}\n${marketSource}`) === manifestHash.toLowerCase();
-  const rpcs = configuredRpcs();
-  const addressesReady = [programId, feeRecipient, treasuryAuthority, governance, guardian, multisigProgram].every(isSolanaAddress) && governance !== guardian;
-  const observations = addressesReady && rpcs.length >= 2
-    ? (await Promise.allSettled(rpcs.map((url) => liveEvidence(url, { programId, feeRecipient, treasuryAuthority, governance, guardian, multisigProgram }, markets)))).flatMap((result) => result.status === "fulfilled" ? [result.value] : [])
-    : [];
-  const live = observations.length >= 2 && observations.every((value) => value.program && value.treasury && value.multisigs);
-  const marketsLive = live && Object.keys(markets).length > 0 && observations.every((value) => Object.keys(markets).every((key) => value.markets[key] === true));
-
+export async function protocolStatus(nowUnix = Math.floor(Date.now() / 1_000)) {
+  const release = await releaseInputs(nowUnix); const manifest = release.manifest; const rpcs = configuredRpcs();
+  const observations = manifest && rpcs.length >= 2 ? (await Promise.allSettled(rpcs.map((url) => liveEvidence(url, manifest)))).flatMap((result) => result.status === "fulfilled" ? [result.value] : []) : [];
+  const live = observations.length >= 2 && observations.every((item) => item.program && item.config && item.treasury && item.multisigs && Object.keys(item.markets).length === 2 && Object.values(item.markets).every(Boolean));
   const checks = [
-    { id: "venue", label: "Ondo pilot venue admitted", passed: venue.admitted, failure: venue.reasons[0] || "Ondo pilot venue is not admitted" },
-    { id: "products", label: "Isolated product manifests admitted", passed: products.admitted, failure: products.reasons[0] || "No product is admitted" },
-    { id: "program", label: "Program verified by RPC quorum", passed: live, failure: "Two independent mainnet RPCs have not verified the program and authorities" },
-    { id: "treasury", label: "Pinned USDC fee treasury", passed: live && observations.every((value) => value.treasury), failure: "The fee account is not a quorum-verified USDC account owned by the treasury multisig" },
-    { id: "multisigs", label: "Independent multisigs", passed: live && observations.every((value) => value.multisigs), failure: "Governance and guardian are not independent quorum-verified multisig accounts" },
-    { id: "audit", label: "Independent audit", passed: hash(auditHash), failure: "Independent audit hash is missing" },
-    { id: "release", label: "Frozen release hash", passed: hash(releaseHash), failure: "Frozen release hash is missing" },
-    { id: "frozen", label: "Program authority frozen", passed: process.env.LEVPLAY_SVM_PROGRAM_FROZEN === "true" && live && observations.every((value) => value.frozen), failure: "Audited program release is not verifiably immutable onchain" },
-    { id: "backing", label: "Backing venue attestation", passed: hash(backingHash) && adapters.size > 0, failure: "Audited backing venue and adapter evidence is missing" },
-    { id: "reserve", label: "Funded Standby reserve", passed: hash(reserveHash) && marketsLive, failure: "Isolated Standby reserve funding and solvency attestation is missing" },
-    { id: "manifest", label: "Frozen deployment manifest", passed: manifestMatches, failure: "Deployment manifest does not match its frozen SHA-256 hash" },
-    { id: "markets", label: "Audited vault deployment", passed: manifestMatches && marketsLive, failure: "No market deployment passed quorum verification of its state, vault, mints, oracles and fixed adapter" },
-    { id: "switch", label: "Multisig go-live vote", passed: process.env.LEVPLAY_SVM_EXECUTION_ENABLED === "true", failure: "Mainnet execution switch is off" },
+    { id: "manifest", label: "Canonical release manifest v2", passed: Boolean(manifest), failure: release.reasons[0] || "Release manifest is missing" },
+    { id: "venue", label: "Venue evidence bound to release", passed: Boolean(manifest && release.venue.admitted), failure: "Venue evidence is not admitted and release-bound" },
+    { id: "products", label: "Exact AAPL2L/AAPL2S manifests", passed: Boolean(manifest && release.productIds.join(",") === "AAPL2L,AAPL2S"), failure: "Exact pilot product manifests are not admitted and release-bound" },
+    { id: "onchain", label: "Program, decoded state and account-identity RPC quorum", passed: live, failure: "Two RPCs have not verified exact program bytes, decoded state, vault semantics and pinned account identities; oracle value checks remain a handler gate" },
+    { id: "evidence", label: "Signed external evidence verified", passed: EXTERNAL_EVIDENCE_SIGNATURES_VERIFIED, failure: "Audit, economic, legal and GO-vote hashes are presence commitments only; signed content verification is not implemented" },
+    { id: "implementation", label: "Audited value-moving handlers", passed: VALUE_MOVING_HANDLERS_IMPLEMENTED, failure: "Value-moving handlers remain deliberately execution-locked" },
+    { id: "switch", label: "Multisig go-live vote", passed: process.env.LEVPLAY_SVM_EXECUTION_ENABLED === "true" && Boolean(manifest?.evidence.goLiveVoteSha256), failure: "Mainnet execution switch or release-bound GO vote is missing" },
   ];
   const blockers = checks.filter((check) => !check.passed).map((check) => check.failure);
-
-  return {
-    executionEnabled: blockers.length === 0,
-    venueId: venue.venueId,
-    venueBlockers: venue.reasons,
-    admittedProducts: products.productIds,
-    productBlockers: products.reasons,
-    feeBps: 50,
-    maxPilotUsd: 100,
-    programId: isSolanaAddress(programId) ? programId : null,
-    feeRecipient: isSolanaAddress(feeRecipient) ? feeRecipient : null,
-    treasuryAuthority: isSolanaAddress(treasuryAuthority) ? treasuryAuthority : null,
-    rpcQuorum: observations.length,
-    configuredMarkets: Object.keys(markets),
-    checks: checks.map((check) => ({ id: check.id, label: check.label, passed: check.passed })),
-    blockers,
-  };
+  return { executionEnabled: blockers.length === 0, venueId: release.venue.venueId, venueBlockers: release.venue.reasons, admittedProducts: release.productIds, productBlockers: release.reasons, feeBps: 50, maxPilotUsd: 100, programId: manifest?.programId || null, feeRecipient: manifest?.feeRecipient || null, treasuryAuthority: manifest?.treasuryAuthority || null, rpcQuorum: observations.length, configuredMarkets: manifest ? Object.keys(manifest.markets) : [], releaseManifestHash: release.manifestHash, checks: checks.map(({ id, label, passed }) => ({ id, label, passed })), blockers };
 }

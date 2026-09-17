@@ -1,13 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://levplay.app/audit/deployment-manifest.schema.json",
-  "title": "LevPlay AAPL 2x pilot deployment",
+  "$id": "https://levplay.tech/audit/deployment-manifest.schema.json",
+  "title": "LevPlay AAPL 2x pilot deployment manifest v2",
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "schemaVersion",
     "releaseCommit",
     "releaseArtifacts",
+    "evidence",
     "programId",
+    "configState",
     "programDataAddress",
     "programLoader",
     "upgradePolicy",
@@ -21,6 +24,7 @@
     "markets"
   ],
   "properties": {
+    "schemaVersion": { "const": 2 },
     "releaseCommit": { "type": "string", "pattern": "^[a-fA-F0-9]{40}$" },
     "releaseArtifacts": {
       "type": "object",
@@ -34,10 +38,34 @@
         "toolchainImageDigest": { "type": "string", "pattern": "^sha256:[a-fA-F0-9]{64}$" }
       }
     },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "independentAuditSha256", "economicAuditSha256", "auditorRetestSha256",
+        "backingAttestationSha256", "reserveAttestationSha256", "venueManifestSha256",
+        "productManifestsSha256", "governanceAccountSha256", "guardianAccountSha256",
+        "legalApprovalSha256", "goLiveVoteSha256"
+      ],
+      "properties": {
+        "independentAuditSha256": { "$ref": "#/$defs/hash" },
+        "economicAuditSha256": { "$ref": "#/$defs/hash" },
+        "auditorRetestSha256": { "$ref": "#/$defs/hash" },
+        "backingAttestationSha256": { "$ref": "#/$defs/hash" },
+        "reserveAttestationSha256": { "$ref": "#/$defs/hash" },
+        "venueManifestSha256": { "$ref": "#/$defs/hash" },
+        "productManifestsSha256": { "$ref": "#/$defs/hash" },
+        "governanceAccountSha256": { "$ref": "#/$defs/hash" },
+        "guardianAccountSha256": { "$ref": "#/$defs/hash" },
+        "legalApprovalSha256": { "$ref": "#/$defs/hash" },
+        "goLiveVoteSha256": { "$ref": "#/$defs/hash" }
+      }
+    },
     "programId": { "$ref": "#/$defs/address" },
+    "configState": { "$ref": "#/$defs/address" },
     "programDataAddress": { "$ref": "#/$defs/address" },
     "programLoader": { "$ref": "#/$defs/address" },
-    "upgradePolicy": { "enum": ["frozen", "timelocked"] },
+    "upgradePolicy": { "const": "frozen" },
     "upgradeAuthority": {
       "oneOf": [
         { "$ref": "#/$defs/address" },
@@ -61,21 +89,7 @@
     }
   },
   "allOf": [
-    {
-      "if": { "properties": { "upgradePolicy": { "const": "frozen" } }, "required": ["upgradePolicy"] },
-      "then": {
-        "properties": {
-          "upgradeAuthority": { "type": "null" },
-          "upgradeTimelockSeconds": { "const": 0 }
-        }
-      },
-      "else": {
-        "properties": {
-          "upgradeAuthority": { "$ref": "#/$defs/address" },
-          "upgradeTimelockSeconds": { "type": "integer", "minimum": 172800 }
-        }
-      }
-    }
+    { "properties": { "upgradeAuthority": { "type": "null" }, "upgradeTimelockSeconds": { "const": 0 } } }
   ],
   "$defs": {
     "address": { "type": "string", "pattern": "^[1-9A-HJ-NP-Za-km-z]{32,44}$" },
@@ -85,13 +99,15 @@
       "additionalProperties": false,
       "required": [
         "marketState",
-        "vault",
+        "clearingVault",
+        "sourceVault",
         "reserveVault",
         "standbyBps",
         "productMint",
         "sourceProvider",
         "sourceAssetSymbol",
         "sourceMint",
+        "sourceMintAccountSha256",
         "sourceRegistryHash",
         "primaryOracleAccount",
         "primaryOracleOwner",
@@ -105,17 +121,24 @@
         "adapterMarket",
         "adapterBinaryHash",
         "leverage",
-        "side"
+        "side",
+        "transactionCap",
+        "walletCap",
+        "tvlCap",
+        "dailyMintCap",
+        "dailyRedeemCap"
       ],
       "properties": {
         "marketState": { "$ref": "#/$defs/address" },
-        "vault": { "$ref": "#/$defs/address" },
+        "clearingVault": { "$ref": "#/$defs/address" },
+        "sourceVault": { "$ref": "#/$defs/address" },
         "reserveVault": { "$ref": "#/$defs/address" },
         "standbyBps": { "type": "integer", "minimum": 1, "maximum": 500 },
         "productMint": { "$ref": "#/$defs/address" },
         "sourceProvider": { "const": "ondo" },
         "sourceAssetSymbol": { "const": "AAPLon" },
         "sourceMint": { "$ref": "#/$defs/address" },
+        "sourceMintAccountSha256": { "$ref": "#/$defs/hash" },
         "sourceRegistryHash": { "$ref": "#/$defs/hash" },
         "primaryOracleAccount": { "$ref": "#/$defs/address" },
         "primaryOracleOwner": { "$ref": "#/$defs/address" },
@@ -130,6 +153,11 @@
         "adapterBinaryHash": { "$ref": "#/$defs/hash" },
         "leverage": { "const": 2 },
         "side": { "enum": ["long", "short"] }
+        ,"transactionCap": { "type": "integer", "minimum": 1 }
+        ,"walletCap": { "type": "integer", "minimum": 1 }
+        ,"tvlCap": { "type": "integer", "minimum": 1 }
+        ,"dailyMintCap": { "type": "integer", "minimum": 1 }
+        ,"dailyRedeemCap": { "type": "integer", "minimum": 1 }
       }
     },
     "longMarket": {

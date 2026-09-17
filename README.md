@@ -55,17 +55,10 @@ pnpm build
 
 Production signing requires all of the following:
 
-- `LEVPLAY_SVM_PROGRAM_ID`
-- `LEVPLAY_SVM_FEE_RECIPIENT`
-- `LEVPLAY_SVM_GOVERNANCE_MULTISIG`
-- `LEVPLAY_SVM_GUARDIAN_MULTISIG`
-- `LEVPLAY_SVM_AUDIT_HASH`
-- `LEVPLAY_SVM_RELEASE_HASH`
-- `LEVPLAY_SVM_MANIFEST_HASH`
-- `LEVPLAY_SVM_PROGRAM_FROZEN=true`
-- `LEVPLAY_SVM_MARKETS_JSON` with audited deployments and oracle identifiers
+- `LEVPLAY_SVM_DEPLOYMENT_MANIFEST_JSON` containing the exact schema-v2 release, artifact/evidence hashes, program/config identities, separate USDC clearing, source-token and reserve vaults, and exactly `AAPL2L` plus `AAPL2S`
+- `LEVPLAY_SVM_DEPLOYMENT_MANIFEST_HASH` matching the byte-exact JSON above
 - `LEVPLAY_SVM_VENUE_MANIFEST_JSON` with the exact Ondo programs, AAPLon mint, solver allowlist, eligibility policy, approval/audit hashes, funded collateral and independent exit domains
 - `LEVPLAY_SVM_PRODUCT_MANIFESTS_JSON` with one independently audited, funded and deployed manifest per enabled product
 - `LEVPLAY_SVM_EXECUTION_ENABLED=true`
 
-These gates are necessary, not sufficient: the supplied addresses and hashes must be verified independently before enabling real-money use.
+The deployment manifest hashes and cross-binds the venue and product manifests. Two RPCs must independently match the deployed SBF bytes, decoded `LVPCFG01`/`LVPMKT01` state and vault semantics. Execution still remains hard-locked in code until audited value-moving handlers exist.
