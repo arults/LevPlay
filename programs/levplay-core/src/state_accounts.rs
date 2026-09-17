@@ -10,7 +10,7 @@ pub const CONFIG_DISCRIMINATOR: [u8; 8] = *b"LVPCFG01";
 pub const MARKET_DISCRIMINATOR: [u8; 8] = *b"LVPMKT01";
 pub const ACCOUNT_VERSION: u8 = 1;
 pub const CONFIG_STATE_LEN: usize = 208;
-pub const MARKET_STATE_LEN: usize = 328;
+pub const MARKET_STATE_LEN: usize = 392;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ConfigState {
@@ -44,7 +44,9 @@ pub struct MarketState {
     pub adapter_program: Address,
     pub adapter_market: Address,
     pub primary_oracle: Address,
+    pub primary_oracle_program: Address,
     pub secondary_oracle: Address,
+    pub secondary_oracle_program: Address,
 }
 
 struct StateReader<'a> {
@@ -209,6 +211,8 @@ pub fn decode_market_state(bytes: &[u8]) -> Result<MarketState> {
         adapter_market: reader.address()?,
         primary_oracle: reader.address()?,
         secondary_oracle: reader.address()?,
+        primary_oracle_program: reader.address()?,
+        secondary_oracle_program: reader.address()?,
     };
     reader.finish()?;
     if state.leverage_bps != PILOT_LEVERAGE_BPS
@@ -231,6 +235,8 @@ pub fn decode_market_state(bytes: &[u8]) -> Result<MarketState> {
         state.adapter_market,
         state.primary_oracle,
         state.secondary_oracle,
+        state.primary_oracle_program,
+        state.secondary_oracle_program,
     ])?;
     Ok(state)
 }
@@ -290,6 +296,8 @@ mod tests {
         write_address(&mut bytes, 232, 16);
         write_address(&mut bytes, 264, 17);
         write_address(&mut bytes, 296, 18);
+        write_address(&mut bytes, 328, 19);
+        write_address(&mut bytes, 360, 20);
         bytes
     }
 
