@@ -42,7 +42,12 @@ for (const wallet of ["Phantom", "Backpack", "Jupiter", "Rabby", "OKX Wallet", "
 assert.match(app, /Detected on this device/, "installed wallets must be visibly distinguished");
 assert.match(app, /Connecting does not approve a trade or move funds/, "wallet selector must explain connection permissions");
 assert.match(app, /function AssetLogo/, "market rows and position views must use real asset logos with a safe fallback");
-assert.ok(app.includes("Live Solana DEX") && app.includes("Reference offline"), "pre-IPO reference state must distinguish a live display price from an outage");
+assert.ok(!app.includes("BRAND_DOMAINS[market.ticker]"), "market logos must not depend on a runtime favicon provider");
+assert.match(markets, /\/brands\/\$\{ticker\.toLowerCase\(\)\}\.svg/, "every stock must bind to a committed local SVG");
+assert.ok(app.includes("Reference unavailable"), "UI must render an explicit missing-reference state without inventing a quote");
+assert.match(marketApi, /provider_unconfigured/, "missing credentials must be distinguished from an upstream outage");
+assert.match(marketApi, /Last verified display/, "stale display quotes must be labeled rather than treated as live");
+assert.match(marketApi, /settlement: \{ required: 2, admitted: 0, status: "fail-closed" \}/, "display provider health must never admit a settlement feed");
 assert.match(css, /@media\(max-width:800px\)/, "mobile breakpoint must exist");
 assert.match(css, /\.app-nav\{position:fixed;left:0;right:0;bottom:0/, "mobile app navigation must remain thumb-accessible");
 assert.match(css, /\.position-card\{grid-template-columns:1fr 1fr/, "positions must collapse to a mobile grid");
