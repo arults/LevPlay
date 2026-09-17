@@ -33,7 +33,7 @@ assert.match(markets, /api\.dexscreener\.com\/latest\/dex\/tokens/, "pre-IPO dis
 assert.match(markets, /pair\.chainId === "solana"/, "pre-IPO references must reject other chains");
 assert.match(markets, /pair\.baseToken\?\.address === mint/, "pre-IPO references must match the pinned mint");
 assert.match(markets, /sourceMintVerified/, "pinned source mints must be independently checked onchain");
-assert.match(markets, /Math\\.abs\\(Date\\.now\\(\\) - timestampMs\\) <= DISPLAY_FRESHNESS_MS/, "stale display prices must be identified");
+assert.match(markets, /Math\.abs\(Date\.now\(\) - timestampMs\) <= DISPLAY_FRESHNESS_MS/, "stale display prices must be identified");
 assert.match(markets, /provider_unconfigured/, "missing display credentials must fail with an explicit state");
 assert.match(markets, /status: "fail-closed"/, "display provider availability must not unlock settlement");
 assert.ok(!markets.includes("XSTOCKS_API"), "xStocks must remain shelved");
