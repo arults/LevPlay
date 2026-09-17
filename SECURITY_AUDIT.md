@@ -32,6 +32,11 @@ Deterministic checks were rerun on 2026-09-15 against the production build. Brow
 
 These results prove the interface, read paths, deterministic Rust kernel, fail-closed SBF entrypoint and modeled safety rules. They do not prove a value-moving Solana handler, economic solvency, backing-liquidity availability, oracle account parsing under attack, or legal eligibility.
 
+The required implementation boundary is specified in the audit-facing
+[value-movement architecture](./docs/VALUE_MOVEMENT_ARCHITECTURE.md). That document records
+design requirements and non-claims only; it is not remediation evidence and does not change
+the current safety-locked release decision.
+
 ## Remediated findings — 2026-09-15
 
 | ID | Severity | Finding | Resolution |
@@ -91,7 +96,7 @@ Ondo and PreStocks issuer controls, redemption availability, legal eligibility, 
 
 ## Open critical blockers
 
-1. The checked Rust protocol kernel and executable fail-closed SBF shell exist, but no program-owned account processor, Token-2022 CPI layer or value-moving program is deployed.
+1. The checked Rust protocol kernel and executable fail-closed SBF shell exist, but no program-owned account processor, Token-2022 CPI layer or value-moving program is deployed. The required state and atomic `Open`/`Close` boundary are documented in the [value-movement architecture](./docs/VALUE_MOVEMENT_ARCHITECTURE.md), not implemented.
 2. The vault/execution adapter has not been implemented against a confirmed liquid backing venue for every market.
 3. No independent audit, fuzz suite, local-validator integration suite or mainnet-fork economic stress test has completed.
 4. No governance multisig, guardian multisig or fee treasury has been supplied.
@@ -106,4 +111,4 @@ Ondo and PreStocks issuer controls, redemption availability, legal eligibility, 
 
 ## Required sequence
 
-Port the reviewed integer state machine to the SVM program; compile it; run unit, property, fuzz and local-validator differential tests; deploy to devnet; run an economic stress campaign; commission an independent audit and remediate every finding; freeze the release; configure multisigs and monitoring; then run a capped mainnet canary with one 2× market before considering 3× products.
+Implement the sequenced [value-movement architecture](./docs/VALUE_MOVEMENT_ARCHITECTURE.md) while preserving the execution lock; compile it; run unit, property, fuzz and local-validator differential tests; deploy to devnet; run an economic stress campaign; commission an independent audit and remediate every finding; freeze the release; configure multisigs and monitoring; then run a capped mainnet canary with one 2× market before considering 3× products.
