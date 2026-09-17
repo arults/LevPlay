@@ -1,9 +1,11 @@
 #![no_std]
 #![forbid(unsafe_code)]
 
+mod position_accounts;
 mod program_boundary;
 mod risk_vault;
 mod state_accounts;
+pub use position_accounts::*;
 pub use program_boundary::*;
 pub use risk_vault::*;
 pub use state_accounts::*;
