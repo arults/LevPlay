@@ -18,12 +18,12 @@ const [landing, layout, docs, proof, proxy, app, css, markets, marketApi, stockL
   Promise.all(additionalLogos.map((ticker) => read(`public/brands/${ticker}.svg`))),
 ]);
 
-assert.match(landing, /Leveraged<br\/><em>Tokenized Stocks\.<\/em>/, "homepage must describe the instrument without an absolute safety headline");
-assert.match(landing, /No holder margin calls\./, "homepage must state the bounded holder benefit");
+assert.match(landing, /Defined risk\.<br\/><em>Leveraged stocks\.<\/em>/, "homepage must describe the instrument without an absolute safety headline");
+assert.match(landing, /No holder margin account\./, "homepage must state the bounded holder benefit");
 assert.match(landing, /principal and recovery are never guaranteed/i, "homepage hero must preserve loss and recovery limits");
 assert.match(layout, /LevPlay — Leveraged Tokenized Stocks/, "metadata title must use the bounded product description");
 assert.match(layout, /Token NAV can approach zero/, "metadata must preserve the material loss boundary");
-assert.match(landing, /Leveraged stock tokens, made clear/, "homepage must explain the instrument without redundant exclusivity language");
+assert.match(landing, /Leverage you can inspect/, "homepage must explain the instrument without redundant exclusivity language");
 assert.match(landing, /No forced wallet liquidation/, "homepage must explain the near-zero holder experience");
 assert.match(landing, /real reserve collateral/, "homepage must distinguish funded Standby from cosmetic token dust");
 assert.match(landing, /Standby does not guarantee recovery/, "homepage must disclose Standby recovery limits");
