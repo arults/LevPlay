@@ -68,6 +68,7 @@ Catalog expansion is not a launch-gate substitute. The auditable catalog contain
 - [ ] Implement the frozen [instruction interface](./programs/levplay/INTERFACE.md) and [value-movement architecture](./docs/VALUE_MOVEMENT_ARCHITECTURE.md) with program-owned state and value-moving handlers; `Open` and `Close` must reach the audit boundary together.
 - [x] Freeze exact versioned config and market byte layouts with strict initialization, reserved-byte, bounds and address-isolation checks.
 - [x] Enforce program ownership, exact privileges and canonical identity-bound config/market PDA seeds and bumps in SBF loaders.
+- [x] Freeze execution-locked state-v2 audit-candidate layouts that separate immutable market identity from writable market accounting, paired risk-vault accounting and per-wallet positions; strict encoders/decoders and PDA role loaders exist, but are intentionally not wired into dispatch or the release verifier.
 - [ ] Isolate backing, reserve, fee, position and claim accounting PDAs and bind their token-account authorities.
 - [ ] Use checked integer arithmetic and explicit decimal/exponent normalization; no floats.
 - [ ] Enforce capital, fee, wallet, transaction, TVL, daily mint and daily redemption caps onchain.
@@ -156,4 +157,4 @@ Catalog expansion is not a launch-gate substitute. The auditable catalog contain
 
 ## Machine release rule
 
-The `/api/protocol` gate requires one byte-exact schema-v2 release manifest and two independent Solana mainnet RPCs. The manifest cross-binds the exact venue/product admission JSON, source/SBF/IDL/SBOM/toolchain hashes, separate clearing/source/reserve vaults and exactly `AAPL2L` plus `AAPL2S`. Each RPC must reproduce the frozen deployed SBF hash and decoded `LVPCFG01`/`LVPMKT01` identities. A compile-time lock remains false until audited value-moving handlers exist, so configuration alone cannot enable signing. Any missing, extra or disagreeing proof keeps signing unavailable.
+The `/api/protocol` gate requires one byte-exact schema-v2 release manifest and two independent Solana mainnet RPCs. The manifest cross-binds the exact venue/product admission JSON, source/SBF/IDL/SBOM/toolchain hashes, separate clearing/source/reserve vaults and exactly `AAPL2L` plus `AAPL2S`. Each RPC must reproduce the frozen deployed SBF hash and decoded `LVPCFG01`/`LVPMKT01` identities. The audit-candidate `*02` account layouts are not accepted by this verifier and cannot unlock signing. A compile-time lock remains false until audited value-moving handlers exist, so configuration alone cannot enable signing. Any missing, extra or disagreeing proof keeps signing unavailable.

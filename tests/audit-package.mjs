@@ -21,10 +21,13 @@ const required = [
   "programs/levplay-core/src/risk_vault.rs",
   "programs/levplay-core/src/program_boundary.rs",
   "programs/levplay-core/src/state_accounts.rs",
+  "programs/levplay-core/src/state_v2.rs",
   "PROGRAM_STATE_V1.md",
+  "PROGRAM_STATE_V2.md",
   "programs/levplay-sbf/Cargo.toml",
   "programs/levplay-sbf/src/lib.rs",
   "programs/levplay-sbf/src/account_validation.rs",
+  "programs/levplay-sbf/src/state_v2_validation.rs",
   "programs/levplay-sbf/src/open_validation.rs",
   "programs/levplay-sbf/src/token_validation.rs",
   "programs/levplay-sbf/README.md",
@@ -131,6 +134,15 @@ assert.match(stateSource, /usdc_token_program/);
 assert.match(stateSource, /product_token_program/);
 assert.match(stateSource, /reader\.zeroes/);
 assert.match(stateSource, /validate_addresses/);
+
+const stateV2Source = files.find(([path]) => path === "programs/levplay-core/src/state_v2.rs")[1];
+const stateV2Docs = files.find(([path]) => path === "PROGRAM_STATE_V2.md")[1];
+for (const [name, length] of [["MARKET_CONFIG_V2_LEN", 800], ["MARKET_ACCOUNTING_V2_LEN", 288], ["PAIRED_RISK_VAULT_V2_LEN", 640], ["POSITION_V2_LEN", 224]]) {
+  assert.match(stateV2Source, new RegExp(`${name}: usize = ${length}`), `${name} source length must remain frozen`);
+  assert.match(stateV2Docs, new RegExp(`\\| ${length} \\|`), `${name} documentation must match source`);
+}
+assert.match(stateV2Source, /LVPPAIR2/);
+assert.match(stateV2Docs, /`PairedRiskVaultV2` \(`LVPPAIR2`\)/);
 
 const sbfManifest = files.find(([path]) => path === "programs/levplay-sbf/Cargo.toml")[1];
 assert.match(sbfManifest, /solana-program = "=2\.2\.1"/, "Solana SDK must remain exactly pinned");
