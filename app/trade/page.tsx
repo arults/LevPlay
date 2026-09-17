@@ -12,7 +12,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ALL_MARKETS, SOLANA_USDC_MINT, type MarketCategory } from "@/lib/markets";
 
 type Oracle = { provider: string; feedId: string; minPublishers: number };
-type LiveMarket = (typeof ALL_MARKETS)[number] & { provider?: string; price?: number; logo?: string; liquidityUsd?: number; mint?: string; atomic?: boolean; halted?: boolean; marketOpen?: boolean; period?: string; multiplier?: number; pendingMultiplier?: number; multiplierActivation?: number; oracles?: Oracle[]; verified: boolean; unavailable?: boolean; verificationNote?: string };
+type ReferenceStatus = "live" | "stale" | "provider_unconfigured" | "provider_offline" | "not_admitted";
+type LiveMarket = (typeof ALL_MARKETS)[number] & { provider?: string; price?: number; logo?: string; liquidityUsd?: number; mint?: string; atomic?: boolean; halted?: boolean; marketOpen?: boolean; period?: string; multiplier?: number; pendingMultiplier?: number; multiplierActivation?: number; oracles?: Oracle[]; verified: boolean; unavailable?: boolean; verificationNote?: string; referenceStatus?: ReferenceStatus; referenceLabel?: string; referenceTimestamp?: number };
 type ProtocolCheck = { id: string; label: string; passed: boolean };
 type Protocol = { executionEnabled: boolean; feeBps: number; maxPilotUsd: number; feeRecipient: string | null; treasuryAuthority: string | null; rpcQuorum: number; configuredMarkets: string[]; checks: ProtocolCheck[]; blockers: string[] };
 type MarketResponse = { markets: LiveMarket[]; checkedAt?: string | null };
@@ -41,16 +42,11 @@ const WALLET_OPTIONS = [
   { id: "okx", name: "OKX Wallet", aliases: ["okx"], domain: "okx.com", install: "https://www.okx.com/web3" },
 ] as const;
 
-const BRAND_DOMAINS: Record<string, string> = {
-  AAPL: "apple.com", MSFT: "microsoft.com", NVDA: "nvidia.com", GOOGL: "google.com", AMZN: "amazon.com", META: "meta.com", TSLA: "tesla.com", MSTR: "strategy.com", COIN: "coinbase.com", HOOD: "robinhood.com", NFLX: "netflix.com", AMD: "amd.com", SPY: "ssga.com", DIS: "disney.com", UBER: "uber.com", SOFI: "sofi.com", ORCL: "oracle.com", QQQ: "invesco.com", AVGO: "broadcom.com", JPM: "jpmorganchase.com", PLTR: "palantir.com",
-  ANTH: "anthropic.com", OPENAI: "openai.com", ANDURIL: "anduril.com", NEURAL: "neuralink.com", KALSHI: "kalshi.com", POLY: "polymarket.com", SPACEX: "spacex.com",
-};
-
 const favicon = (domain: string) => `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
 function AssetLogo({ market, size = 42 }: { market: LiveMarket; size?: number }) {
   const [failed, setFailed] = useState(false);
-  const source = market.logo || (BRAND_DOMAINS[market.ticker] ? favicon(BRAND_DOMAINS[market.ticker]) : "");
+  const source = market.logo || "";
   if (!source || failed) return <i className="asset-logo-fallback" style={{ background: market.tone, width: size, height: size }}>{market.ticker[0]}</i>;
   return <span className="asset-logo" style={{ width: size, height: size }}><Image src={source} alt={`${market.name} logo`} width={size} height={size} unoptimized onError={() => setFailed(true)}/></span>;
 }
@@ -291,17 +287,17 @@ export default function TradingApp() {
           <label className="search"><Search size={16}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search" aria-label="Search markets"/></label>
           <button className="refresh" onClick={() => void refresh()} aria-label="Refresh verified market data"><RefreshCw className={loadingMarkets ? "spin" : ""} size={16}/></button>
         </div>
-        <div className="table-head"><span>Market</span><span>Reference</span><span>Session</span><span>Feeds</span></div>
+        <div className="table-head"><span>Market</span><span>Reference</span><span>Status</span><span>Feeds</span></div>
         <div className="market-list">
-          {visible.map((market) => <button key={market.symbol} className={market.symbol === selectedSymbol ? "market-row selected" : "market-row"} onClick={() => { setSelectedSymbol(market.symbol); if (market.category === "Pre-IPO") setLeverage(2); }}><span className="asset"><AssetLogo market={market}/><span><strong>{market.ticker}</strong><small>{market.name}</small></span></span><strong className="price">{market.price ? formatUsd(market.price) : loadingMarkets ? "Checking…" : "Reference offline"}</strong><span className={market.marketOpen ? "session open" : "session"}>{market.marketOpen ? "Open" : market.period || "—"}</span><span className={market.verified ? "feed verified" : market.category === "Pre-IPO" && market.price ? "feed display" : "feed blocked"}>{market.verified ? <><Check size={13}/>2/2</> : market.category === "Pre-IPO" && market.price ? <><Eye size={13}/>DEX</> : <><LockKeyhole size={13}/>Block</>}</span></button>)}
+          {visible.map((market) => <button key={market.symbol} className={market.symbol === selectedSymbol ? "market-row selected" : "market-row"} onClick={() => { setSelectedSymbol(market.symbol); if (market.category === "Pre-IPO") setLeverage(2); }}><span className="asset"><AssetLogo market={market}/><span><strong>{market.ticker}</strong><small>{market.name}</small></span></span><strong className="price">{market.price ? formatUsd(market.price) : loadingMarkets ? "Checking…" : market.referenceLabel || "Reference unavailable"}</strong><span className={market.marketOpen ? "session open" : "session"}>{market.referenceStatus === "live" ? "Fresh" : market.referenceStatus === "stale" ? "Stale" : "Blocked"}</span><span className={market.verified ? "feed verified" : market.price ? "feed display" : "feed blocked"}>{market.verified ? <><Check size={13}/>2/2</> : market.price ? <><Eye size={13}/>Display</> : <><LockKeyhole size={13}/>Block</>}</span></button>)}
           {visible.length === 0 && <div className="empty">No matching markets.</div>}
         </div>
         <div className="source-line"><span>{checkedAt ? `Checked ${new Date(checkedAt).toLocaleTimeString()}` : "Checking reference providers"}</span><span><a href="https://docs.ondo.finance/ondo-stocks" target="_blank" rel="noreferrer"><PartnerLogo name="Ondo" domain="ondo.finance"/>Ondo</a><a href="https://prestocks.com/products" target="_blank" rel="noreferrer"><PartnerLogo name="PreStocks" domain="prestocks.com"/>PreStocks <ExternalLink size={12}/></a></span></div>
       </div>
 
       <div className="detail-panel">
-        <div className="detail-top"><div className="selected-asset"><AssetLogo market={selected} size={58}/><div><small>LevPlay · {selected.category}</small><h2>{selected.ticker}<em>{leverage}{direction === "Long" ? "L" : "S"}</em></h2><p>Liquidation-free holder structure</p></div></div><div className="selected-price"><small>{selected.category === "Pre-IPO" ? "PreStocks market reference" : "Underlying Ondo reference"}</small><strong>{selected.price ? formatUsd(selected.price) : "Reference offline"}</strong><span>{selected.category === "Pre-IPO" ? "Live DEX display · execution locked" : selected.marketOpen ? "Primary session open" : "Provider session / secondary market"}</span></div></div>
-        <div className="oracle-strip"><span><ShieldCheck size={18}/><span><small>Settlement guard</small><strong>{selected.verified ? "Dual-source ready" : "Fail-closed"}</strong></span></span>{selected.category === "Pre-IPO" ? <span><Eye size={18}/><span><small>Display source</small><strong>{selected.price ? "Live Solana DEX" : "Temporarily offline"}</strong></span></span> : oracles.slice(0, 2).map((oracle) => <span key={oracle.provider}><i className={oracle.provider.toLowerCase()}/><span><small>{oracle.provider}</small><strong>{oracle.feedId ? short(oracle.feedId) : "Unavailable"}</strong></span></span>)}</div>
+        <div className="detail-top"><div className="selected-asset"><AssetLogo market={selected} size={58}/><div><small>LevPlay · {selected.category}</small><h2>{selected.ticker}<em>{leverage}{direction === "Long" ? "L" : "S"}</em></h2><p>Liquidation-free holder structure</p></div></div><div className="selected-price"><small>{selected.category === "Pre-IPO" ? "PreStocks market reference" : "Underlying Ondo reference"}</small><strong>{selected.price ? formatUsd(selected.price) : selected.referenceLabel || "Reference unavailable"}</strong><span>{selected.referenceLabel || "Checking reference provider"} · settlement {selected.verified ? "ready" : "locked"}</span></div></div>
+        <div className="oracle-strip"><span><ShieldCheck size={18}/><span><small>Settlement guard</small><strong>{selected.verified ? "Dual-source ready" : "Fail-closed"}</strong></span></span>{selected.category === "Pre-IPO" ? <span><Eye size={18}/><span><small>Display source</small><strong>{selected.referenceLabel || "Checking provider"}</strong></span></span> : oracles.slice(0, 2).map((oracle) => <span key={oracle.provider}><i className={oracle.provider.toLowerCase()}/><span><small>{oracle.provider}</small><strong>{oracle.feedId ? short(oracle.feedId) : "Unavailable"}</strong></span></span>)}</div>
         <div className="curve-card"><div><span className="eyebrow">Outcome preview</span><h3>{leverage}× {direction.toLowerCase()} daily target</h3><p>The vault rebalances exposure; returns compound and will not equal {leverage}× over longer periods.</p></div><ExposureCurve leverage={leverage} direction={direction}/></div>
         <div className="mechanic-grid"><span><Activity size={17}/><small>Rebalance band</small><strong>±10% target drift</strong></span><span><Layers3 size={17}/><small>Underlying</small><strong>{selected.symbol} on Solana</strong></span><span><Zap size={17}/><small>Keeper model</small><strong>Permissionless calls</strong></span></div>
       </div>

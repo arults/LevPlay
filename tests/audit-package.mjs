@@ -23,6 +23,7 @@ const required = [
   "programs/levplay-sbf/Cargo.toml",
   "programs/levplay-sbf/src/lib.rs",
   "programs/levplay-sbf/src/account_validation.rs",
+  "programs/levplay-sbf/src/open_validation.rs",
   "programs/levplay-sbf/src/token_validation.rs",
   "programs/levplay-sbf/README.md",
   ".github/workflows/sbf-build.yml",
@@ -101,7 +102,7 @@ for (const primitive of ["checked_add", "checked_sub", "checked_mul", "checked_d
 
 const stateSource = files.find(([path]) => path === "programs/levplay-core/src/state_accounts.rs")[1];
 assert.match(stateSource, /CONFIG_STATE_LEN: usize = 208/);
-assert.match(stateSource, /MARKET_STATE_LEN: usize = 328/);
+assert.match(stateSource, /MARKET_STATE_LEN: usize = 392/);
 assert.match(stateSource, /usdc_token_program/);
 assert.match(stateSource, /product_token_program/);
 assert.match(stateSource, /reader\.zeroes/);
@@ -127,6 +128,12 @@ assert.match(tokenValidation, /ExtensionType::ImmutableOwner/);
 assert.match(tokenValidation, /extensions\.is_empty\(\)/);
 assert.match(tokenValidation, /delegate != COption::None/);
 assert.match(tokenValidation, /close_authority != COption::None/);
+const openValidation = files.find(([path]) => path === "programs/levplay-sbf/src/open_validation.rs")[1];
+assert.match(openValidation, /validate_open_account_set/);
+assert.match(openValidation, /market\.primary_oracle_program/);
+assert.match(openValidation, /market\.secondary_oracle_program/);
+assert.match(openValidation, /validate_descriptor_set/);
+assert.match(openValidation, /validate_product_mint/);
 const boundarySource = files.find(([path]) => path === "programs/levplay-core/src/program_boundary.rs")[1];
 assert.match(boundarySource, /usdc_token_program/);
 assert.match(boundarySource, /product_token_program/);

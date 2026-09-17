@@ -132,6 +132,8 @@ mod tests {
         write_address(&mut data, 232, 16);
         write_address(&mut data, 264, 17);
         write_address(&mut data, 296, 18);
+        write_address(&mut data, 328, 19);
+        write_address(&mut data, 360, 20);
         data
     }
 
@@ -260,7 +262,7 @@ mod tests {
         );
         let owner = program_id;
         let mut lamports = 1;
-        let mut data = market_data(bump, [19_u8; 32]);
+        let mut data = market_data(bump, [21_u8; 32]);
         let account = AccountInfo::new(
             &key,
             false,
