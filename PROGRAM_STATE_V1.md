@@ -24,7 +24,7 @@ critical addresses and aliased critical addresses.
 All six addresses are nonzero and pairwise distinct. This deliberately prevents
 one address from silently satisfying multiple control roles.
 
-## Market account — 328 bytes
+## Market account — 392 bytes
 
 | Offset | Bytes | Field |
 |---:|---:|---|
@@ -51,8 +51,10 @@ one address from silently satisfying multiple control roles.
 | 168 | 32 | isolated reserve vault |
 | 200 | 32 | fixed adapter program |
 | 232 | 32 | fixed adapter market |
-| 264 | 32 | primary oracle |
-| 296 | 32 | secondary oracle |
+| 264 | 32 | primary oracle account / feed |
+| 296 | 32 | secondary oracle account / report |
+| 328 | 32 | primary oracle owner program |
+| 360 | 32 | secondary oracle owner / verifier program |
 
 Integers are little-endian. The canary decoder accepts only 2× leverage, at
 most 50-bps entry fee, a 1–500-bps Standby floor, ordered nonzero caps and
@@ -60,7 +62,9 @@ unique nonzero critical addresses.
 
 ## Remaining account-boundary work
 
-The SBF processor must additionally prove account ownership, canonical PDA
-seeds and bumps, rent/size, exact signer/writable flags, token-account mint and
-authority, oracle owner/feed identity and transaction introspection before
-using decoded state. A valid state byte array alone never unlocks execution.
+The SBF Open boundary proves account ownership, canonical PDA seeds and bumps,
+exact signer/writable flags, token-account mint and authority, and persisted
+oracle account/program identity. Remaining value-moving handlers must parse the
+two oracle payloads, enforce freshness/confidence/deviation and inspect the
+outer transaction before using decoded state. A valid state byte array alone
+never unlocks execution.
