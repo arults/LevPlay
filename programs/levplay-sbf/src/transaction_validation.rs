@@ -8,7 +8,6 @@
 use levplay_core::{validate_transaction_shape, Address, MAX_COMPUTE_BUDGET_PREFIXES};
 use solana_program::{
     account_info::AccountInfo,
-    compute_budget,
     program_error::ProgramError,
     pubkey::Pubkey,
     sysvar::{self, instructions::{load_current_index_checked, load_instruction_at_checked}},
@@ -65,7 +64,7 @@ pub fn validate_top_level_transaction(
         current_index,
         &programs[..count],
         program_id.to_bytes(),
-        compute_budget::ID.to_bytes(),
+        solana_program::pubkey!("ComputeBudget111111111111111111111111111111").to_bytes(),
     )
     .map_err(|_| ProgramError::InvalidArgument)
 }
