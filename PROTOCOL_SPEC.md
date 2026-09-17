@@ -25,7 +25,8 @@ The external-audit pilot is limited to two isolated Apple-referenced markets: `A
 
 ## Settlement guard
 
-- Pyth and Chainlink prices are both mandatory.
+- Pyth is the preferred primary source wherever an exact production feed exists. A separately admitted onchain source, operated independently from Pyth, is also mandatory; no secondary provider is selected by brand in advance.
+- Ondo, PreStocks, Tessera, DEX and other HTTP/API marks are display-only and can never authorize mint, redeem or rebalance.
 - Maximum age: 30 seconds during execution.
 - Maximum cross-feed deviation: 100 basis points.
 - Confidence interval and minimum-publisher requirements are checked.

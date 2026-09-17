@@ -42,6 +42,8 @@ assert.match(app, /selected\.category === "Pre-IPO" \? \[2\]/, "PreStocks must r
 assert.match(app, /TabsTrigger value="Pre-IPO"/, "pre-IPO references must have a distinct market category");
 assert.match(app, /markets\.find\(\(market\) => market\.category === next && \(next !== "Pre-IPO" \|\| market\.provider === preIpoProvider\)\)/, "changing categories must select a visible provider market");
 assert.match(app, /PreStocks.*Tessera/s, "pre-IPO view must expose both admitted reference providers");
+assert.match(app, /\$\{selected\.provider\} research reference/, "review dialog must identify the selected pre-IPO provider");
+assert.ok(!app.includes('"PreStocks research reference"'), "Tessera products must never be mislabeled as PreStocks");
 assert.match(app, /settlement-ready.*display references online/, "footer must distinguish settlement admission from display-price availability");
 assert.ok(!app.includes('TabsTrigger value="Hong Kong"'), "Hong Kong products must remain shelved");
 assert.match(app, /Public stocks \+ commodities via Ondo/, "active providers must be clear");

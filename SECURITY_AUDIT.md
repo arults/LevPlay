@@ -68,7 +68,7 @@ These results prove the interface, read paths, deterministic Rust kernel, fail-c
 | Wrong token program | Mints must be owned by the canonical Token-2022 program. |
 | Corporate-action balance errors | Transaction amounts remain raw; any source-token scaling/rebase mechanism must be explicitly parsed and interactions pause around activation. |
 | Issuer halt or pause ignored | Any admitted Ondo/PreStocks issuer halt, freeze, redemption stop or supported token pause must block new risk and trigger close-only handling. |
-| Price API used for settlement | API quotes are reference-only. The protocol specification requires fresh Pyth and Chainlink data onchain. |
+| Price API used for settlement | API quotes are reference-only. The protocol specification requires fresh Pyth-primary and independently operated secondary data verified onchain. |
 | Oracle manipulation | Both feeds are mandatory, with age, confidence, publisher and 100-bps deviation checks. |
 | Malicious transfer hook | Any unexpected Token-2022 transfer-hook program blocks the mint. |
 | Keeper compromise | Rebalances are permissionless and constrained by exact mints, programs, balance deltas, minimum output and oracle state. |
