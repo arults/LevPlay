@@ -17,7 +17,7 @@ Submit the integration packet to Ondo through its official contact form or suppo
 
 - Contact PreStocks for written permission covering the exact 2x long/short wrapper, program-controlled vaults, source mints, valuation methodology, redemption/secondary-liquidity route, administrative controls, product changes and eligible jurisdictions.
 - Ask both providers to disclose all mint, freeze, pause, permanent-delegate and transfer-hook authorities and to provide signed change/halt notifications.
-- xStocks is shelved and needs no launch work.
+- xStocks is a parallel feasibility candidate only. Use the official partner-integration form to request written structured-product permission, program-controlled vault approval, production xChange access, signed Solana mint/authority data, oracle identities, redemption/halt procedures and eligible jurisdictions. It remains outside the first canary until the fail-closed xStocks admission manifest passes.
 
 Deliverable: signed approval/terms and a technical onboarding package. Never send credentials or private agreements to the repository.
 

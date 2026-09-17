@@ -11,7 +11,7 @@ Status date: 2026-09-15. This catalog defines isolated products for audit and pa
 | PreStocks | 8 pre-IPO references (xAI excluded) | 2L, 2S | 16 |
 | **Total** | **28** | — | **136** |
 
-xStocks is shelved and is not an active integration or launch dependency. Hong Kong products are omitted because neither admitted source currently provides a verified HK catalog for this release.
+xStocks remains outside the active launch catalog, but is now a documented feasibility candidate under `XSTOCKS_LEVERAGED_LAYER.md`. Its public API and DeFi-composability do not constitute wrapper approval; each xStocks-backed product must pass the independent fail-closed admission gate. Hong Kong products are omitted because no admitted source currently provides a verified HK catalog for this release.
 
 ## Ondo public stocks
 
