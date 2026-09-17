@@ -1,6 +1,6 @@
 # LevPlay
 
-LevPlay is a Solana-first, fail-closed infrastructure layer for daily-target leveraged tokens using Ondo public-stock and commodity-linked assets plus PreStocks pre-IPO references. xStocks is shelved. Transaction construction and signing remain disabled until every product's production gates are independently proven.
+LevPlay is a Solana-first, fail-closed infrastructure layer for daily-target leveraged tokens using Ondo public-stock and commodity-linked assets plus PreStocks and Tessera pre-IPO references. xStocks is shelved. Tessera's pinned T-OpenAI and T-Kalshi mints are available only as 2x long/short paper concepts. Transaction construction and signing remain disabled until every product's production gates are independently proven.
 
 ## Product boundary
 
@@ -21,6 +21,7 @@ LevPlay is a Solana-first, fail-closed infrastructure layer for daily-target lev
 - Exact source mint pinning and onchain Token-2022 metadata/extension validation are required by product admission.
 - A 136-product Ondo/PreStocks catalog plus leverage-specific, fail-closed collateral and deployment manifests.
 - Dual-provider availability gate for Pyth and Chainlink.
+- Pyth-first settlement policy: an exact feed is required per product; issuer APIs and DEX quotes remain display-only and no feed is inferred by ticker.
 - Corporate-action, issuer-halt, Token-2022 pause and unexpected transfer-hook gates.
 - Environment-driven production release lock; absent evidence blocks signing.
 - Protocol-model tests, live integration checks, lint, production build and dependency audit.
