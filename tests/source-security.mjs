@@ -60,46 +60,28 @@ assert.match(markets, /readJsonResponseBounded\(response, 1_000_000\)/, "batched
 assert.doesNotMatch(markets, /response\.json\(\)/, "market providers must not bypass bounded response parsing");
 
 for (const gate of [
-  "LEVPLAY_SVM_PROGRAM_ID",
-  "LEVPLAY_SVM_FEE_RECIPIENT",
-  "LEVPLAY_SVM_FEE_TREASURY_AUTHORITY",
-  "LEVPLAY_SVM_GOVERNANCE_MULTISIG",
-  "LEVPLAY_SVM_GUARDIAN_MULTISIG",
-  "LEVPLAY_SVM_MULTISIG_PROGRAM_ID",
-  "LEVPLAY_SVM_AUDIT_HASH",
-  "LEVPLAY_SVM_RELEASE_HASH",
-  "LEVPLAY_SVM_BACKING_ATTESTATION_HASH",
-  "LEVPLAY_SVM_RESERVE_ATTESTATION_HASH",
-  "LEVPLAY_SVM_MANIFEST_HASH",
-  "LEVPLAY_SVM_PROGRAM_FROZEN",
-  "LEVPLAY_SVM_ADAPTER_PROGRAMS_JSON",
-  "LEVPLAY_SVM_MARKETS_JSON",
+  "LEVPLAY_SVM_DEPLOYMENT_MANIFEST_JSON",
+  "LEVPLAY_SVM_DEPLOYMENT_MANIFEST_HASH",
   "LEVPLAY_SVM_PRODUCT_MANIFESTS_JSON",
   "LEVPLAY_SVM_EXECUTION_ENABLED",
 ]) assert.ok(`${protocol}\n${products}`.includes(gate), `${gate} release gate must exist`);
-assert.match(protocol, /item\?\.xStockMint !== expected\.mint/, "deployment xStock mint must match the curated market");
-assert.match(protocol, /item\?\.leverage !== leverage/, "deployment leverage must match its product ID");
-assert.match(protocol, /item\?\.side !== side/, "deployment side must match its long or short product ID");
-assert.match(protocol, /vaults\.has\(item\.vault\).*productMints\.has\(item\.productMint\)/s, "vault and product-mint accounts must be unique");
-assert.match(protocol, /reserveVaults\.has\(item\.reserveVault\)/, "standby reserve vaults must be unique per market");
-assert.match(protocol, /item\.standbyBps < 1 \|\| item\.standbyBps > 500/, "standby floors must remain inside a bounded range");
+assert.ok(!protocol.includes("xStockMint"), "shelved xStocks terminology must not remain in the runtime manifest");
+assert.match(protocol, /item\.sourceMint/, "source mint must be cross-bound to the product manifest");
+assert.match(protocol, /item\.clearingVault/, "USDC clearing vault must be explicit");
+assert.match(protocol, /item\.sourceVault/, "source-token vault must be explicit");
+assert.match(protocol, /item\.reserveVault/, "Standby USDC reserve must be explicit");
 assert.match(protocol, /observations\.length >= 2/, "two independent mainnet RPC observations must be required");
-assert.match(protocol, /parsed\.parsed\.info\?\.mint === SOLANA_USDC_MINT/, "fee recipient must be the canonical USDC token account");
-assert.match(protocol, /parsed\.parsed\.info\?\.owner === treasuryAuthority/, "fee recipient owner must be pinned");
-assert.match(protocol, /allowedAdapters\.has\(item\.adapterProgram\)/, "backing adapters must be explicitly allowlisted");
-assert.match(protocol, /programDataBytes\[12\] === 0/, "upgradeable programs must be proven frozen from onchain ProgramData");
-assert.match(protocol, /marketEvidence\(url, deployment, values\.programId\)/, "every configured market must be verified independently by each RPC");
-assert.match(protocol, /state\.owner === programId/, "market state must be owned by the audited LevPlay program");
-assert.match(protocol, /tokenVaultEvidence\(vault, deployment\.xStockMint, deployment\.marketState\)/, "backing vault mint and authority must be pinned");
-assert.match(protocol, /reserveVaultEvidence\(reserveVault, deployment\.marketState\)/, "standby reserve must be canonical USDC controlled by the market PDA");
-assert.match(protocol, /productMintEvidence\(productMint, deployment\.marketState\)/, "product mint authority must be pinned and freeze authority absent");
-assert.match(protocol, /primaryOracle\.owner === deployment\.primaryOracleOwner/, "primary oracle owner must match the frozen manifest");
-assert.match(protocol, /secondaryOracle\.owner === deployment\.secondaryOracleOwner/, "secondary oracle owner must match the frozen manifest");
-assert.match(protocol, /item\.primaryOracleProviderId === item\.secondaryOracleProviderId/, "oracle providers must be independent");
-assert.match(protocol, /item\.primaryOracleAccount === item\.secondaryOracleAccount/, "oracle accounts must be distinct");
-assert.match(protocol, /adapterMarket\.owner === deployment\.adapterProgram/, "adapter market must be owned by the fixed adapter program");
-assert.match(protocol, /sha256\(`\$\{adapterSource\}\\n\$\{marketSource\}`\)/, "deployment JSON must match a frozen SHA-256 manifest hash");
+assert.match(protocol, /bytes\[12\] === 0/, "upgradeable programs must be proven frozen from onchain ProgramData");
+assert.match(protocol, /sha256\(bytes\.slice\(13\)\).*sbfSha256/s, "deployed SBF bytes must match the release artifact hash");
+assert.match(protocol, /LVPCFG01/, "config account bytes must be decoded");
+assert.match(protocol, /LVPMKT01/, "market account bytes must be decoded");
+assert.match(protocol, /VALUE_MOVING_HANDLERS_IMPLEMENTED = false/, "execution must stay locked while handlers are absent");
+assert.match(protocol, /rawProducts\.length !== 2/, "extra or missing pilot products must fail closed");
+assert.match(protocol, /ids\.join\(","\) !== "AAPL2L,AAPL2S"/, "only the exact pilot pair can pass");
+assert.match(protocol, /venueManifestSha256/, "venue evidence must be release-bound");
+assert.match(protocol, /productManifestsSha256/, "product evidence must be release-bound");
 assert.ok(protocol.includes('!/^\\d+\\.\\d+\\.\\d+\\.\\d+$/.test(host)'), "RPC configuration must reject IP literals");
+assert.match(protocol, /readJsonResponseBounded\(response, RPC_RESPONSE_LIMIT_BYTES\)/, "protocol RPC responses must use bounded streaming reads");
 
 for (const header of [
   "Content-Security-Policy",
