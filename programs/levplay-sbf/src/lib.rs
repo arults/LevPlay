@@ -1,8 +1,9 @@
 //! Solana SBF entrypoint for LevPlay.
 //!
-//! This shell deliberately validates the frozen wire format and then fails
-//! closed. It cannot move funds or mutate accounts until the audited account
-//! state, oracle, token and backing-vault handlers are admitted.
+//! Every admitted instruction is decoded and its implemented account boundary
+//! is validated before the global execution lock is reached. The lock remains
+//! fail-closed until state mutation, CPI balance-delta checks and independent
+//! audit evidence are complete.
 
 // Solana 2.2's entrypoint macro probes SBF-only cfg values that host Rust 1.85
 // does not know. Keep this exception crate-local; all other warnings are denied
@@ -20,7 +21,7 @@ pub use oracle_validation::*;
 pub use position_validation::*;
 pub use token_validation::*;
 
-use levplay_core::{decode_instruction, Error};
+use levplay_core::{decode_instruction, Error, ProgramInstruction};
 use solana_program::{
     account_info::AccountInfo, entrypoint, entrypoint::ProgramResult, program_error::ProgramError,
     pubkey::Pubkey,
@@ -40,7 +41,17 @@ pub fn process_instruction(
     if *program_id == Pubkey::default() || accounts.len() > MAX_ACCOUNTS {
         return Err(ProgramError::InvalidArgument);
     }
-    decode_instruction(instruction_data).map_err(map_core_error)?;
+
+    let instruction = decode_instruction(instruction_data).map_err(map_core_error)?;
+
+    // Open is the first frozen boundary with a complete account parser. Wire it
+    // into the real entrypoint now so account substitution, privilege changes,
+    // token-program confusion and malformed token state fail before the global
+    // execution lock. No CPI or account mutation is performed.
+    if matches!(instruction, ProgramInstruction::Open { .. }) {
+        validate_open_account_set(program_id, accounts)?;
+    }
+
     Err(ProgramError::Custom(EXECUTION_LOCKED_ERROR))
 }
 
@@ -68,18 +79,30 @@ fn map_core_error(error: Error) -> ProgramError {
 mod tests {
     use super::*;
 
-    fn enter_standby(epoch: u64) -> Vec<u8> {
+    fn instruction(tag: u8, values: &[u64]) -> Vec<u8> {
         let mut data = Vec::from(*b"LEVP");
         data.push(1);
-        data.push(5);
-        data.extend_from_slice(&epoch.to_le_bytes());
+        data.push(tag);
+        for value in values {
+            data.extend_from_slice(&value.to_le_bytes());
+        }
         data
     }
 
     #[test]
-    fn valid_wire_data_still_fails_closed() {
-        let result = process_instruction(&Pubkey::new_unique(), &[], &enter_standby(7));
+    fn non_value_instruction_still_reaches_release_lock() {
+        let result = process_instruction(&Pubkey::new_unique(), &[], &instruction(5, &[7]));
         assert_eq!(result, Err(ProgramError::Custom(EXECUTION_LOCKED_ERROR)));
+    }
+
+    #[test]
+    fn open_requires_exact_accounts_before_release_lock() {
+        let result = process_instruction(
+            &Pubkey::new_unique(),
+            &[],
+            &instruction(1, &[10, 9, 100, 7]),
+        );
+        assert_eq!(result, Err(ProgramError::NotEnoughAccountKeys));
     }
 
     #[test]
@@ -90,7 +113,7 @@ mod tests {
 
     #[test]
     fn default_program_id_is_rejected_before_dispatch() {
-        let result = process_instruction(&Pubkey::default(), &[], &enter_standby(7));
+        let result = process_instruction(&Pubkey::default(), &[], &instruction(5, &[7]));
         assert_eq!(result, Err(ProgramError::InvalidArgument));
     }
 }
