@@ -90,7 +90,8 @@ mod tests {
     use levplay_core::{ClaimStatus, Side, ACCOUNT_VERSION};
 
     fn write_address(bytes: &mut [u8], offset: usize, value: &Pubkey) {
-        bytes[offset..offset + 32].copy_from_slice(value.as_ref());
+        let end = offset.saturating_add(32);
+        bytes[offset..end].copy_from_slice(value.as_ref());
     }
 
     fn position_data(
