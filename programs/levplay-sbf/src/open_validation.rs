@@ -275,6 +275,7 @@ mod tests {
         let mut lamports15 = 1_u64;
         let wrong_oracle_owner = Pubkey::new_unique();
 
+        #[rustfmt::skip]
         let accounts = [
             AccountInfo::new(&user, true, true, &mut lamports0, &mut empty0, &system_program::ID, false, 0),
             AccountInfo::new(&user_usdc, false, true, &mut lamports1, &mut user_usdc_data, &spl_token::ID, false, 0),
