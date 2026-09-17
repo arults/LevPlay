@@ -12,7 +12,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ALL_MARKETS, SOLANA_USDC_MINT, type MarketCategory } from "@/lib/markets";
 
 type Oracle = { provider: string; feedId: string; minPublishers: number };
-type ReferenceStatus = "live" | "stale" | "provider_unconfigured" | "provider_offline" | "not_admitted";\ntype LiveMarket = (typeof ALL_MARKETS)[number] & { provider?: string; price?: number; logo?: string; liquidityUsd?: number; mint?: string; atomic?: boolean; halted?: boolean; marketOpen?: boolean; period?: string; multiplier?: number; pendingMultiplier?: number; multiplierActivation?: number; oracles?: Oracle[]; verified: boolean; unavailable?: boolean; verificationNote?: string; referenceStatus?: ReferenceStatus; referenceLabel?: string; referenceTimestamp?: number };
+type ReferenceStatus = "live" | "stale" | "provider_unconfigured" | "provider_offline" | "not_admitted";
+type LiveMarket = (typeof ALL_MARKETS)[number] & { provider?: string; price?: number; logo?: string; liquidityUsd?: number; mint?: string; atomic?: boolean; halted?: boolean; marketOpen?: boolean; period?: string; multiplier?: number; pendingMultiplier?: number; multiplierActivation?: number; oracles?: Oracle[]; verified: boolean; unavailable?: boolean; verificationNote?: string; referenceStatus?: ReferenceStatus; referenceLabel?: string; referenceTimestamp?: number };
 type ProtocolCheck = { id: string; label: string; passed: boolean };
 type Protocol = { executionEnabled: boolean; feeBps: number; maxPilotUsd: number; feeRecipient: string | null; treasuryAuthority: string | null; rpcQuorum: number; configuredMarkets: string[]; checks: ProtocolCheck[]; blockers: string[] };
 type MarketResponse = { markets: LiveMarket[]; checkedAt?: string | null };
