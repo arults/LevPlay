@@ -12,10 +12,12 @@
 mod account_validation;
 mod open_validation;
 mod oracle_validation;
+mod position_validation;
 mod token_validation;
 pub use account_validation::*;
 pub use open_validation::*;
 pub use oracle_validation::*;
+pub use position_validation::*;
 pub use token_validation::*;
 
 use levplay_core::{decode_instruction, Error};
