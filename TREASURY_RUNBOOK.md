@@ -21,7 +21,7 @@ The owner accesses the treasury by connecting their signer wallet to the chosen 
 2. Record public member addresses, threshold and vault address. Never record seed phrases.
 3. Create the treasury's canonical USDC associated token account and fund it with a dust test.
 4. Prove a propose/approve/execute flow and a lost-signer replacement flow.
-5. Configure the exact treasury token account in `LEVPLAY_SVM_FEE_RECIPIENT`.
+5. Record the exact treasury token account in the hashed schema-v2 deployment manifest and verify the decoded `LVPCFG01` fee-vault field against it through the RPC quorum.
 6. Verify onchain that the account is initialized, uses the canonical Solana USDC mint and is owned by the expected treasury vault.
 7. Pin the verified address in the program release and display it in every order review.
 8. Put fee changes behind governance, a public timelock and an immutable maximum of 50 basis points; the launch release fixes the fee at 50 basis points on position capital only.

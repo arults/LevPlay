@@ -34,6 +34,7 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: pnpm test:security
       - run: pnpm test:http-safety
+      - run: pnpm test:release-manifest
       - run: pnpm test:ui
       - run: pnpm test:audit-package
       - run: pnpm test:release-evidence
