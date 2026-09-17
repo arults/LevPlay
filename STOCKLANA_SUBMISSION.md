@@ -2,7 +2,8 @@
 
 ## Submission links
 
-- Live product: https://lev-play.vercel.app
+- Homepage and documentation: https://levplay.tech
+- Safety-locked trading demo: https://app.levplay.tech
 - GitHub: https://github.com/arults/LevPlay
 - Primary track: Stocklana Main Track
 - Sponsor track: Best Use of PreStocks
@@ -160,10 +161,10 @@ PreStocks provides onchain economic references for companies that are otherwise 
 - [ ] Confirm the organizer’s deadline discrepancy; operate to September 18, 2026 at 4:00 PM ET.
 - [ ] Register the founder and all teammates on the hackathon portal.
 - [ ] Add a one-line founder bio and contact details.
-- [ ] Give judges access to the private GitHub repository, or make a public submission mirror.
+- [x] Publish the canonical GitHub repository for judge review.
 - [ ] Upload the 10-slide pitch deck PDF.
 - [ ] Record the 90-second product demo using the script above.
-- [ ] Verify the production URL in a signed-out browser and on mobile.
+- [ ] Verify the public demo URL in a signed-out browser and on mobile.
 - [ ] Submit both Main Track and Best Use of PreStocks.
 - [ ] Include the live app, GitHub and video URLs.
 - [ ] State real-money status exactly; do not call the safety-locked prototype mainnet-live.
@@ -175,5 +176,7 @@ PreStocks provides onchain economic references for companies that are otherwise 
 - PreStocks products: https://prestocks.com/products
 - Ondo Global Markets: https://ondo.finance/ondo-stocks
 - Solana docs: https://solana.com/docs
-- LevPlay live app: https://lev-play.vercel.app
+- LevPlay homepage: https://levplay.tech
+- LevPlay safety-locked demo: https://app.levplay.tech
+- Public source: https://github.com/arults/LevPlay
 - LevPlay repository: https://github.com/arults/LevPlay
