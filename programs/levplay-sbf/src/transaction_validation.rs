@@ -10,7 +10,10 @@ use solana_program::{
     account_info::AccountInfo,
     program_error::ProgramError,
     pubkey::Pubkey,
-    sysvar::{self, instructions::{load_current_index_checked, load_instruction_at_checked}},
+    sysvar::{
+        self,
+        instructions::{load_current_index_checked, load_instruction_at_checked},
+    },
 };
 
 pub fn validate_top_level_transaction(
