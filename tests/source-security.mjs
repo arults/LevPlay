@@ -37,6 +37,7 @@ assert.match(markets, /Math\.abs\(Date\.now\(\) - timestampMs\) <= DISPLAY_FRESH
 assert.match(markets, /provider_unconfigured/, "missing display credentials must fail with an explicit state");
 assert.match(markets, /status: "fail-closed"/, "display provider availability must not unlock settlement");
 assert.ok(!markets.includes("XSTOCKS_API"), "xStocks must remain shelved");
+assert.ok(!markets.match(/verified:\s*true/), "no server-side display provider may manufacture settlement readiness");
 
 assert.match(wallet, /getGenesisHash/, "wallet reads must verify Solana mainnet");
 assert.match(wallet, /knownMints\.has\(mint\)/, "wallet API must return only allowlisted assets");
@@ -82,8 +83,10 @@ assert.match(protocol, /state\.owner === programId/, "market state must be owned
 assert.match(protocol, /tokenVaultEvidence\(vault, deployment\.xStockMint, deployment\.marketState\)/, "backing vault mint and authority must be pinned");
 assert.match(protocol, /reserveVaultEvidence\(reserveVault, deployment\.marketState\)/, "standby reserve must be canonical USDC controlled by the market PDA");
 assert.match(protocol, /productMintEvidence\(productMint, deployment\.marketState\)/, "product mint authority must be pinned and freeze authority absent");
-assert.match(protocol, /pyth\.owner === deployment\.pythOwner/, "Pyth account owner must match the frozen manifest");
-assert.match(protocol, /chainlink\.owner === deployment\.chainlinkOwner/, "Chainlink account owner must match the frozen manifest");
+assert.match(protocol, /primaryOracle\.owner === deployment\.primaryOracleOwner/, "primary oracle owner must match the frozen manifest");
+assert.match(protocol, /secondaryOracle\.owner === deployment\.secondaryOracleOwner/, "secondary oracle owner must match the frozen manifest");
+assert.match(protocol, /item\.primaryOracleProviderId === item\.secondaryOracleProviderId/, "oracle providers must be independent");
+assert.match(protocol, /item\.primaryOracleAccount === item\.secondaryOracleAccount/, "oracle accounts must be distinct");
 assert.match(protocol, /adapterMarket\.owner === deployment\.adapterProgram/, "adapter market must be owned by the fixed adapter program");
 assert.match(protocol, /sha256\(`\$\{adapterSource\}\\n\$\{marketSource\}`\)/, "deployment JSON must match a frozen SHA-256 manifest hash");
 assert.ok(protocol.includes('!/^\\d+\\.\\d+\\.\\d+\\.\\d+$/.test(host)'), "RPC configuration must reject IP literals");

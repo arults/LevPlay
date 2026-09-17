@@ -26,7 +26,7 @@ const manifest = (productId, overrides = {}) => {
     productId, provider: product.provider, sourceSymbol: product.symbol,
     sourceMint: product.publishedMint || addr("S"), productMint: addr("P"), marketPda: addr("M"),
     collateralVault: addr("C"), feeVault: addr("F"), primaryOracle: addr("B"), secondaryOracle: addr("Q"),
-    primaryOracleProviderId: "pyth", secondaryOracleProviderId: "chainlink",
+    primaryOracleProviderId: "pyth", secondaryOracleProviderId: "independent-provider",
     sourceRegistryHash: hash, providerApprovalHash: hash, legalApprovalHash: hash,
     productAuditHash: hash, economicAuditHash: hash, auditorRetestHash: hash,
     deploymentHash: hash, eligibilityPolicyHash: hash,

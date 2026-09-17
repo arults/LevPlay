@@ -32,12 +32,14 @@ type Deployment = {
   reserveVault: string;
   productMint: string;
   xStockMint: string;
-  pythAccount: string;
-  pythOwner: string;
-  pythFeedId: string;
-  chainlinkAccount: string;
-  chainlinkOwner: string;
-  chainlinkFeedId: string;
+  primaryOracleAccount: string;
+  primaryOracleOwner: string;
+  primaryOracleFeedId: string;
+  primaryOracleProviderId: string;
+  secondaryOracleAccount: string;
+  secondaryOracleOwner: string;
+  secondaryOracleFeedId: string;
+  secondaryOracleProviderId: string;
   adapterProgram: string;
   adapterMarket: string;
   leverage: 2 | 3 | 5;
@@ -145,14 +147,14 @@ function productMintEvidence(value: RpcAccount, authority: string) {
 }
 
 async function marketEvidence(url: string, deployment: Deployment, programId: string) {
-  const [state, vault, reserveVault, productMint, xStockMint, pyth, chainlink, adapterProgram, adapterMarket] = await Promise.all([
+  const [state, vault, reserveVault, productMint, xStockMint, primaryOracle, secondaryOracle, adapterProgram, adapterMarket] = await Promise.all([
     account(url, deployment.marketState),
     account(url, deployment.vault, "jsonParsed"),
     account(url, deployment.reserveVault, "jsonParsed"),
     account(url, deployment.productMint, "jsonParsed"),
     account(url, deployment.xStockMint, "jsonParsed"),
-    account(url, deployment.pythAccount),
-    account(url, deployment.chainlinkAccount),
+    account(url, deployment.primaryOracleAccount),
+    account(url, deployment.secondaryOracleAccount),
     account(url, deployment.adapterProgram),
     account(url, deployment.adapterMarket),
   ]);
@@ -162,8 +164,8 @@ async function marketEvidence(url: string, deployment: Deployment, programId: st
     reserveVaultEvidence(reserveVault, deployment.marketState) &&
     productMintEvidence(productMint, deployment.marketState) &&
     xStockMint.owner === TOKEN_2022_PROGRAM && xStockParsed?.type === "mint" && xStockParsed.info?.isInitialized === true &&
-    pyth.owner === deployment.pythOwner && pyth.executable !== true &&
-    chainlink.owner === deployment.chainlinkOwner && chainlink.executable !== true &&
+    primaryOracle.owner === deployment.primaryOracleOwner && primaryOracle.executable !== true &&
+    secondaryOracle.owner === deployment.secondaryOracleOwner && secondaryOracle.executable !== true &&
     adapterProgram.executable === true && PROGRAM_LOADERS.has(String(adapterProgram.owner || "")) &&
     adapterMarket.owner === deployment.adapterProgram && adapterMarket.executable !== true;
 }
@@ -205,13 +207,16 @@ function deployments(allowedAdapters: Set<string>): Record<string, Deployment> {
       if (!expected || item?.xStockMint !== expected.mint || item?.leverage !== leverage || item?.side !== side ||
         !isSolanaAddress(item?.marketState) || !isSolanaAddress(item?.vault) || !isSolanaAddress(item?.reserveVault) || !isSolanaAddress(item?.productMint) ||
         !isSolanaAddress(item?.adapterProgram) || !allowedAdapters.has(item.adapterProgram) || !isSolanaAddress(item?.adapterMarket) ||
-        !isSolanaAddress(item?.pythAccount) || !isSolanaAddress(item?.pythOwner) ||
-        !isSolanaAddress(item?.chainlinkAccount) || !isSolanaAddress(item?.chainlinkOwner) ||
+        !isSolanaAddress(item?.primaryOracleAccount) || !isSolanaAddress(item?.primaryOracleOwner) ||
+        !isSolanaAddress(item?.secondaryOracleAccount) || !isSolanaAddress(item?.secondaryOracleOwner) ||
+        !item.primaryOracleProviderId?.trim() || !item.secondaryOracleProviderId?.trim() ||
+        item.primaryOracleProviderId === item.secondaryOracleProviderId ||
+        item.primaryOracleAccount === item.secondaryOracleAccount ||
         item.vault === item.productMint || item.vault === item.reserveVault || item.reserveVault === item.productMint ||
         vaults.has(item.vault) || reserveVaults.has(item.reserveVault) || productMints.has(item.productMint) ||
         !Number.isInteger(item.standbyBps) || item.standbyBps < 1 || item.standbyBps > 500 ||
-        typeof item?.pythFeedId !== "string" || !/^[a-fA-F0-9]{64}$/.test(item.pythFeedId) ||
-        typeof item?.chainlinkFeedId !== "string" || !/^0x[a-fA-F0-9]{64}$/.test(item.chainlinkFeedId)) continue;
+        typeof item?.primaryOracleFeedId !== "string" || !HASH.test(item.primaryOracleFeedId.replace(/^0x/, "")) ||
+        typeof item?.secondaryOracleFeedId !== "string" || !HASH.test(item.secondaryOracleFeedId.replace(/^0x/, ""))) continue;
       vaults.add(item.vault);
       reserveVaults.add(item.reserveVault);
       productMints.add(item.productMint);

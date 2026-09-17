@@ -20,8 +20,7 @@ LevPlay is a Solana-first, fail-closed infrastructure layer for daily-target lev
 - Phantom/Backpack connection with live Solana SOL, USDC and allowlisted source-token balance reads.
 - Exact source mint pinning and onchain Token-2022 metadata/extension validation are required by product admission.
 - A 136-product Ondo/PreStocks catalog plus leverage-specific, fail-closed collateral and deployment manifests.
-- Dual-provider availability gate for Pyth and Chainlink.
-- Pyth-first settlement policy: an exact feed is required per product; issuer APIs and DEX quotes remain display-only and no feed is inferred by ticker.
+- Pyth-first settlement policy: an exact feed is required per product, plus a separately admitted and independently operated secondary onchain source; issuer APIs and DEX quotes remain display-only and no feed is inferred by ticker.
 - Corporate-action, issuer-halt, Token-2022 pause and unexpected transfer-hook gates.
 - Environment-driven production release lock; absent evidence blocks signing.
 - Protocol-model tests, live integration checks, lint, production build and dependency audit.
@@ -30,14 +29,14 @@ LevPlay is a Solana-first, fail-closed infrastructure layer for daily-target lev
 
 - Deployed LevPlay Solana program and verified build.
 - Audited backing/execution adapter with contractually available leverage liquidity.
-- Onchain Pyth and Chainlink settlement account validation inside value-moving instructions.
+- Onchain Pyth plus an independently admitted secondary settlement account validated inside value-moving instructions.
 - Independent security audit, fuzz/local-validator suite and economic stress campaign.
 - Governance and guardian multisigs, a pinned multisig-owned USDC fee account, production RPC quorum and incident monitoring.
 - Confirmed, audited Ondo and PreStocks adapters with sufficient market-specific leverage capital and exit liquidity.
 - A separately proven short borrow/perpetual route and deterministic buy-to-cover path; the short cannot reuse the long vault.
 - Jurisdiction and eligibility controls required for tokenized securities.
 
-The application intentionally cannot be made live with environment values alone unless every required program, market, audit and release identifier is provided. See `PROTOCOL_SPEC.md`, `SECURITY_AUDIT.md`, `TREASURY_RUNBOOK.md` and `MAINNET_LAUNCH_CHECKLIST.md`.
+The application intentionally cannot be made live with environment values alone unless every required program, market, audit and release identifier is provided. See `ORACLE_ARCHITECTURE.md`, `PROTOCOL_SPEC.md`, `SECURITY_AUDIT.md`, `TREASURY_RUNBOOK.md` and `MAINNET_LAUNCH_CHECKLIST.md`.
 
 ## Validation
 

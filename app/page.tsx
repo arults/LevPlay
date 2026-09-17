@@ -65,7 +65,7 @@ export default function LandingPage() {
 
     <section className="landing-section proof-section">
       <div className="section-heading"><span className="eyebrow">Designed to fail closed</span><h2>Prices must agree before value moves.</h2></div>
-      <div className="proof-card"><div><ShieldCheck/><span><small>Settlement policy</small><strong>Pyth + Chainlink</strong></span></div><p>Freshness, confidence, publisher count and deviation limits are checked before mint, redeem and rebalance. Ondo API and PreStocks DEX quotes are display-only.</p><ul><li><Check/>Issuer halt and Token-2022 pause gates</li><li><Check/>Exact mint and program pinning</li><li><Check/>Separate governance and guardian roles</li></ul></div>
+      <div className="proof-card"><div><ShieldCheck/><span><small>Settlement policy</small><strong>Pyth-first · two sources</strong></span></div><p>Pyth is primary where an exact feed exists; an independently operated onchain source must also pass freshness, confidence, publisher-count and deviation limits. Provider API and DEX marks are display-only.</p><ul><li><Check/>Issuer halt and Token-2022 pause gates</li><li><Check/>Exact mint, feed and program pinning</li><li><Check/>No invented or server-relayed settlement feeds</li></ul></div>
     </section>
 
     <section className="landing-section preipo-section">
