@@ -1,6 +1,6 @@
 # LevPlay Solana mainnet GO checklist
 
-Status date: 2026-09-15. **GO means every Critical gate below has independently reproducible evidence for the exact release hash.** A configuration value, screenshot, preview result or internal review cannot satisfy a Critical gate. The application unlocks signing only when its machine-readable release checks also pass.
+Status date: 2026-09-17. **GO means every Critical gate below has independently reproducible evidence for the exact release hash.** A configuration value, screenshot, preview result or internal review cannot satisfy a Critical gate. The application unlocks signing only when its machine-readable release checks also pass.
 
 ## Priority execution order
 
@@ -11,7 +11,7 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 5. **Legal launch controls:** counsel approval, eligibility/sanctions/geofence rules, issuer permissions, market-data rights and customer disclosures.
 6. **Capped mainnet canary:** $1,000 aggregate across audited `AAPL2L` and `AAPL2S`, reconciliation, seven-day observation and explicit multisig GO vote.
 
-Catalog expansion is not a launch-gate substitute. The catalog now contains 136 Ondo/PreStocks candidates, while xStocks and Hong Kong products are shelved. Every product remains signing-disabled until separately admitted after the initial canary.
+Catalog expansion is not a launch-gate substitute. The auditable catalog contains 136 Ondo/PreStocks candidate definitions; none is executable merely because it appears in the catalog. Two pinned Tessera references add four 2x paper concepts only and do not expand the audit scope. xStocks and Hong Kong products are shelved. Every product remains signing-disabled until separately admitted after the initial canary.
 
 ## Current completion
 
@@ -21,7 +21,7 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 136 
 | Funded Standby model | Critical | Integer reference engine plus 588 adversarial long/short intervals; fake dust fails insolvent | Passed at model level |
 | Backing admission model | Critical | Fixed-account admission checks plus the Rust LevPlay Risk Vault v1 core for paired exposure, contingency escrow, expiry, caps, settlement, independent close, FIFO queued claims and orderly wind-down | Passed at economic-core level; no onchain instance admitted |
 | Rust protocol kernel | Critical | Pinned Rust 1.85 `no_std` core; 45 unit/adversarial tests, Clippy arithmetic denial and rustfmt in CI | Passed at core level; not an SBF program |
-| Read-only market and wallet verification | High | Frozen 15-stock, 5-commodity and 8-PreStocks catalog; pinned known mints, Token-2022 checks, dual-feed registry and mainnet genesis | Passed at read-only level |
+| Read-only market and wallet verification | High | Frozen 15-stock, 5-commodity and 8-PreStocks audit catalog plus two paper-only Tessera references; pinned known mints, Token-2022 checks, oracle registry and mainnet genesis | Passed at read-only level |
 | Executable Solana program | Critical | Pinned Rust entrypoint and reproducible SBF shell exist; all valid instructions intentionally return the execution-lock error and cannot move funds | In progress; value-moving handlers and deployment pending |
 | Leverage backing venue | Critical | Ondo and PreStocks source routes researched; no audited long adapter or separately proven prepaid short route/capacity | Pending |
 | Independent program audit and retest | Critical | Internal source review only | Pending |
@@ -39,7 +39,7 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 136 
 - [x] Select LevPlay Risk Vault v1 as the canary venue architecture and freeze its economic admission model.
 - [x] Select Ondo Stocks on Solana as the candidate AAPL2L spot route; pin the published GM program, Jupiter Order Engine, AAPLon mint, Token-2022 program and solver set.
 - [x] Add a fail-closed venue-manifest gate covering legal eligibility, explicit wrapper approval, audit/retest, collateral, expiry and independent exits.
-- [x] Define 136 independently admitted candidates: 15 Ondo stocks and 5 commodity-linked ETFs at 2x/3x/5x L/S, plus 8 launch-approved PreStocks at 2x L/S; explicitly exclude xAI; shelf xStocks and HK products.
+- [x] Define 136 independently gated audit candidates: 15 Ondo stocks and 5 commodity-linked ETFs at 2x/3x/5x L/S, plus 8 catalogued PreStocks references at 2x L/S; explicitly exclude xAI; keep the four Tessera variants paper-only; shelf xStocks and HK products.
 - [x] Encode leverage-specific long capital, bounded short payout collateral, real Standby floor, maximum redemption liability and independent exit liquidity.
 - [x] Encode independent long/short closes, owner-bound FIFO queued-claim liabilities and maker-escrow release only after empty, fully paid wind-down.
 - [x] Require three RPC domains, three keepers plus permissionless rebalance, distinct multisigs and exit operators, 48-hour upgrades and close-only pro-rata source-outage mode.

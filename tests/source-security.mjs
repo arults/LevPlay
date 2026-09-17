@@ -54,7 +54,10 @@ assert.match(wallet, /readJsonResponseBounded\(response, RPC_RESPONSE_LIMIT_BYTE
 assert.match(httpSafety, /length > maxBytes/, "streamed bodies must stop after their byte limit");
 assert.match(httpSafety, /maxKeys = 2_048/, "the in-memory limiter must cap attacker-controlled keys");
 assert.match(markets, /isSafeRpcUrl/, "market RPC configuration must reject unsafe URLs");
-assert.match(markets, /Oversized Ondo response/, "Ondo responses must be bounded");
+assert.match(markets, /readJsonResponseBounded\(response, 2_000_000\)/, "Ondo and DEX responses must be bounded while streaming");
+assert.match(markets, /readJsonResponseBounded\(response, 500_000\)/, "Tessera responses must be bounded while streaming");
+assert.match(markets, /readJsonResponseBounded\(response, 1_000_000\)/, "batched RPC responses must be bounded while streaming");
+assert.doesNotMatch(markets, /response\.json\(\)/, "market providers must not bypass bounded response parsing");
 
 for (const gate of [
   "LEVPLAY_SVM_PROGRAM_ID",

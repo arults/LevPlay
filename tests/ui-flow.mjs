@@ -4,9 +4,10 @@ import { readFile } from "node:fs/promises";
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const stockTickers = ["aapl", "msft", "nvda", "googl", "amzn", "tsla", "amd", "nflx", "spy", "dis", "uber", "hood", "sofi", "orcl", "qqq"];
 const additionalLogos = ["gld", "slv", "pplt", "uso", "copx", "anth", "openai", "anduril", "neural", "figure", "kalshi", "poly", "spacex", "ondo", "prestocks", "solana"];
-const [landing, docs, proxy, app, css, markets, marketApi, stockLogos, otherLogos] = await Promise.all([
+const [landing, docs, proof, proxy, app, css, markets, marketApi, stockLogos, otherLogos] = await Promise.all([
   read("app/page.tsx"),
   read("app/docs/page.tsx"),
+  read("app/proof/page.tsx"),
   read("proxy.ts"),
   read("app/trade/page.tsx"),
   read("app/globals.css"),
@@ -42,6 +43,8 @@ assert.match(app, /selected\.category === "Pre-IPO" \? \[2\]/, "PreStocks must r
 assert.match(app, /TabsTrigger value="Pre-IPO"/, "pre-IPO references must have a distinct market category");
 assert.match(app, /markets\.find\(\(market\) => market\.category === next && \(next !== "Pre-IPO" \|\| market\.provider === preIpoProvider\)\)/, "changing categories must select a visible provider market");
 assert.match(app, /PreStocks.*Tessera/s, "pre-IPO view must expose both admitted reference providers");
+assert.match(app, /aria-label="Market truth"/, "each market must expose its execution, pricing, mint and backing truth without another click");
+for (const label of ["Market state", "Reference use", "Source mint", "Backing \\+ hedge"]) assert.match(app, new RegExp(label), `${label} must be visible in the market truth panel`);
 assert.match(app, /\$\{selected\.provider\} research reference/, "review dialog must identify the selected pre-IPO provider");
 assert.ok(!app.includes('"PreStocks research reference"'), "Tessera products must never be mislabeled as PreStocks");
 assert.match(app, /settlement-ready.*display references online/, "footer must distinguish settlement admission from display-price availability");
@@ -78,5 +81,8 @@ assert.match(css, /\.app-nav\{position:fixed;left:0;right:0;bottom:0/, "mobile a
 assert.match(css, /\.position-card\{grid-template-columns:1fr 1fr/, "positions must collapse to a mobile grid");
 assert.match(css, /\.history-head\{display:none\}/, "dense table headers must be removed on mobile");
 assert.match(css, /\.workspace-tabs\{width:100%\}/, "mobile activity tabs must use the available width");
+assert.match(proof, /Demo ready · real-money execution locked/, "public proof must separate deployment readiness from fund readiness");
+assert.match(proof, /No market currently has two admitted feeds/, "public proof must disclose the current oracle blocker");
+assert.match(proof, /A Solana specialist audit, economic review and retest are still required/, "public proof must not imply an external audit exists");
 
 console.log("LevPlay UI flow: lifecycle, wallet, Ondo/PreStocks catalog, Standby and responsive assertions passed");

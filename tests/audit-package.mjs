@@ -144,6 +144,10 @@ assert.match(sbfWorkflow, /sha256sum --check --strict/);
 assert.match(sbfWorkflow, /-keypair\.json/);
 
 const marketSource = await read("lib/markets.ts");
+const positioning = await read("COMPETITIVE_POSITIONING.md");
+assert.match(positioning, /no holder margin call or personal debt/i, "positioning must use the bounded holder claim");
+assert.match(positioning, /retaining dust units is not solvency/i, "positioning must reject fake non-zero NAV claims");
+assert.match(positioning, /Issuer, API, DEX and bonding-curve marks\s+remain display-only/i, "positioning must preserve the settlement trust boundary");
 assert.equal([...marketSource.matchAll(/market\("[A-Z]+on"[^\n]+"Stocks"/g)].length, 15, "exactly 15 Ondo stock references must be selected");
 assert.equal([...marketSource.matchAll(/market\("[A-Z]+on"[^\n]+"Commodities"/g)].length, 5, "exactly five Ondo commodity-linked references must be selected");
 assert.equal([...marketSource.matchAll(/provider: "PreStocks"/g)].length, 8, "the frozen PreStocks launch catalog must contain eight pinned references");

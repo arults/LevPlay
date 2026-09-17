@@ -1,5 +1,6 @@
 import { CURATED_MARKETS, ONDO_API, PREIPO_MARKETS, TESSERA_MARKETS, TOKEN_2022_PROGRAM } from "@/lib/markets";
 import { isSafeRpcUrl } from "@/lib/protocol";
+import { readJsonResponseBounded } from "@/lib/http-safety";
 
 export const runtime = "edge";
 
@@ -40,8 +41,7 @@ async function getOndoPrices(): Promise<Record<string, OndoPrice>> {
     signal: AbortSignal.timeout(10_000),
   });
   if (!response.ok) throw new Error("provider_offline");
-  if (Number(response.headers.get("content-length") || 0) > 2_000_000) throw new Error("Oversized Ondo response");
-  const payload = await response.json() as OndoPrice[];
+  const payload = await readJsonResponseBounded(response, 2_000_000) as OndoPrice[];
   if (!Array.isArray(payload)) throw new Error("provider_invalid");
   return Object.fromEntries(payload.flatMap((row) => row.primaryMarket?.symbol ? [[row.primaryMarket.symbol, row]] : []));
 }
@@ -53,8 +53,7 @@ async function getPreIpoReferences(): Promise<Record<string, PreIpoReference | n
     signal: AbortSignal.timeout(10_000),
   });
   if (!response.ok) throw new Error("provider_offline");
-  if (Number(response.headers.get("content-length") || 0) > 2_000_000) throw new Error("Oversized DEX response");
-  const payload = await response.json() as { pairs?: DexPair[] };
+  const payload = await readJsonResponseBounded(response, 2_000_000) as { pairs?: DexPair[] };
   const pairs = Array.isArray(payload.pairs) ? payload.pairs : [];
   return Object.fromEntries([...requested].map((mint) => {
     const candidates = pairs.filter((pair) =>
@@ -79,8 +78,7 @@ async function getTesseraReferences(): Promise<Record<string, TesseraToken>> {
     signal: AbortSignal.timeout(10_000),
   });
   if (!response.ok) throw new Error("provider_offline");
-  if (Number(response.headers.get("content-length") || 0) > 500_000) throw new Error("Oversized Tessera response");
-  const payload = await response.json() as TesseraToken[];
+  const payload = await readJsonResponseBounded(response, 500_000) as TesseraToken[];
   if (!Array.isArray(payload)) throw new Error("provider_invalid");
   return Object.fromEntries(payload.flatMap((row) =>
     typeof row.mint === "string" && BASE58.test(row.mint) ? [[row.mint, row]] : []
@@ -109,7 +107,7 @@ async function verifyPinnedMints(): Promise<Record<string, boolean>> {
         signal: AbortSignal.timeout(10_000),
       });
       if (!response.ok) continue;
-      const payload = await response.json() as Array<{
+      const payload = await readJsonResponseBounded(response, 1_000_000) as Array<{
         id: number;
         result?: { value?: { owner?: string; data?: { parsed?: { info?: { isInitialized?: boolean } } } } };
       }>;
