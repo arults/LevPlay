@@ -78,7 +78,16 @@ export async function GET() {
       verificationNote: reference ? "DEX display reference available; it is not an execution oracle" : "PreStocks reference unavailable; execution remains blocked",
     };
   });
-  return Response.json({ markets: [...publicMarkets, ...privateMarkets], checkedAt: new Date().toISOString(), source: "Ondo authenticated display API + pinned PreStocks DEX references" }, {
+  return Response.json({
+    markets: [...publicMarkets, ...privateMarkets],
+    checkedAt: new Date().toISOString(),
+    source: "Ondo authenticated display API + pinned PreStocks DEX references",
+    providers: {
+      ondo: { configured: ondoConfigured, reachable: ondoResult.available, purpose: "display-only" },
+      prestocksDex: { configured: true, reachable: preIpoResult.available, purpose: "display-only" },
+      settlement: { required: 2, admitted: 0, status: "fail-closed" },
+    },
+  }, {
     headers: { "cache-control": "public, max-age=15, s-maxage=30, stale-while-revalidate=60" },
   });
 }
