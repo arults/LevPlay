@@ -34,7 +34,7 @@ async function getOndoPrices(): Promise<Record<string, OndoPrice>> {
     signal: AbortSignal.timeout(10_000),
   });
   if (!response.ok) throw new Error("provider_offline");
-  if (Number(response.headers.get("content-length") || 0) > 2_000_000) throw new Error("provider_invalid");
+  if (Number(response.headers.get("content-length") || 0) > 2_000_000) throw new Error("Oversized Ondo response");
   const payload = await response.json() as OndoPrice[];
   if (!Array.isArray(payload)) throw new Error("provider_invalid");
   return Object.fromEntries(payload.flatMap((row) => row.primaryMarket?.symbol ? [[row.primaryMarket.symbol, row]] : []));
@@ -47,7 +47,7 @@ async function getPreIpoReferences(): Promise<Record<string, PreIpoReference | n
     signal: AbortSignal.timeout(10_000),
   });
   if (!response.ok) throw new Error("provider_offline");
-  if (Number(response.headers.get("content-length") || 0) > 2_000_000) throw new Error("provider_invalid");
+  if (Number(response.headers.get("content-length") || 0) > 2_000_000) throw new Error("Oversized DEX response");
   const payload = await response.json() as { pairs?: DexPair[] };
   const pairs = Array.isArray(payload.pairs) ? payload.pairs : [];
   return Object.fromEntries([...requested].map((mint) => {
