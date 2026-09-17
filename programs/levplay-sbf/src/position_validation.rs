@@ -27,11 +27,8 @@ pub fn canonical_claim_address(
 ) -> Result<Pubkey, ProgramError> {
     let claim_id = state.claim_id.to_le_bytes();
     let bump = [state.bump];
-    Pubkey::create_program_address(
-        &[CLAIM_SEED, &state.market, &claim_id, &bump],
-        program_id,
-    )
-    .map_err(|_| ProgramError::InvalidSeeds)
+    Pubkey::create_program_address(&[CLAIM_SEED, &state.market, &claim_id, &bump], program_id)
+        .map_err(|_| ProgramError::InvalidSeeds)
 }
 
 fn validate_envelope(
@@ -143,8 +140,10 @@ mod tests {
         let owner = Pubkey::new_unique();
         let market = Pubkey::new_unique();
         let mint = Pubkey::new_unique();
-        let (key, bump) =
-            Pubkey::find_program_address(&[POSITION_SEED, market.as_ref(), owner.as_ref()], &program_id);
+        let (key, bump) = Pubkey::find_program_address(
+            &[POSITION_SEED, market.as_ref(), owner.as_ref()],
+            &program_id,
+        );
         let mut data = position_data(bump, &owner, &market, &mint);
         let mut lamports = 1;
         let account = AccountInfo::new(
@@ -168,8 +167,10 @@ mod tests {
         let owner = Pubkey::new_unique();
         let market = Pubkey::new_unique();
         let mint = Pubkey::new_unique();
-        let (key, bump) =
-            Pubkey::find_program_address(&[POSITION_SEED, market.as_ref(), owner.as_ref()], &program_id);
+        let (key, bump) = Pubkey::find_program_address(
+            &[POSITION_SEED, market.as_ref(), owner.as_ref()],
+            &program_id,
+        );
         let changed_owner = Pubkey::new_unique();
         let mut data = position_data(bump, &changed_owner, &market, &mint);
         let mut lamports = 1;
