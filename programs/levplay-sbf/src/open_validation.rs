@@ -78,7 +78,7 @@ pub fn validate_open_account_set(
         instructions_sysvar: sysvar::instructions::ID.to_bytes(),
     };
 
-    let descriptors = accounts.map(|account| descriptor(&account));
+    let descriptors = core::array::from_fn(|index| descriptor(&accounts[index]));
     validate_descriptor_set(&bindings, &descriptors)
         .map_err(|_| ProgramError::InvalidAccountData)?;
 
