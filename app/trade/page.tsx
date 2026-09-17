@@ -45,10 +45,15 @@ const WALLET_OPTIONS = [
 const favicon = (domain: string) => `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
 function AssetLogo({ market, size = 42 }: { market: LiveMarket; size?: number }) {
-  const [failed, setFailed] = useState(false);
   const source = market.logo || "";
+  const [failure, setFailure] = useState<{ source: string; attempts: number } | null>(null);
+  const attempts = failure?.source === source ? failure.attempts : 0;
+  const localBrand = source.startsWith("/brands/");
+  const renderedSource = localBrand ? `${source}?v=20260917-${attempts}` : source;
+  const failed = attempts >= 2;
+
   if (!source || failed) return <i className="asset-logo-fallback" style={{ background: market.tone, width: size, height: size }}>{market.ticker[0]}</i>;
-  return <span className="asset-logo" style={{ width: size, height: size }}><Image src={source} alt={`${market.name} logo`} width={size} height={size} unoptimized onError={() => setFailed(true)}/></span>;
+  return <span className="asset-logo" style={{ width: size, height: size }}><Image key={renderedSource} src={renderedSource} alt={`${market.name} logo`} width={size} height={size} unoptimized onLoad={() => setFailure(null)} onError={() => setFailure({ source, attempts: attempts + 1 })}/></span>;
 }
 
 function WalletLogo({ name, icon, domain }: { name: string; icon?: string; domain: string }) {
