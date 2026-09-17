@@ -21,7 +21,12 @@ assert.match(landing, /Leveraged stock tokens, made clear/, "homepage must expla
 assert.match(landing, /No forced wallet liquidation/, "homepage must explain the near-zero holder experience");
 assert.match(landing, /real reserve collateral/, "homepage must distinguish funded Standby from cosmetic token dust");
 assert.match(landing, /Standby does not guarantee recovery/, "homepage must disclose Standby recovery limits");
-assert.match(landing, /href="\/trade"/, "homepage must provide an app entry route");
+assert.match(landing, /https:\/\/app\.levplay\.tech/, "homepage must use the canonical trading-app domain");
+assert.ok(!landing.includes("google.com/s2/favicons"), "homepage logos must not depend on a third-party favicon endpoint");
+assert.match(landing, /mailto:info@levplay\.tech/, "homepage must publish the support address");
+assert.match(landing, /https:\/\/x\.com\/lev__play/, "homepage must link the official X account");
+assert.match(docs, /Display is not settlement/, "public documentation must explain the oracle boundary");
+assert.match(proxy, /host === "app\.levplay\.tech"/, "app subdomain root must route to trading");
 assert.ok(!landing.includes("LevPlay SVM"), "customer-facing brand must be LevPlay");
 assert.match(app, /type AppView = "trade" \| "portfolio" \| "history"/, "trade, portfolio and history views must exist");
 assert.match(app, /setView\("portfolio"\)/, "successful entry must open the portfolio");
