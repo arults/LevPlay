@@ -1,4 +1,4 @@
-import { CURATED_MARKETS, ONDO_API, PREIPO_MARKETS, TOKEN_2022_PROGRAM } from "@/lib/markets";
+import { CURATED_MARKETS, ONDO_API, PREIPO_MARKETS, TESSERA_MARKETS, TOKEN_2022_PROGRAM } from "@/lib/markets";
 import { isSafeRpcUrl } from "@/lib/protocol";
 
 export const runtime = "edge";
@@ -21,6 +21,12 @@ type PreIpoReference = {
   liquidityUsd: number;
   pairAddress: string;
   logo?: string;
+};
+type TesseraToken = {
+  id?: string;
+  code?: string;
+  mint?: string;
+  markPrice?: number;
 };
 
 const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -67,8 +73,22 @@ async function getPreIpoReferences(): Promise<Record<string, PreIpoReference | n
   }));
 }
 
+async function getTesseraReferences(): Promise<Record<string, TesseraToken>> {
+  const response = await fetch("https://rest-api.tessera.pe/v1/public/token-details", {
+    headers: { accept: "application/json" },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) throw new Error("provider_offline");
+  if (Number(response.headers.get("content-length") || 0) > 500_000) throw new Error("Oversized Tessera response");
+  const payload = await response.json() as TesseraToken[];
+  if (!Array.isArray(payload)) throw new Error("provider_invalid");
+  return Object.fromEntries(payload.flatMap((row) =>
+    typeof row.mint === "string" && BASE58.test(row.mint) ? [[row.mint, row]] : []
+  ));
+}
+
 async function verifyPinnedMints(): Promise<Record<string, boolean>> {
-  const pinned = CURATED_MARKETS.filter((item) => BASE58.test(item.mint));
+  const pinned = [...CURATED_MARKETS, ...TESSERA_MARKETS].filter((item) => BASE58.test(item.mint));
   const configured = process.env.LEVPLAY_SVM_READ_RPC;
   const rpcs = [...new Set([
     ...(isSafeRpcUrl(configured) ? [configured] : []),
@@ -111,7 +131,7 @@ async function verifyPinnedMints(): Promise<Record<string, boolean>> {
 
 export async function GET() {
   const ondoConfigured = Boolean(process.env.ONDO_API_KEY);
-  const [ondoResult, mintChecks, preIpoResult] = await Promise.all([
+  const [ondoResult, mintChecks, preIpoResult, tesseraResult] = await Promise.all([
     getOndoPrices()
       .then((prices) => ({ prices, reachable: true }))
       .catch(() => ({ prices: {} as Record<string, OndoPrice>, reachable: false })),
@@ -119,6 +139,9 @@ export async function GET() {
     getPreIpoReferences()
       .then((references) => ({ references, reachable: true }))
       .catch(() => ({ references: {} as Record<string, PreIpoReference | null>, reachable: false })),
+    getTesseraReferences()
+      .then((references) => ({ references, reachable: true }))
+      .catch(() => ({ references: {} as Record<string, TesseraToken>, reachable: false })),
   ]);
 
   const publicMarkets = CURATED_MARKETS.map((item) => {
@@ -189,13 +212,38 @@ export async function GET() {
     };
   });
 
+  const tesseraMarkets = TESSERA_MARKETS.map((item) => {
+    const reference = tesseraResult.references[item.mint];
+    const identityMatches = reference?.mint === item.mint && reference?.code?.toLowerCase() === item.ticker.toLowerCase();
+    const price = Number(reference?.markPrice);
+    const available = identityMatches && Number.isFinite(price) && price > 0;
+    const mintVerified = Boolean(mintChecks[item.symbol]);
+    return {
+      ...item,
+      price: available ? price : undefined,
+      period: "24/7 issuer display",
+      marketOpen: false,
+      verified: false,
+      unavailable: !available,
+      referenceStatus: available ? "timestamp_unavailable" : (tesseraResult.reachable ? "not_admitted" : "provider_offline"),
+      referenceLabel: available ? "Display · timestamp unavailable" : (tesseraResult.reachable ? "Identity not admitted" : "Provider temporarily offline"),
+      sourceMintVerified: mintVerified,
+      pythFeedId: null,
+      pricingPolicy: "Pyth primary only when an exact product feed is admitted",
+      verificationNote: available
+        ? `Tessera issuer mark received and pinned mint ${mintVerified ? "verified on Solana" : "not verified"}; the API supplies no observation timestamp and is never accepted for settlement`
+        : "Tessera display reference unavailable; execution remains blocked",
+    };
+  });
+
   return Response.json({
-    markets: [...publicMarkets, ...privateMarkets],
+    markets: [...publicMarkets, ...privateMarkets, ...tesseraMarkets],
     checkedAt: new Date().toISOString(),
-    source: "Ondo authenticated display API + pinned PreStocks DEX references",
+    source: "Ondo authenticated display API + pinned PreStocks DEX references + pinned Tessera public token details",
     providers: {
       ondo: { configured: ondoConfigured, reachable: ondoResult.reachable, purpose: "display-only" },
       prestocksDex: { configured: true, reachable: preIpoResult.reachable, purpose: "display-only" },
+      tessera: { configured: true, reachable: tesseraResult.reachable, purpose: "display-only", timestamped: false },
       settlement: { required: 2, admitted: 0, status: "fail-closed" },
     },
   }, {

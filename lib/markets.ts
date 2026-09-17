@@ -37,7 +37,16 @@ export const PREIPO_MARKETS = [
   { symbol: "SPACEX", ticker: "SPACEX", name: "SpaceX", category: "Pre-IPO", tone: "#69727d", mint: "PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh", provider: "PreStocks", logo: "/brands/spacex.svg" },
 ] as const;
 
-export const ALL_MARKETS = [...CURATED_MARKETS, ...PREIPO_MARKETS] as const;
+// Pinned from Tessera's public token-details API and verified against the
+// Token-2022 metadata stored on Solana. These are issuer tokens, not LevPlay
+// products; LevPlay's 2x long/short candidates remain paper-only until their
+// backing, settlement-oracle and audit gates pass.
+export const TESSERA_MARKETS = [
+  { symbol: "TESSERA_OPENAI", ticker: "tOPENAI", name: "OpenAI · Tessera", category: "Pre-IPO", tone: "#10a37f", mint: "oPAiAikWTaFj9RYoRFD35ccfwhnMcB3ThgBZRHSkjTZ", provider: "Tessera", logo: "/brands/openai.svg" },
+  { symbol: "TESSERA_KALSHI", ticker: "tKALSHI", name: "Kalshi · Tessera", category: "Pre-IPO", tone: "#0ca678", mint: "TKLSidmLVt3cqGaaodG8tyRzoANfQwoh67AccjmubeZ", provider: "Tessera", logo: "/brands/kalshi.svg" },
+] as const;
+
+export const ALL_MARKETS = [...CURATED_MARKETS, ...PREIPO_MARKETS, ...TESSERA_MARKETS] as const;
 export type MarketSymbol = (typeof CURATED_MARKETS)[number]["symbol"];
 export type MarketCategory = (typeof ALL_MARKETS)[number]["category"];
 
