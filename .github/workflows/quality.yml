@@ -33,6 +33,7 @@ jobs:
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - run: cargo fmt --all -- --check
       - run: pnpm test:security
+      - run: pnpm test:http-safety
       - run: pnpm test:ui
       - run: pnpm test:audit-package
       - run: pnpm test:release-evidence

@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
-const [page, markets, wallet, protocol, products, config] = await Promise.all([
+const [page, markets, wallet, httpSafety, protocol, products, config] = await Promise.all([
   read("app/trade/page.tsx"),
   read("app/api/markets/route.ts"),
   read("app/api/wallet/route.ts"),
+  read("lib/http-safety.ts"),
   read("lib/protocol.ts"),
   read("lib/product-registry.ts"),
   read("next.config.ts"),
@@ -42,10 +43,16 @@ assert.ok(!markets.match(/verified:\s*true/), "no server-side display provider m
 assert.match(wallet, /getGenesisHash/, "wallet reads must verify Solana mainnet");
 assert.match(wallet, /knownMints\.has\(mint\)/, "wallet API must return only allowlisted assets");
 assert.ok(!wallet.includes("Access-Control-Allow-Origin"), "wallet balances must not be exposed cross-origin");
-assert.match(wallet, /content-length.*1_024/s, "wallet requests must reject oversized bodies");
+assert.match(wallet, /readJsonBodyBounded\(request, REQUEST_LIMIT_BYTES\)/, "wallet requests must use a streaming body limit");
+assert.match(wallet, /InstanceRateLimiter/, "wallet reads must have a best-effort instance rate limit");
+assert.match(wallet, /status: 429/, "wallet rate-limit failures must be explicit");
+assert.match(wallet, /retry-after/, "wallet rate limits must tell clients when to retry");
 assert.match(wallet, /application\/json/, "wallet endpoint must require JSON");
 assert.match(wallet, /isSafeRpcUrl/, "wallet RPC configuration must reject unsafe URLs");
 assert.match(wallet, /Oversized RPC response/, "wallet RPC responses must be bounded");
+assert.match(wallet, /readJsonResponseBounded\(response, RPC_RESPONSE_LIMIT_BYTES\)/, "chunked RPC responses must be bounded while streaming");
+assert.match(httpSafety, /length > maxBytes/, "streamed bodies must stop after their byte limit");
+assert.match(httpSafety, /maxKeys = 2_048/, "the in-memory limiter must cap attacker-controlled keys");
 assert.match(markets, /isSafeRpcUrl/, "market RPC configuration must reject unsafe URLs");
 assert.match(markets, /Oversized Ondo response/, "Ondo responses must be bounded");
 
