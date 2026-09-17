@@ -34,6 +34,8 @@ assert.match(markets, /pair\.chainId === "solana"/, "pre-IPO references must rej
 assert.match(markets, /pair\.baseToken\?\.address === mint/, "pre-IPO references must match the pinned mint");
 assert.match(markets, /sourceMintVerified/, "pinned source mints must be independently checked onchain");
 assert.match(markets, /Math\.abs\(Date\.now\(\) - timestamp\) <= 60_000/, "stale display prices must be identified");
+assert.match(markets, /provider_unconfigured/, "missing display credentials must fail with an explicit state");
+assert.match(markets, /status: "fail-closed"/, "display provider availability must not unlock settlement");
 assert.ok(!markets.includes("XSTOCKS_API"), "xStocks must remain shelved");
 
 assert.match(wallet, /getGenesisHash/, "wallet reads must verify Solana mainnet");
