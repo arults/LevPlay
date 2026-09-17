@@ -11,7 +11,7 @@ Status date: 2026-09-15. **GO means every Critical gate below has independently 
 5. **Legal launch controls:** counsel approval, eligibility/sanctions/geofence rules, issuer permissions, market-data rights and customer disclosures.
 6. **Capped mainnet canary:** $1,000 aggregate across audited `AAPL2L` and `AAPL2S`, reconciliation, seven-day observation and explicit multisig GO vote.
 
-Catalog expansion is not a launch-gate substitute. The catalog now contains 136 Ondo/PreStocks candidates, while xStocks and Hong Kong products are shelved. Every product remains signing-disabled until separately admitted after the initial canary.
+Catalog expansion is not a launch-gate substitute. The catalog contains 136 Ondo/PreStocks candidates. xStocks is a separately gated feasibility candidate and Hong Kong products remain shelved. Every product remains signing-disabled until separately admitted after the initial canary.
 
 ## Current completion
 
@@ -39,7 +39,8 @@ Catalog expansion is not a launch-gate substitute. The catalog now contains 136 
 - [x] Select LevPlay Risk Vault v1 as the canary venue architecture and freeze its economic admission model.
 - [x] Select Ondo Stocks on Solana as the candidate AAPL2L spot route; pin the published GM program, Jupiter Order Engine, AAPLon mint, Token-2022 program and solver set.
 - [x] Add a fail-closed venue-manifest gate covering legal eligibility, explicit wrapper approval, audit/retest, collateral, expiry and independent exits.
-- [x] Define 136 independently admitted candidates: 15 Ondo stocks and 5 commodity-linked ETFs at 2x/3x/5x L/S, plus 8 launch-approved PreStocks at 2x L/S; explicitly exclude xAI; shelf xStocks and HK products.
+- [x] Define 136 independently gated candidates: 15 Ondo stocks and 5 commodity-linked ETFs at 2x/3x/5x L/S, plus 8 PreStocks references at 2x L/S; explicitly exclude xAI and HK products.
+- [x] Add a separate fail-closed xStocks feasibility gate; do not add xStocks to the public launch catalog until wrapper permission, PDA-vault approval, transaction composition, authorities, oracles, redemption and legal evidence pass.
 - [x] Encode leverage-specific long capital, bounded short payout collateral, real Standby floor, maximum redemption liability and independent exit liquidity.
 - [x] Encode independent long/short closes, owner-bound FIFO queued-claim liabilities and maker-escrow release only after empty, fully paid wind-down.
 - [x] Require three RPC domains, three keepers plus permissionless rebalance, distinct multisigs and exit operators, 48-hour upgrades and close-only pro-rata source-outage mode.
