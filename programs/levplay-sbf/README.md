@@ -6,15 +6,16 @@ returns `EXECUTION_LOCKED_ERROR` and no CPI or account mutation is performed.
 
 The `Open` path is now connected to the frozen 16-account validator before the
 release lock. As a result, substituted accounts, privilege escalation, token
-program confusion, malformed token state and non-canonical market/config PDAs
-fail at the real program boundary instead of leaving the validator disconnected
+program confusion, malformed token state, non-canonical market/config PDAs, CPI invocation,
+unsafe instruction suffixes and non-Compute-Budget prefixes fail at the real
+program boundary instead of leaving the validator disconnected
 from dispatch. Other instruction handlers remain release-locked until their
 exact account layouts and state transitions are implemented.
 
 The global lock is a security property, not a launch implementation. It must
 remain until program-owned state mutation, SPL Token/Token-2022 CPIs, native
-provider oracle parsing, isolated backing-vault execution, nonce persistence,
-transaction-introspection checks and CPI pre/post balance-delta validation are
+provider oracle parsing, isolated backing-vault execution, nonce persistence and CPI pre/post
+balance-delta validation are
 implemented and independently audited.
 
 Builds are pinned to the repository's exact Solana crate versions. Production

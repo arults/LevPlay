@@ -6,7 +6,7 @@
 
 use crate::{
     load_config_account, load_market_account, validate_legacy_token_account, validate_product_mint,
-    validate_product_token_account,
+    validate_product_token_account, validate_top_level_transaction,
 };
 use levplay_core::{
     validate_open_accounts as validate_descriptor_set, AccountDescriptor, ConfigState, MarketState,
@@ -82,6 +82,7 @@ pub fn validate_open_account_set(
         core::array::from_fn(|index| descriptor(&accounts[index]));
     validate_descriptor_set(&bindings, &descriptors)
         .map_err(|_| ProgramError::InvalidAccountData)?;
+    validate_top_level_transaction(program_id, &accounts[15])?;
 
     let user = accounts[0].key;
     let market_authority = accounts[4].key;
