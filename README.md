@@ -35,6 +35,7 @@ LevPlay is a Solana-first, fail-closed infrastructure layer for daily-target lev
 - Confirmed, audited Ondo and PreStocks adapters with sufficient market-specific leverage capital and exit liquidity.
 - A separately proven short borrow/perpetual route and deterministic buy-to-cover path; the short cannot reuse the long vault.
 - Jurisdiction and eligibility controls required for tokenized securities.
+- Counsel-approved jurisdiction rules and authoritative wallet-bound enforcement; the versioned browser acknowledgement in [`ELIGIBILITY_AND_RISK_GATE.md`](./ELIGIBILITY_AND_RISK_GATE.md) is a fail-closed UX gate, not legal approval.
 
 The application intentionally cannot be made live with environment values alone unless every required program, market, audit and release identifier is provided. See `COMPETITIVE_POSITIONING.md`, `ORACLE_ARCHITECTURE.md`, `PROTOCOL_SPEC.md`, `SECURITY_AUDIT.md`, `TREASURY_RUNBOOK.md` and `MAINNET_LAUNCH_CHECKLIST.md`.
 

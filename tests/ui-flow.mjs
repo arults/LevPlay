@@ -4,8 +4,9 @@ import { readFile } from "node:fs/promises";
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const stockTickers = ["aapl", "msft", "nvda", "googl", "amzn", "tsla", "amd", "nflx", "spy", "dis", "uber", "hood", "sofi", "orcl", "qqq"];
 const additionalLogos = ["gld", "slv", "pplt", "uso", "copx", "anth", "openai", "anduril", "neural", "figure", "kalshi", "poly", "spacex", "ondo", "prestocks", "solana"];
-const [landing, docs, proof, proxy, app, css, markets, marketApi, stockLogos, otherLogos] = await Promise.all([
+const [landing, layout, docs, proof, proxy, app, css, markets, marketApi, stockLogos, otherLogos] = await Promise.all([
   read("app/page.tsx"),
+  read("app/layout.tsx"),
   read("app/docs/page.tsx"),
   read("app/proof/page.tsx"),
   read("proxy.ts"),
@@ -17,7 +18,11 @@ const [landing, docs, proof, proxy, app, css, markets, marketApi, stockLogos, ot
   Promise.all(additionalLogos.map((ticker) => read(`public/brands/${ticker}.svg`))),
 ]);
 
-assert.match(landing, /Liquidation-Free/, "homepage must state the primary product promise");
+assert.match(landing, /Leveraged<br\/><em>Tokenized Stocks\.<\/em>/, "homepage must describe the instrument without an absolute safety headline");
+assert.match(landing, /No holder margin calls\./, "homepage must state the bounded holder benefit");
+assert.match(landing, /principal and recovery are never guaranteed/i, "homepage hero must preserve loss and recovery limits");
+assert.match(layout, /LevPlay — Leveraged Tokenized Stocks/, "metadata title must use the bounded product description");
+assert.match(layout, /Token NAV can approach zero/, "metadata must preserve the material loss boundary");
 assert.match(landing, /Leveraged stock tokens, made clear/, "homepage must explain the instrument without redundant exclusivity language");
 assert.match(landing, /No forced wallet liquidation/, "homepage must explain the near-zero holder experience");
 assert.match(landing, /real reserve collateral/, "homepage must distinguish funded Standby from cosmetic token dust");
@@ -44,6 +49,9 @@ assert.match(app, /TabsTrigger value="Pre-IPO"/, "pre-IPO references must have a
 assert.match(app, /markets\.find\(\(market\) => market\.category === next && \(next !== "Pre-IPO" \|\| market\.provider === preIpoProvider\)\)/, "changing categories must select a visible provider market");
 assert.match(app, /PreStocks.*Tessera/s, "pre-IPO view must expose both admitted reference providers");
 assert.match(app, /aria-label="Market truth"/, "each market must expose its execution, pricing, mint and backing truth without another click");
+assert.match(app, /aria-label="Reference and execution status"/, "the order ticket must expose reference source, freshness, session and execution state on mobile");
+for (const label of ["Reference", "Freshness", "Session", "Trading blocked"]) assert.ok(app.includes(label), `${label} must appear at the point of action`);
+assert.match(app, /selected\.verificationNote \|\| selected\.referenceLabel/, "blocked orders must explain the provider-specific reason without inventing readiness");
 for (const label of ["Market state", "Reference use", "Source mint", "Backing \\+ hedge"]) assert.match(app, new RegExp(label), `${label} must be visible in the market truth panel`);
 assert.match(app, /\$\{selected\.provider\} research reference/, "review dialog must identify the selected pre-IPO provider");
 assert.ok(!app.includes('"PreStocks research reference"'), "Tessera products must never be mislabeled as PreStocks");
@@ -58,7 +66,15 @@ assert.match(app, /setPaperCash\(paperCash \+ value\)/, "paper redemption must c
 assert.match(app, /balance\.usdc < totalDebit/, "wallet sufficiency must include the entry fee");
 assert.match(app, /available \/ \(1 \+ protocol\.feeBps \/ 10_000\)/, "max amount must reserve the fee");
 assert.ok(app.includes("Total wallet debit") && app.includes("Fee recipient") && app.includes("Treasury owner"), "review must disclose the full wallet debit and treasury routing");
-assert.ok(app.includes("One atomic, wallet-funded") && app.includes("Sign atomic Solana transaction"), "wallet-direct atomic execution must be explicit");
+assert.ok(app.includes("One atomic, wallet-funded") && app.includes("Signing not implemented"), "wallet-direct design and the absent signing implementation must both be explicit");
+assert.match(app, /ELIGIBILITY_ATTESTATION_VERSION = "levplay-eligibility-2026-09-17-v1"/, "real-money eligibility acknowledgement must be explicitly versioned");
+assert.match(app, /const canExecute = releaseReady && eligibilityAccepted && TRANSACTION_HANDLER_IMPLEMENTED/, "signing must require release readiness, eligibility evidence and an implemented handler");
+assert.match(app, /TRANSACTION_HANDLER_IMPLEMENTED = false/, "this release must not expose a non-existent signing path");
+assert.match(app, /eligibilityAttestation\.walletAddress === walletAddress/, "eligibility acceptance must be bound to the connected wallet");
+assert.match(app, /Paper preview never requires this acknowledgement/, "paper preview must remain usable without a real-money eligibility gate");
+for (const disclosure of ["not a U.S. Person", "may not confer stock ownership", "loss of most or all invested capital", "confirmed Solana transactions are final"]) assert.ok(app.includes(disclosure), `${disclosure} must be acknowledged before future real-money signing`);
+assert.match(app, /forgeable browser record is a UX prototype, not a security control or legal approval/i, "the UI must not misrepresent client storage as a security or legal boundary");
+assert.ok(app.includes("Signing not implemented") && app.includes("No audited transaction construction or signing handler exists"), "no CTA may imply that an absent signing handler exists");
 assert.match(app, /setTimeout\(\(\) => setNotice\(null\), 3_000\)/, "feedback must disappear after three seconds");
 assert.match(app, /getWallets\(\)/, "wallet discovery must use the Wallet Standard registry");
 for (const wallet of ["Phantom", "Backpack", "Jupiter", "Rabby", "OKX Wallet", "Search with WalletConnect"]) assert.ok(app.includes(wallet), `${wallet} must appear in wallet discovery`);
@@ -81,6 +97,7 @@ assert.match(css, /\.app-nav\{position:fixed;left:0;right:0;bottom:0/, "mobile a
 assert.match(css, /\.position-card\{grid-template-columns:1fr 1fr/, "positions must collapse to a mobile grid");
 assert.match(css, /\.history-head\{display:none\}/, "dense table headers must be removed on mobile");
 assert.match(css, /\.workspace-tabs\{width:100%\}/, "mobile activity tabs must use the available width");
+assert.match(css, /\.ticket-evidence>div\{display:grid;grid-template-columns:repeat\(3,1fr\)\}/, "reference evidence must stay compact in the order ticket");
 assert.match(proof, /Demo ready · real-money execution locked/, "public proof must separate deployment readiness from fund readiness");
 assert.match(proof, /No market currently has two admitted feeds/, "public proof must disclose the current oracle blocker");
 assert.match(proof, /A Solana specialist audit, economic review and retest are still required/, "public proof must not imply an external audit exists");

@@ -15,7 +15,13 @@ const [page, markets, wallet, httpSafety, protocol, products, config] = await Pr
 assert.ok(!page.includes("dangerouslySetInnerHTML"), "client must not render untrusted HTML");
 assert.ok(!page.match(/\beval\s*\(/), "client must not evaluate code");
 assert.ok(!page.includes("secretKey") && !page.includes("privateKey"), "client must never contain signing keys");
-assert.match(page, /disabled=\{!paperMode && !canExecute\}/, "mainnet sign control must fail closed while paper mode stays local");
+assert.match(page, /disabled=\{!paperMode && \(!releaseReady \|\| eligibilityAccepted\)\}/, "mainnet action must fail closed unless it is the pre-signing acknowledgement step");
+assert.match(page, /const canExecute = releaseReady && eligibilityAccepted && TRANSACTION_HANDLER_IMPLEMENTED/, "real-money signing readiness must require release gates, eligibility evidence and an implemented handler");
+assert.match(page, /TRANSACTION_HANDLER_IMPLEMENTED = false/, "the absent transaction handler must be an explicit fail-closed gate");
+assert.match(page, /eligibilityAttestation\?\.version === ELIGIBILITY_ATTESTATION_VERSION/, "stale eligibility policy versions must fail closed");
+assert.match(page, /eligibilityAttestation\.walletAddress === walletAddress/, "eligibility evidence must not cross wallets");
+assert.match(page, /window\.localStorage\.removeItem\(ELIGIBILITY_STORAGE_KEY\)/, "malformed eligibility evidence must be discarded");
+assert.match(page, /forgeable browser record is a UX prototype, not a security control or legal approval/i, "client storage must not be described as authoritative");
 assert.ok(!page.includes("sendTransaction("), "preview must not submit transactions");
 assert.ok(page.includes("Paper preview only. No funds or transactions will move."), "paper mode must be unmistakably labeled");
 assert.ok(page.includes("levplay-paper-v3"), "paper portfolio and history must persist locally under the direction-aware fee-on-top schema");
@@ -76,6 +82,8 @@ assert.match(protocol, /sha256\(bytes\.slice\(13\)\).*sbfSha256/s, "deployed SBF
 assert.match(protocol, /LVPCFG01/, "config account bytes must be decoded");
 assert.match(protocol, /LVPMKT01/, "market account bytes must be decoded");
 assert.match(protocol, /VALUE_MOVING_HANDLERS_IMPLEMENTED = false/, "execution must stay locked while handlers are absent");
+assert.match(protocol, /Release manifest is missing or invalid/, "public protocol status must use a stable release-manifest blocker");
+assert.doesNotMatch(protocol, /reasons: \[error instanceof Error \? error\.message/, "public protocol status must not expose parser internals");
 assert.match(protocol, /rawProducts\.length !== 2/, "extra or missing pilot products must fail closed");
 assert.match(protocol, /ids\.join\(","\) !== "AAPL2L,AAPL2S"/, "only the exact pilot pair can pass");
 assert.match(protocol, /venueManifestSha256/, "venue evidence must be release-bound");

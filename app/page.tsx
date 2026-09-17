@@ -25,7 +25,8 @@ export default function LandingPage() {
     <section className="landing-hero">
       <div className="landing-copy">
         <span className="landing-kicker"><Sparkles size={14}/> Solana-native · Ondo + PreStocks + Tessera</span>
-        <h1>Liquidation-Free<br/><em>Leveraged Stock Tokens.</em></h1>
+        <h1>Leveraged<br/><em>Tokenized Stocks.</em></h1>
+        <p className="hero-boundary">No holder margin calls.</p>
         <p>Explore 2×, 3× or 5× daily long and short exposure to public stocks and commodity-linked ETFs, plus 2× pre-IPO products in one self-custodial Solana token—without opening a margin account.</p>
         <div className="landing-actions"><Link className="enter-app" href={APP_URL}>Enter app <ArrowRight size={18}/></Link><a className="learn-link" href="#mechanics">See how it works</a></div>
         <div className="hero-disclosure"><CircleAlert size={16}/><span>No margin liquidation. Funded Standby is designed to preserve residual NAV, but principal and recovery are never guaranteed.</span></div>

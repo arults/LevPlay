@@ -27,5 +27,6 @@ These invariants apply independently to `AAPL2L` and `AAPL2S`.
 23. A primary route and emergency exit route have independent failure domains and full capped unwind capacity; duplicating one program or operator is not redundancy.
 24. Capacity degradation disables new mints before exits and cannot be represented as available liquidity by the frontend, keeper or adapter.
 25. Long/short matching may reduce active hedge usage but never reduces either side's independently escrowed close and unwind capacity; collateral cannot depend on the opposite holder remaining open.
+26. Real-money signing requires the connected wallet to satisfy the current counsel-approved eligibility policy and accept its exact version; missing, expired, revoked, stale-version or different-wallet evidence fails closed, and browser storage is never authoritative onchain.
 
 Each invariant requires at least one positive test, one negative test and one adversarial mutation test in the final evidence bundle.
