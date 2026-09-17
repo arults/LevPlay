@@ -37,3 +37,9 @@ Required settlement evidence is not an environment-variable shortcut. Exact orac
 - Never promote display availability to settlement readiness.
 - Keep opening and minting disabled when either settlement source fails; close-only recovery must follow the audited wind-down path.
 - Record provider, timestamp, feed account, owner program and validation outcome in release/canary evidence without recording API secrets.
+
+## Public read API abuse boundary
+
+Wallet balance requests and upstream RPC responses are byte-limited while streaming, including when `Content-Length` is absent. The wallet endpoint also applies conservative per-IP and per-wallet limits inside each warm runtime instance before it fans out to Solana RPC providers.
+
+The in-process limiter is defense in depth only: serverless instances do not share its counters and forwarded network identifiers depend on the deployment platform. Production must additionally enforce distributed rate limits at the Vercel Firewall or an equivalent trusted edge, apply provider quotas, and alert on 429/503 rates and RPC fan-out before increasing public traffic.
