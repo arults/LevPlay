@@ -41,16 +41,11 @@ const WALLET_OPTIONS = [
   { id: "okx", name: "OKX Wallet", aliases: ["okx"], domain: "okx.com", install: "https://www.okx.com/web3" },
 ] as const;
 
-const BRAND_DOMAINS: Record<string, string> = {
-  AAPL: "apple.com", MSFT: "microsoft.com", NVDA: "nvidia.com", GOOGL: "google.com", AMZN: "amazon.com", META: "meta.com", TSLA: "tesla.com", MSTR: "strategy.com", COIN: "coinbase.com", HOOD: "robinhood.com", NFLX: "netflix.com", AMD: "amd.com", SPY: "ssga.com", DIS: "disney.com", UBER: "uber.com", SOFI: "sofi.com", ORCL: "oracle.com", QQQ: "invesco.com", AVGO: "broadcom.com", JPM: "jpmorganchase.com", PLTR: "palantir.com",
-  ANTH: "anthropic.com", OPENAI: "openai.com", ANDURIL: "anduril.com", NEURAL: "neuralink.com", KALSHI: "kalshi.com", POLY: "polymarket.com", SPACEX: "spacex.com",
-};
-
 const favicon = (domain: string) => `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
 function AssetLogo({ market, size = 42 }: { market: LiveMarket; size?: number }) {
   const [failed, setFailed] = useState(false);
-  const source = market.logo || (BRAND_DOMAINS[market.ticker] ? favicon(BRAND_DOMAINS[market.ticker]) : "");
+  const source = market.logo || "";
   if (!source || failed) return <i className="asset-logo-fallback" style={{ background: market.tone, width: size, height: size }}>{market.ticker[0]}</i>;
   return <span className="asset-logo" style={{ width: size, height: size }}><Image src={source} alt={`${market.name} logo`} width={size} height={size} unoptimized onError={() => setFailed(true)}/></span>;
 }
