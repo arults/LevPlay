@@ -6,9 +6,7 @@
 //! versioned, integer-only envelope at the value-moving boundary.
 
 use levplay_core::{mul_div_ceil, oracle_agrees, OracleObservation, BPS};
-use solana_program::{
-    account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey,
-};
+use solana_program::{account_info::AccountInfo, program_error::ProgramError, pubkey::Pubkey};
 
 pub const OBSERVATION_DISCRIMINATOR: [u8; 8] = *b"LVPOBS01";
 pub const OBSERVATION_VERSION: u8 = 1;
@@ -268,8 +266,16 @@ mod tests {
         let mut lamports = 1;
         let mut data = observation(100_000_000, -6, 10_000, 1_003, 5);
         data[48] = 1;
-        let account =
-            AccountInfo::new(&key, false, false, &mut lamports, &mut data, &owner, false, 0);
+        let account = AccountInfo::new(
+            &key,
+            false,
+            false,
+            &mut lamports,
+            &mut data,
+            &owner,
+            false,
+            0,
+        );
         assert_eq!(
             validate_observation_account(&account, &key, &wrong_owner, 1_000),
             Err(ProgramError::InvalidAccountData)
@@ -340,8 +346,16 @@ mod tests {
 
         let mut dust_lamports = 1;
         let mut dust = observation(1, -MAX_ABS_EXPONENT, 1, 1_000, 5);
-        let dust_account =
-            AccountInfo::new(&key, false, false, &mut dust_lamports, &mut dust, &owner, false, 0);
+        let dust_account = AccountInfo::new(
+            &key,
+            false,
+            false,
+            &mut dust_lamports,
+            &mut dust,
+            &owner,
+            false,
+            0,
+        );
         assert_eq!(
             validate_observation_account(&dust_account, &key, &owner, 1_000),
             Err(ProgramError::InvalidAccountData)
