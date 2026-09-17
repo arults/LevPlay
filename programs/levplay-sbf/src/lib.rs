@@ -14,12 +14,14 @@ mod account_validation;
 mod open_validation;
 mod oracle_validation;
 mod position_validation;
+mod state_v2_validation;
 mod token_validation;
 mod transaction_validation;
 pub use account_validation::*;
 pub use open_validation::*;
 pub use oracle_validation::*;
 pub use position_validation::*;
+pub use state_v2_validation::*;
 pub use token_validation::*;
 pub use transaction_validation::*;
 
