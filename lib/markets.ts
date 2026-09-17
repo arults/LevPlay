@@ -1,6 +1,6 @@
 const market = (symbol: string, ticker: string, name: string, category: "Stocks" | "Commodities", tone: string, mint = "") => ({
   symbol, ticker, name, category, tone, mint, provider: "Ondo" as const,
-  logo: category === "Stocks" ? `/brands/${ticker.toLowerCase()}.svg` : "",
+  logo: `/brands/${ticker.toLowerCase()}.svg`,
 });
 
 export const CURATED_MARKETS = [
@@ -27,14 +27,14 @@ export const CURATED_MARKETS = [
 ] as const;
 
 export const PREIPO_MARKETS = [
-  { symbol: "ANTHROPIC", ticker: "ANTH", name: "Anthropic", category: "Pre-IPO", tone: "#d97757", mint: "Pren1FvFX6J3E4kXhJuCiAD5aDmGEb7qJRncwA8Lkhw", provider: "PreStocks" },
-  { symbol: "OPENAI", ticker: "OPENAI", name: "OpenAI", category: "Pre-IPO", tone: "#10a37f", mint: "PreweJYECqtQwBtpxHL171nL2K6umo692gTm7Q3rpgF", provider: "PreStocks" },
-  { symbol: "ANDURIL", ticker: "ANDURIL", name: "Anduril", category: "Pre-IPO", tone: "#83745f", mint: "PresTj4Yc2bAR197Er7wz4UUKSfqt6FryBEdAriBoQB", provider: "PreStocks" },
-  { symbol: "NEURALINK", ticker: "NEURAL", name: "Neuralink", category: "Pre-IPO", tone: "#8b5cf6", mint: "PrekqLJvJ3qVdXmBGDiexvwUTF4rLFDa6HWS4HJbw9S", provider: "PreStocks" },
-  { symbol: "FIGUREAI", ticker: "FIGURE", name: "Figure AI", category: "Pre-IPO", tone: "#2563eb", mint: "PreZad18qfPtbxNpMtMuAuX2zVpvkEU8DnJx56faCWd", provider: "PreStocks" },
-  { symbol: "KALSHI", ticker: "KALSHI", name: "Kalshi", category: "Pre-IPO", tone: "#0ca678", mint: "PreLWGkkeqG1s4HEfFZSy9moCrJ7btsHuUtfcCeoRua", provider: "PreStocks" },
-  { symbol: "POLYMARKET", ticker: "POLY", name: "Polymarket", category: "Pre-IPO", tone: "#4c6fff", mint: "Pre8AREmFPtoJFT8mQSXQLh56cwJmM7CFDRuoGBZiUP", provider: "PreStocks" },
-  { symbol: "SPACEX", ticker: "SPACEX", name: "SpaceX", category: "Pre-IPO", tone: "#69727d", mint: "PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh", provider: "PreStocks" },
+  { symbol: "ANTHROPIC", ticker: "ANTH", name: "Anthropic", category: "Pre-IPO", tone: "#d97757", mint: "Pren1FvFX6J3E4kXhJuCiAD5aDmGEb7qJRncwA8Lkhw", provider: "PreStocks", logo: "/brands/anth.svg" },
+  { symbol: "OPENAI", ticker: "OPENAI", name: "OpenAI", category: "Pre-IPO", tone: "#10a37f", mint: "PreweJYECqtQwBtpxHL171nL2K6umo692gTm7Q3rpgF", provider: "PreStocks", logo: "/brands/openai.svg" },
+  { symbol: "ANDURIL", ticker: "ANDURIL", name: "Anduril", category: "Pre-IPO", tone: "#83745f", mint: "PresTj4Yc2bAR197Er7wz4UUKSfqt6FryBEdAriBoQB", provider: "PreStocks", logo: "/brands/anduril.svg" },
+  { symbol: "NEURALINK", ticker: "NEURAL", name: "Neuralink", category: "Pre-IPO", tone: "#8b5cf6", mint: "PrekqLJvJ3qVdXmBGDiexvwUTF4rLFDa6HWS4HJbw9S", provider: "PreStocks", logo: "/brands/neural.svg" },
+  { symbol: "FIGUREAI", ticker: "FIGURE", name: "Figure AI", category: "Pre-IPO", tone: "#2563eb", mint: "PreZad18qfPtbxNpMtMuAuX2zVpvkEU8DnJx56faCWd", provider: "PreStocks", logo: "/brands/figure.svg" },
+  { symbol: "KALSHI", ticker: "KALSHI", name: "Kalshi", category: "Pre-IPO", tone: "#0ca678", mint: "PreLWGkkeqG1s4HEfFZSy9moCrJ7btsHuUtfcCeoRua", provider: "PreStocks", logo: "/brands/kalshi.svg" },
+  { symbol: "POLYMARKET", ticker: "POLY", name: "Polymarket", category: "Pre-IPO", tone: "#4c6fff", mint: "Pre8AREmFPtoJFT8mQSXQLh56cwJmM7CFDRuoGBZiUP", provider: "PreStocks", logo: "/brands/poly.svg" },
+  { symbol: "SPACEX", ticker: "SPACEX", name: "SpaceX", category: "Pre-IPO", tone: "#69727d", mint: "PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh", provider: "PreStocks", logo: "/brands/spacex.svg" },
 ] as const;
 
 export const ALL_MARKETS = [...CURATED_MARKETS, ...PREIPO_MARKETS] as const;

@@ -3,13 +3,17 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const stockTickers = ["aapl", "msft", "nvda", "googl", "amzn", "tsla", "amd", "nflx", "spy", "dis", "uber", "hood", "sofi", "orcl", "qqq"];
-const [landing, app, css, markets, marketApi, stockLogos] = await Promise.all([
+const additionalLogos = ["gld", "slv", "pplt", "uso", "copx", "anth", "openai", "anduril", "neural", "figure", "kalshi", "poly", "spacex", "ondo", "prestocks", "solana"];
+const [landing, docs, proxy, app, css, markets, marketApi, stockLogos, otherLogos] = await Promise.all([
   read("app/page.tsx"),
+  read("app/docs/page.tsx"),
+  read("proxy.ts"),
   read("app/trade/page.tsx"),
   read("app/globals.css"),
   read("lib/markets.ts"),
   read("app/api/markets/route.ts"),
   Promise.all(stockTickers.map((ticker) => read(`public/brands/${ticker}.svg`))),
+  Promise.all(additionalLogos.map((ticker) => read(`public/brands/${ticker}.svg`))),
 ]);
 
 assert.match(landing, /Liquidation-Free/, "homepage must state the primary product promise");
@@ -17,7 +21,12 @@ assert.match(landing, /Leveraged stock tokens, made clear/, "homepage must expla
 assert.match(landing, /No forced wallet liquidation/, "homepage must explain the near-zero holder experience");
 assert.match(landing, /real reserve collateral/, "homepage must distinguish funded Standby from cosmetic token dust");
 assert.match(landing, /Standby does not guarantee recovery/, "homepage must disclose Standby recovery limits");
-assert.match(landing, /href="\/trade"/, "homepage must provide an app entry route");
+assert.match(landing, /https:\/\/app\.levplay\.tech/, "homepage must use the canonical trading-app domain");
+assert.ok(!landing.includes("google.com/s2/favicons"), "homepage logos must not depend on a third-party favicon endpoint");
+assert.match(landing, /mailto:info@levplay\.tech/, "homepage must publish the support address");
+assert.match(landing, /https:\/\/x\.com\/lev__play/, "homepage must link the official X account");
+assert.match(docs, /Display is not settlement/, "public documentation must explain the oracle boundary");
+assert.match(proxy, /host === "app\.levplay\.tech"/, "app subdomain root must route to trading");
 assert.ok(!landing.includes("LevPlay SVM"), "customer-facing brand must be LevPlay");
 assert.match(app, /type AppView = "trade" \| "portfolio" \| "history"/, "trade, portfolio and history views must exist");
 assert.match(app, /setView\("portfolio"\)/, "successful entry must open the portfolio");
@@ -53,6 +62,8 @@ assert.match(app, /function AssetLogo/, "market rows and position views must use
 assert.ok(!app.includes("BRAND_DOMAINS[market.ticker]"), "market logos must not depend on a runtime favicon provider");
 assert.match(markets, /\/brands\/\$\{ticker\.toLowerCase\(\)\}\.svg/, "every stock must bind to a committed local SVG");
 assert.equal(stockLogos.length, 15, "all 15 launch stocks must have committed SVG assets");
+assert.equal(otherLogos.length, 16, "commodities, PreStocks and partners must have committed SVG assets");
+otherLogos.forEach((logo, index) => assert.match(logo, /<svg[^>]+viewBox=/, `${additionalLogos[index]} must be a valid local vector asset`));
 stockLogos.forEach((logo, index) => assert.match(logo, /<svg[^>]+viewBox=/, `${stockTickers[index]} must be a valid local vector asset`));
 assert.match(stockLogos[0], /<title>Apple<\/title>/, "AAPL must use the Apple mark rather than a letter tile");
 assert.ok(app.includes("Reference unavailable"), "UI must render an explicit missing-reference state without inventing a quote");
