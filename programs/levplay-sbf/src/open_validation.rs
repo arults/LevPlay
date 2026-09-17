@@ -5,8 +5,8 @@
 //! canonical Solana program ID; no browser-supplied address is trusted.
 
 use crate::{
-    load_config_account, load_market_account, validate_legacy_token_account,
-    validate_product_mint, validate_product_token_account,
+    load_config_account, load_market_account, validate_legacy_token_account, validate_product_mint,
+    validate_product_token_account,
 };
 use levplay_core::{
     validate_open_accounts as validate_descriptor_set, AccountDescriptor, ConfigState, MarketState,
@@ -112,9 +112,7 @@ mod tests {
         Side, VaultMode, ACCOUNT_VERSION, CONFIG_STATE_LEN, ENTRY_FEE_BPS, MARKET_STATE_LEN,
         PILOT_LEVERAGE_BPS,
     };
-    use solana_program::{
-        account_info::AccountInfo, program_option::COption, program_pack::Pack,
-    };
+    use solana_program::{account_info::AccountInfo, program_option::COption, program_pack::Pack};
     use spl_token::state::{Account as LegacyAccount, AccountState as LegacyState};
     use spl_token_2022::state::{
         Account as ProductAccount, AccountState as ProductState, Mint as ProductMint,
@@ -195,12 +193,7 @@ mod tests {
         let side_seed = [Side::Long as u8];
         let leverage_seed = PILOT_LEVERAGE_BPS.to_le_bytes();
         let (market_key, market_bump) = Pubkey::find_program_address(
-            &[
-                b"market",
-                product_mint.as_ref(),
-                &side_seed,
-                &leverage_seed,
-            ],
+            &[b"market", product_mint.as_ref(), &side_seed, &leverage_seed],
             &program_id,
         );
 
