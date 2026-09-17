@@ -62,21 +62,13 @@ export function MarketDecisionChart({
 }) {
   const [range, setRange] = useState<ChartRange>("24H");
   const [data, setData] = useState<HistoryResponse | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [hovered, setHovered] = useState<number | null>(null);
 
   useEffect(() => {
-    setRange("24H");
-    setData(null);
-    setError("");
-  }, [symbol]);
-
-  useEffect(() => {
     if (category === "Pre-IPO") return;
     const controller = new AbortController();
-    setLoading(true);
-    setError("");
     fetch(`/api/markets/history?symbol=${encodeURIComponent(symbol)}&range=${range}`, {
       cache: "no-store",
       signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10_000)]),
@@ -132,7 +124,7 @@ export function MarketDecisionChart({
   return <section className="decision-chart" aria-label={`${name} market chart and decision metrics`}>
     <div className="chart-heading">
       <div><span className="eyebrow">Market research</span><h3>{name} price action</h3><p>{data?.sourceDetail || "Loading a display-only public market reference."}</p></div>
-      <div className="range-tabs" aria-label="Chart range">{RANGES.map((item) => <button key={item} className={range === item ? "active" : ""} onClick={() => setRange(item)} aria-pressed={range === item}>{item}</button>)}</div>
+      <div className="range-tabs" aria-label="Chart range">{RANGES.map((item) => <button key={item} className={range === item ? "active" : ""} onClick={() => { setRange(item); setLoading(true); setError(""); }} aria-pressed={range === item}>{item}</button>)}</div>
     </div>
 
     {loading && !data ? <div className="chart-state"><LoaderCircle className="spin"/><span>Loading verified chart response…</span></div> : error ? <div className="chart-state error"><CircleAlert/><span>{error} Trading remains blocked; no substitute price was created.</span></div> : chart && data ? <>
