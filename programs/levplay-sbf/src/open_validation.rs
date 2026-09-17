@@ -256,26 +256,41 @@ mod tests {
         let mut empty13 = [];
         let mut empty14 = [];
         let mut empty15 = [];
-        let mut lamports = [1_u64; OPEN_ACCOUNT_COUNT];
+        let mut lamports0 = 1_u64;
+        let mut lamports1 = 1_u64;
+        let mut lamports2 = 1_u64;
+        let mut lamports3 = 1_u64;
+        let mut lamports4 = 1_u64;
+        let mut lamports5 = 1_u64;
+        let mut lamports6 = 1_u64;
+        let mut lamports7 = 1_u64;
+        let mut lamports8 = 1_u64;
+        let mut lamports9 = 1_u64;
+        let mut lamports10 = 1_u64;
+        let mut lamports11 = 1_u64;
+        let mut lamports12 = 1_u64;
+        let mut lamports13 = 1_u64;
+        let mut lamports14 = 1_u64;
+        let mut lamports15 = 1_u64;
         let wrong_oracle_owner = Pubkey::new_unique();
 
         let accounts = [
-            AccountInfo::new(&user, true, true, &mut lamports[0], &mut empty0, &system_program::ID, false, 0),
-            AccountInfo::new(&user_usdc, false, true, &mut lamports[1], &mut user_usdc_data, &spl_token::ID, false, 0),
-            AccountInfo::new(&user_product, false, true, &mut lamports[2], &mut user_product_data, &spl_token_2022::ID, false, 0),
-            AccountInfo::new(&config_key, false, false, &mut lamports[3], &mut config_data, &program_id, false, 0),
-            AccountInfo::new(&market_key, false, true, &mut lamports[4], &mut market_data, &program_id, false, 0),
-            AccountInfo::new(&product_mint, false, true, &mut lamports[5], &mut product_mint_bytes, &spl_token_2022::ID, false, 0),
-            AccountInfo::new(&clearing_vault, false, true, &mut lamports[6], &mut clearing_data, &spl_token::ID, false, 0),
-            AccountInfo::new(&fee_vault, false, true, &mut lamports[7], &mut fee_data, &spl_token::ID, false, 0),
-            AccountInfo::new(&reserve_vault, false, false, &mut lamports[8], &mut reserve_data, &spl_token::ID, false, 0),
-            AccountInfo::new(&primary_oracle, false, false, &mut lamports[9], &mut empty9, &wrong_oracle_owner, false, 0),
-            AccountInfo::new(&secondary_oracle, false, false, &mut lamports[10], &mut empty10, &secondary_oracle_program, false, 0),
-            AccountInfo::new(&adapter_program, false, false, &mut lamports[11], &mut empty11, &bpf_loader_upgradeable::ID, true, 0),
-            AccountInfo::new(&adapter_market, false, true, &mut lamports[12], &mut empty12, &adapter_program, false, 0),
-            AccountInfo::new(&spl_token::ID, false, false, &mut lamports[13], &mut empty13, &bpf_loader_upgradeable::ID, true, 0),
-            AccountInfo::new(&spl_token_2022::ID, false, false, &mut lamports[14], &mut empty14, &bpf_loader_upgradeable::ID, true, 0),
-            AccountInfo::new(&sysvar::instructions::ID, false, false, &mut lamports[15], &mut empty15, &sysvar::ID, false, 0),
+            AccountInfo::new(&user, true, true, &mut lamports0, &mut empty0, &system_program::ID, false, 0),
+            AccountInfo::new(&user_usdc, false, true, &mut lamports1, &mut user_usdc_data, &spl_token::ID, false, 0),
+            AccountInfo::new(&user_product, false, true, &mut lamports2, &mut user_product_data, &spl_token_2022::ID, false, 0),
+            AccountInfo::new(&config_key, false, false, &mut lamports3, &mut config_data, &program_id, false, 0),
+            AccountInfo::new(&market_key, false, true, &mut lamports4, &mut market_data, &program_id, false, 0),
+            AccountInfo::new(&product_mint, false, true, &mut lamports5, &mut product_mint_bytes, &spl_token_2022::ID, false, 0),
+            AccountInfo::new(&clearing_vault, false, true, &mut lamports6, &mut clearing_data, &spl_token::ID, false, 0),
+            AccountInfo::new(&fee_vault, false, true, &mut lamports7, &mut fee_data, &spl_token::ID, false, 0),
+            AccountInfo::new(&reserve_vault, false, false, &mut lamports8, &mut reserve_data, &spl_token::ID, false, 0),
+            AccountInfo::new(&primary_oracle, false, false, &mut lamports9, &mut empty9, &wrong_oracle_owner, false, 0),
+            AccountInfo::new(&secondary_oracle, false, false, &mut lamports10, &mut empty10, &secondary_oracle_program, false, 0),
+            AccountInfo::new(&adapter_program, false, false, &mut lamports11, &mut empty11, &bpf_loader_upgradeable::ID, true, 0),
+            AccountInfo::new(&adapter_market, false, true, &mut lamports12, &mut empty12, &adapter_program, false, 0),
+            AccountInfo::new(&spl_token::ID, false, false, &mut lamports13, &mut empty13, &bpf_loader_upgradeable::ID, true, 0),
+            AccountInfo::new(&spl_token_2022::ID, false, false, &mut lamports14, &mut empty14, &bpf_loader_upgradeable::ID, true, 0),
+            AccountInfo::new(&sysvar::instructions::ID, false, false, &mut lamports15, &mut empty15, &sysvar::ID, false, 0),
         ];
 
         assert_eq!(
