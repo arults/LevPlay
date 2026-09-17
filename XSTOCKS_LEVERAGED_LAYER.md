@@ -89,7 +89,7 @@ Unexpected authority, extension, multiplier or registry changes must block openi
 
 ## Required external evidence
 
-Contact `partners@xstocks.fi` through the official integration channel and request:
+Use the official **Integrate xStocks / Become a Partner** form at `https://xstocks.fi/` and request:
 
 1. written permission for LevPlay 2×/3×/5× long/short structured tokens;
 2. approval for program-controlled/PDA inventory vaults;
