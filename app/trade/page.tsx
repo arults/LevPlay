@@ -21,6 +21,8 @@ type AppView = "trade" | "portfolio" | "history";
 type Direction = "Long" | "Short";
 type PaperPosition = { id: string; symbol: string; ticker: string; name: string; leverage: number; direction: Direction; capital: number; fee: number; costBasis: number; entryPrice: number; openedAt: string };
 type PaperTrade = { id: string; positionId: string; action: "Buy" | "Sell"; productId: string; amount: number; fee: number; price: number; pnl: number; at: string };
+type EligibilityCheck = "adult" | "jurisdiction" | "rights" | "loss" | "finality";
+type EligibilityAttestation = { version: string; walletAddress: string; acceptedAt: string };
 type SolanaProvider = { isConnected?: boolean; publicKey?: { toString(): string }; connect(options?: { onlyIfTrusted?: boolean }): Promise<{ publicKey: { toString(): string } }>; disconnect?(): Promise<void> };
 type ModelTool = { name: string; title: string; description: string; inputSchema: object; annotations: { readOnlyHint: boolean; untrustedContentHint: boolean }; execute(input: unknown): unknown };
 
@@ -33,6 +35,10 @@ const formatUsd = (value: number) => new Intl.NumberFormat("en-US", { style: "cu
 const short = (value: string) => value ? `${value.slice(0, 4)}…${value.slice(-4)}` : "";
 const marketId = (market: LiveMarket, leverage: number, direction: Direction) => `${market.ticker}${leverage}${direction === "Long" ? "L" : "S"}`;
 const paperId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 11)}`;
+const ELIGIBILITY_ATTESTATION_VERSION = "levplay-eligibility-2026-09-17-v1";
+const ELIGIBILITY_STORAGE_KEY = "levplay-mainnet-eligibility-v1";
+const TRANSACTION_HANDLER_IMPLEMENTED = false;
+const EMPTY_ELIGIBILITY_CHECKS: Record<EligibilityCheck, boolean> = { adult: false, jurisdiction: false, rights: false, loss: false, finality: false };
 
 const WALLET_OPTIONS = [
   { id: "phantom", name: "Phantom", aliases: ["phantom"], domain: "phantom.com", install: "https://phantom.com/download" },
@@ -98,6 +104,9 @@ export default function TradingApp() {
   const [history, setHistory] = useState<PaperTrade[]>([]);
   const [scenarioBps, setScenarioBps] = useState(0);
   const [exitPosition, setExitPosition] = useState<PaperPosition | null>(null);
+  const [eligibilityOpen, setEligibilityOpen] = useState(false);
+  const [eligibilityChecks, setEligibilityChecks] = useState<Record<EligibilityCheck, boolean>>(EMPTY_ELIGIBILITY_CHECKS);
+  const [eligibilityAttestation, setEligibilityAttestation] = useState<EligibilityAttestation | null>(null);
   const paperHydrated = useRef(false);
 
   const selected = markets.find((market) => market.symbol === selectedSymbol) || markets[0];
@@ -108,8 +117,17 @@ export default function TradingApp() {
   const totalDebit = amount + fee;
   const exposure = amount * leverage;
   const managedExposure = Math.max(0, exposure - amount);
-  const canExecute = protocol.executionEnabled && marketConfigured && oracleReady && amount >= 10 && amount <= protocol.maxPilotUsd && Boolean(balance && balance.usdc >= totalDebit && balance.sol >= 0.002);
+  const releaseReady = protocol.executionEnabled && marketConfigured && oracleReady && amount >= 10 && amount <= protocol.maxPilotUsd && Boolean(balance && balance.usdc >= totalDebit && balance.sol >= 0.002);
+  const eligibilityAccepted = Boolean(walletAddress && eligibilityAttestation?.version === ELIGIBILITY_ATTESTATION_VERSION && eligibilityAttestation.walletAddress === walletAddress);
+  const canExecute = releaseReady && eligibilityAccepted && TRANSACTION_HANDLER_IMPLEMENTED;
   const marketState = protocol.executionEnabled && marketConfigured && oracleReady ? "OPEN" : selected.price ? "DISCOVER" : "BLOCKED";
+  const referenceFreshness = selected.referenceTimestamp && checkedAt
+    ? `${Math.max(0, Math.floor((Date.parse(checkedAt) - selected.referenceTimestamp) / 1_000))}s old at check`
+    : selected.referenceStatus === "timestamp_unavailable" ? "No source timestamp" : "Unavailable";
+  const referenceSession = selected.marketOpen ? (selected.period || "Open") : selected.period ? `${selected.period} · closed` : "Closed or unknown";
+  const blockedReason = selected.price
+    ? protocol.blockers[0] || selected.verificationNote || "Release-level execution gates remain locked."
+    : selected.verificationNote || selected.referenceLabel || protocol.blockers[0] || "No verified settlement route is admitted.";
   const maxCapital = (available: number) => Math.max(0, Math.min(protocol.maxPilotUsd, Math.floor(available / (1 + protocol.feeBps / 10_000) * 100) / 100));
   const referenceFor = useCallback((position: PaperPosition) => markets.find((market) => market.symbol === position.symbol)?.price || position.entryPrice, [markets]);
   const positionValue = useCallback((position: PaperPosition) => {
@@ -162,6 +180,15 @@ export default function TradingApp() {
 
   const standardWalletFor = useCallback((aliases: readonly string[]) => installedWallets.find((wallet) => aliases.some((alias) => wallet.name.toLowerCase().includes(alias))), [installedWallets]);
 
+  const loadEligibilityPrototype = useCallback((address: string) => {
+    setEligibilityAttestation(null);
+    setEligibilityChecks(EMPTY_ELIGIBILITY_CHECKS);
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(ELIGIBILITY_STORAGE_KEY) || "null") as EligibilityAttestation | null;
+      if (saved?.version === ELIGIBILITY_ATTESTATION_VERSION && saved.walletAddress === address && !Number.isNaN(Date.parse(saved.acceptedAt))) setEligibilityAttestation(saved);
+    } catch { window.localStorage.removeItem(ELIGIBILITY_STORAGE_KEY); }
+  }, []);
+
   const connectWallet = useCallback(async (option: (typeof WALLET_OPTIONS)[number]) => {
     const standardWallet = standardWalletFor(option.aliases);
     const provider = injectedProvider(option.id);
@@ -180,12 +207,13 @@ export default function TradingApp() {
         address = result.publicKey?.toString() || provider.publicKey?.toString() || "";
       }
       if (!address) throw new Error("Wallet returned no Solana account");
+      loadEligibilityPrototype(address);
       setWalletAddress(address);
       setWalletOpen(false);
       await readWallet(address);
     } catch { setNotice("Wallet connection was cancelled or no Solana account was returned."); }
     finally { setWalletBusy(false); }
-  }, [injectedProvider, readWallet, standardWalletFor]);
+  }, [injectedProvider, loadEligibilityPrototype, readWallet, standardWalletFor]);
 
   const rescanWallets = useCallback(() => {
     setInstalledWallets([...getWallets().get()]);
@@ -247,6 +275,14 @@ export default function TradingApp() {
     if (paperMode && paperCash < totalDebit) { setNotice(`Insufficient paper USDC. ${totalDebit.toFixed(2)} USDC is required including the fee.`); return; }
     if (!paperMode && balance && balance.sol < 0.002) { setNotice("Insufficient SOL for network fees."); return; }
     setReviewOpen(true);
+  };
+  const acceptEligibility = () => {
+    if (!walletAddress || !Object.values(eligibilityChecks).every(Boolean)) { setNotice("Confirm every eligibility and holder-risk statement before signing."); return; }
+    const attestation = { version: ELIGIBILITY_ATTESTATION_VERSION, walletAddress, acceptedAt: new Date().toISOString() };
+    window.localStorage.setItem(ELIGIBILITY_STORAGE_KEY, JSON.stringify(attestation));
+    setEligibilityAttestation(attestation);
+    setEligibilityOpen(false);
+    setNotice("Client acknowledgement saved for this wallet and policy version. It is not production eligibility approval.");
   };
   const startPaper = () => { setPaperMode(true); setBalance({ sol: 0.05, usdc: paperCash }); setNotice("Paper preview active. No real funds will move."); };
   const stopPaper = () => { setPaperMode(false); setBalance(null); if (walletAddress) void readWallet(walletAddress); setNotice("Paper preview closed."); setView("trade"); };
@@ -314,6 +350,7 @@ export default function TradingApp() {
       <aside className="trade-ticket">
         <div className="ticket-heading"><div><span>LevPlay token</span><strong>{productId}</strong></div><span className={protocol.executionEnabled ? "live-pill" : "lock-pill"}>{protocol.executionEnabled ? <><Check size={12}/>Live</> : <><LockKeyhole size={12}/>Guarded</>}</span></div>
         <p className="product-boundary">Your position is {productId}; {selected.symbol} is its {selected.provider} stock reference. {selected.provider === "Tessera" && "Issuer marks lack an observation timestamp and cannot settle a LevPlay trade."}</p>
+        <div className="ticket-evidence" aria-label="Reference and execution status"><div><span><small>Reference</small><strong>{selected.provider || "Unconfigured"}</strong></span><span><small>Freshness</small><strong>{referenceFreshness}</strong></span><span><small>Session</small><strong>{referenceSession}</strong></span></div>{marketState !== "OPEN" && <p><LockKeyhole size={13}/><span><strong>Trading blocked</strong>{blockedReason}</span></p>}</div>
         <div className="direction"><button className={direction === "Long" ? "active" : ""} onClick={() => setDirection("Long")}>Long</button><button className={direction === "Short" ? "active" : ""} onClick={() => setDirection("Short")}>Short</button></div>
         <div className="field-label"><span>Leverage</span><Info size={14}/></div>
         <div className="leverage-buttons">{(selected.category === "Pre-IPO" ? [2] : [2, 3, 5]).map((value) => <button key={value} className={leverage === value ? "active" : ""} onClick={() => setLeverage(value)}>{value}×</button>)}</div>
@@ -378,7 +415,14 @@ export default function TradingApp() {
     </footer>
 
     <Dialog open={walletOpen} onOpenChange={setWalletOpen}><DialogContent className="wallet-dialog"><DialogHeader><DialogTitle>Connect a Solana wallet</DialogTitle><DialogDescription>Detected wallets appear first. LevPlay requests your public account only; never enter a seed phrase.</DialogDescription></DialogHeader><div className="wallet-options">{WALLET_OPTIONS.map((option) => { const wallet = standardWalletFor(option.aliases); const detected = Boolean(wallet || injectedProvider(option.id)); return <button key={option.id} className="wallet-option" onClick={() => void connectWallet(option)} disabled={walletBusy}><WalletLogo name={option.name} icon={wallet?.icon} domain={option.domain}/><span><strong>{option.name}</strong><small>{detected ? "Detected on this device" : "Not detected · open official setup"}</small></span><em className={detected ? "detected" : ""}>{detected ? "Connect" : "Get"}</em></button>; })}</div><a className="walletconnect-option" href="https://explorer.walletconnect.com/?type=wallet&chains=solana%3A5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp" target="_blank" rel="noreferrer"><WalletLogo name="WalletConnect" domain="walletconnect.network"/><span><strong>Search with WalletConnect</strong><small>Browse compatible wallets, then return and rescan.</small></span><ExternalLink size={16}/></a><button className="rescan-wallets" onClick={rescanWallets}><RotateCw size={15}/>Rescan installed wallets</button><p className="wallet-safety"><ShieldCheck size={14}/>Connecting does not approve a trade or move funds.</p></DialogContent></Dialog>
-    <Dialog open={reviewOpen} onOpenChange={setReviewOpen}><DialogContent className="review-dialog"><DialogHeader><DialogTitle>Review {productId}</DialogTitle><DialogDescription>{paperMode ? "Paper preview only. No funds or transactions will move." : "One atomic, wallet-funded leveraged-token position on Solana."}</DialogDescription></DialogHeader><div className="review-asset"><AssetLogo market={selected}/><div><strong>{selected.name} {leverage}× {direction}</strong><small>{selected.symbol} · {selected.category === "Pre-IPO" ? `${selected.provider} research reference` : `${selected.provider} Token-2022 candidate`}</small></div><b>{formatUsd(amount)}</b></div><div className="review-grid"><span><small>Position capital</small><strong>{formatUsd(amount)}</strong></span><span><small>Entry fee · 0.5%</small><strong>{formatUsd(fee)}</strong></span><span><small>Total wallet debit</small><strong>{formatUsd(totalDebit)}</strong></span><span><small>Target exposure</small><strong>{formatUsd(exposure)}</strong></span><span><small>Oracle guard</small><strong>{selected.verified ? "Pyth + independent source" : "Unavailable"}</strong></span><span><small>Pilot limit</small><strong>$100 / wallet</strong></span></div><div className="recipient-row"><small>Fee recipient</small><code>{protocol.feeRecipient || "Not configured"}</code><small>Treasury owner</small><code>{protocol.treasuryAuthority || "Not configured"}</code></div>{paperMode ? <div className="gate-box paper"><PlayCircle/><div><strong>Paper preview</strong><p>This records a local practice position and never submits a Solana transaction.</p></div></div> : <><div className={canExecute ? "gate-box ready" : "gate-box"}>{canExecute ? <ShieldCheck/> : <LockKeyhole/>}<div><strong>{canExecute ? "All release gates passed" : "Transaction signing is disabled"}</strong><p>{canExecute ? `Two RPCs verified the program, treasury and ${productId} deployment.` : (protocol.blockers[0] || (!oracleReady ? "Dual-oracle verification failed." : `${productId} is not an audited deployment.`))}</p></div></div>{!canExecute && <div className="gate-list">{protocol.blockers.slice(0, 5).map((blocker) => <span key={blocker}><i/>{blocker}</span>)}</div>}<Progress value={canExecute ? 100 : Math.max(12, 100 - protocol.blockers.length * 13)} /></>}<button className="review-button" onClick={paperMode ? openPaperPosition : undefined} disabled={!paperMode && !canExecute}>{paperMode ? "Open paper position" : canExecute ? "Sign atomic Solana transaction" : "Mainnet safety lock active"}</button><p className="dialog-note">Liquidation-free describes the holder experience, not risk-free returns. Rebalancing, oracle, liquidity, custody and smart-contract risks remain.</p></DialogContent></Dialog>
+    <Dialog open={reviewOpen} onOpenChange={setReviewOpen}><DialogContent className="review-dialog"><DialogHeader><DialogTitle>Review {productId}</DialogTitle><DialogDescription>{paperMode ? "Paper preview only. No funds or transactions will move." : "One atomic, wallet-funded leveraged-token position on Solana."}</DialogDescription></DialogHeader><div className="review-asset"><AssetLogo market={selected}/><div><strong>{selected.name} {leverage}× {direction}</strong><small>{selected.symbol} · {selected.category === "Pre-IPO" ? `${selected.provider} research reference` : `${selected.provider} Token-2022 candidate`}</small></div><b>{formatUsd(amount)}</b></div><div className="review-grid"><span><small>Position capital</small><strong>{formatUsd(amount)}</strong></span><span><small>Entry fee · 0.5%</small><strong>{formatUsd(fee)}</strong></span><span><small>Total wallet debit</small><strong>{formatUsd(totalDebit)}</strong></span><span><small>Target exposure</small><strong>{formatUsd(exposure)}</strong></span><span><small>Oracle guard</small><strong>{selected.verified ? "Pyth + independent source" : "Unavailable"}</strong></span><span><small>Pilot limit</small><strong>$100 / wallet</strong></span></div><div className="recipient-row"><small>Fee recipient</small><code>{protocol.feeRecipient || "Not configured"}</code><small>Treasury owner</small><code>{protocol.treasuryAuthority || "Not configured"}</code></div>{paperMode ? <div className="gate-box paper"><PlayCircle/><div><strong>Paper preview</strong><p>This records a local practice position and never submits a Solana transaction.</p></div></div> : <><div className={canExecute ? "gate-box ready" : "gate-box"}>{canExecute ? <ShieldCheck/> : <LockKeyhole/>}<div><strong>{canExecute ? "All release gates passed" : releaseReady && !eligibilityAccepted ? "Eligibility acknowledgement required" : releaseReady ? "Transaction builder unavailable" : "Transaction signing is disabled"}</strong><p>{canExecute ? `Two RPCs verified the program, treasury and ${productId} deployment.` : releaseReady && !eligibilityAccepted ? `Review client policy ${ELIGIBILITY_ATTESTATION_VERSION}; production still requires signed eligibility evidence.` : releaseReady ? "No audited transaction construction or signing handler exists in this release." : (protocol.blockers[0] || (!oracleReady ? "Dual-oracle verification failed." : `${productId} is not an audited deployment.`))}</p></div></div>{!releaseReady && <div className="gate-list">{protocol.blockers.slice(0, 5).map((blocker) => <span key={blocker}><i/>{blocker}</span>)}</div>}<Progress value={canExecute ? 100 : Math.max(12, 100 - protocol.blockers.length * 13)} /></>}<button className="review-button" onClick={paperMode ? openPaperPosition : releaseReady && !eligibilityAccepted ? () => setEligibilityOpen(true) : undefined} disabled={!paperMode && (!releaseReady || eligibilityAccepted)}>{paperMode ? "Open paper position" : releaseReady && !eligibilityAccepted ? "Review eligibility statements" : releaseReady ? "Signing not implemented" : "Mainnet safety lock active"}</button><p className="dialog-note">Liquidation-free describes the holder experience, not risk-free returns. Rebalancing, oracle, liquidity, custody and smart-contract risks remain.</p></DialogContent></Dialog>
+    <Dialog open={eligibilityOpen} onOpenChange={setEligibilityOpen}><DialogContent className="eligibility-dialog"><DialogHeader><DialogTitle>Eligibility and holder-risk acknowledgement</DialogTitle><DialogDescription>Client-side prototype for a future real-money flow. Paper preview never requires this acknowledgement.</DialogDescription></DialogHeader><div className="policy-version"><ShieldCheck size={16}/><span><small>Policy version</small><code>{ELIGIBILITY_ATTESTATION_VERSION}</code></span></div><div className="eligibility-checks">{([
+      ["adult", "I am at least 18 and legally able to enter this transaction."],
+      ["jurisdiction", "I am not a U.S. Person, sanctioned person or located where this product is unlawful; I will not use technology to evade eligibility controls."],
+      ["rights", "I understand the reference token may provide economic exposure only and may not confer stock ownership, voting, dividend or information rights."],
+      ["loss", "I understand leverage, compounding, gaps, issuer controls and liquidity failures can cause loss of most or all invested capital; liquidation-free does not mean loss-free."],
+      ["finality", "I understand wallet signatures and confirmed Solana transactions are final, and this acknowledgement is not investment advice or a suitability assessment."],
+    ] as [EligibilityCheck, string][]).map(([id, label]) => <label key={id}><input type="checkbox" checked={eligibilityChecks[id]} onChange={(event) => setEligibilityChecks((checks) => ({ ...checks, [id]: event.target.checked }))}/><span>{label}</span></label>)}</div><div className="eligibility-boundary"><CircleAlert size={15}/><p>This forgeable browser record is a UX prototype, not a security control or legal approval. Production requires a wallet-signed, nonce-bound, expiring attestation verified by an independent eligibility service and enforced by the admitted transaction/onchain boundary.</p></div><button className="review-button" onClick={acceptEligibility} disabled={!walletAddress || !Object.values(eligibilityChecks).every(Boolean)}>Save client acknowledgement</button></DialogContent></Dialog>
     <Dialog open={Boolean(exitPosition)} onOpenChange={(open) => { if (!open) setExitPosition(null); }}><DialogContent className="review-dialog"><DialogHeader><DialogTitle>Sell {exitPosition ? `${exitPosition.ticker}${exitPosition.leverage}${exitPosition.direction === "Long" ? "L" : "S"}` : "position"}</DialogTitle><DialogDescription>Burn the paper position and return simulated USDC to the same wallet.</DialogDescription></DialogHeader>{exitPosition && <><div className="review-grid"><span><small>Total cost paid</small><strong>{formatUsd(exitPosition.costBasis)}</strong></span><span><small>Estimated proceeds</small><strong>{formatUsd(positionValue(exitPosition))}</strong></span><span><small>Entry reference</small><strong>{formatUsd(exitPosition.entryPrice)}</strong></span><span><small>Realized P/L</small><strong className={positionValue(exitPosition) - exitPosition.costBasis >= 0 ? "positive" : "negative"}>{positionValue(exitPosition) - exitPosition.costBasis >= 0 ? "+" : ""}{formatUsd(positionValue(exitPosition) - exitPosition.costBasis)}</strong></span></div><button className="review-button" onClick={sellPaperPosition}>Confirm paper sale</button></>}</DialogContent></Dialog>
   </main>;
 }

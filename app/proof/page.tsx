@@ -9,6 +9,7 @@ const evidence = [
   { title: "Settlement oracles", state: "LOCKED", detail: "Exact Pyth plus an independently operated onchain source is required per market. No market currently has two admitted feeds.", proof: "ORACLE_ARCHITECTURE.md" },
   { title: "Solana program", state: "LOCKED", detail: "The reproducible SBF boundary is execution-locked. Final value-moving handlers and deployment are not complete.", proof: "programs/levplay-sbf" },
   { title: "Backing and reserve", state: "LOCKED", detail: "Risk Vault economics are modeled, but no production venue capacity, short hedge or funded Standby reserve is admitted.", proof: "RISK_VAULT_V1.md" },
+  { title: "Eligibility controls", state: "LOCKED", detail: "A client-side acknowledgement prototype demonstrates the intended UX but is not a security boundary. Counsel approval and wallet-signed independent production enforcement remain required.", proof: "ELIGIBILITY_AND_RISK_GATE.md" },
   { title: "Independent audit", state: "LOCKED", detail: "Internal engineering review exists. A Solana specialist audit, economic review and retest are still required.", proof: "SECURITY_AUDIT.md" },
 ] as const;
 

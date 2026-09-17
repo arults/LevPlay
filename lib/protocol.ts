@@ -87,7 +87,11 @@ async function releaseInputs(nowUnix: number) {
     if (venueManifest.deploymentManifestHash.replace(/^0x/, "").toLowerCase() !== manifest.releaseArtifacts.sourceSha256.toLowerCase() || parsedProducts.some((item) => item.deploymentHash.replace(/^0x/, "").toLowerCase() !== manifest.releaseArtifacts.sourceSha256.toLowerCase())) throw new Error("admission manifests target a different release");
     for (const product of parsedProducts) { const deployed = manifest.markets[product.productId as keyof typeof manifest.markets]; if (!deployed || product.sourceMint !== deployed.sourceMint || product.productMint !== deployed.productMint || product.marketPda !== deployed.marketState || product.collateralVault !== deployed.clearingVault || product.feeVault !== manifest.feeRecipient || product.primaryOracle !== deployed.primaryOracleAccount || product.secondaryOracle !== deployed.secondaryOracleAccount || product.primaryOracleProviderId !== deployed.primaryOracleProviderId || product.secondaryOracleProviderId !== deployed.secondaryOracleProviderId) throw new Error("product and deployment manifests disagree"); }
     return { manifest, manifestHash, venue, productIds: ids as string[], reasons: [] as string[] };
-  } catch (error) { return { manifest: null, manifestHash: null, venue: { admitted: false, venueId: null, reasons: [] as string[] }, productIds: [] as string[], reasons: [error instanceof Error ? error.message : "release manifest is invalid"] }; }
+  } catch {
+    // Configuration and parser details belong in private operator telemetry. The
+    // public status endpoint exposes one stable, actionable fail-closed reason.
+    return { manifest: null, manifestHash: null, venue: { admitted: false, venueId: null, reasons: [] as string[] }, productIds: [] as string[], reasons: ["Release manifest is missing or invalid"] };
+  }
 }
 
 export async function protocolStatus(nowUnix = Math.floor(Date.now() / 1_000)) {

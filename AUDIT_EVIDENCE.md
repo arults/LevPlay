@@ -37,6 +37,7 @@ Every row must link to immutable evidence for the same release commit. `Missing`
 | Independent economic/oracle review | — | **Missing** |
 | Multisig/RPC/keeper operations evidence | — | **Missing** |
 | Legal/eligibility approval | — | **Missing** |
+| Versioned eligibility/risk UX prototype | [`ELIGIBILITY_AND_RISK_GATE.md`](./ELIGIBILITY_AND_RISK_GATE.md), [`app/trade/page.tsx`](./app/trade/page.tsx) | Present as a client acknowledgement prototype only; it is not a security boundary. Counsel approval, wallet-signed evidence and independent authoritative enforcement remain **Missing** |
 
 ## Evidence rules
 

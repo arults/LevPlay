@@ -7,6 +7,7 @@ const required = [
   "AUDIT_EVIDENCE.md",
   "SECURITY_INVARIANTS.md",
   "SECURITY.md",
+  "ELIGIBILITY_AND_RISK_GATE.md",
   "PROTOCOL_SPEC.md",
   "BACKING_VENUE_DECISION.md",
   "ONDO_ADAPTER_SPEC.md",
@@ -82,6 +83,16 @@ assert.match(invariants, /share no vault, product mint, adapter market, nonce na
 assert.match(invariants, /No instruction accepts generic CPI bytes/);
 assert.match(invariants, /Short exposure additionally proves available borrow\/perpetual capacity/);
 assert.match(invariants, /A residual NAV floor cannot be synthesized/);
+assert.match(invariants, /browser storage is never authoritative onchain/);
+
+const eligibility = files.find(([path]) => path === "ELIGIBILITY_AND_RISK_GATE.md")[1];
+assert.match(eligibility, /levplay-eligibility-2026-09-17-v1/);
+assert.match(eligibility, /Paper preview remains available without an eligibility acknowledgement/);
+assert.match(eligibility, /local-storage value must never be treated as authoritative/);
+assert.match(eligibility, /counsel-approved jurisdiction matrix/);
+for (const field of ["policyVersion", "policyContentHash", "domain", "genesisHash", "quoteNonce", "expiresAt"]) assert.match(eligibility, new RegExp(`\\b${field}\\b`), `${field} must be bound into the production wallet signature`);
+assert.match(eligibility, /independent eligibility service must verify that signature/);
+assert.match(eligibility, /pinned eligibility signer or onchain admission registry/);
 
 const venueDecision = files.find(([path]) => path === "BACKING_VENUE_DECISION.md")[1];
 assert.match(venueDecision, /No production backing route is admitted/);
