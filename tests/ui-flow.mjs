@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
-const [landing, app, css] = await Promise.all([read("app/page.tsx"), read("app/trade/page.tsx"), read("app/globals.css")]);
+const [landing, app, css, markets, marketApi] = await Promise.all([read("app/page.tsx"), read("app/trade/page.tsx"), read("app/globals.css"), read("lib/markets.ts"), read("app/api/markets/route.ts")]);
 
 assert.match(landing, /Liquidation-Free/, "homepage must state the primary product promise");
 assert.match(landing, /Leveraged stock tokens, made clear/, "homepage must explain the instrument without redundant exclusivity language");
