@@ -3,13 +3,17 @@ import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 const stockTickers = ["aapl", "msft", "nvda", "googl", "amzn", "tsla", "amd", "nflx", "spy", "dis", "uber", "hood", "sofi", "orcl", "qqq"];
-const [landing, app, css, markets, marketApi, stockLogos] = await Promise.all([
+const additionalLogos = ["gld", "slv", "pplt", "uso", "copx", "anth", "openai", "anduril", "neural", "figure", "kalshi", "poly", "spacex", "ondo", "prestocks", "solana"];
+const [landing, docs, proxy, app, css, markets, marketApi, stockLogos, otherLogos] = await Promise.all([
   read("app/page.tsx"),
+  read("app/docs/page.tsx"),
+  read("proxy.ts"),
   read("app/trade/page.tsx"),
   read("app/globals.css"),
   read("lib/markets.ts"),
   read("app/api/markets/route.ts"),
   Promise.all(stockTickers.map((ticker) => read(`public/brands/${ticker}.svg`))),
+  Promise.all(additionalLogos.map((ticker) => read(`public/brands/${ticker}.svg`))),
 ]);
 
 assert.match(landing, /Liquidation-Free/, "homepage must state the primary product promise");
@@ -53,6 +57,8 @@ assert.match(app, /function AssetLogo/, "market rows and position views must use
 assert.ok(!app.includes("BRAND_DOMAINS[market.ticker]"), "market logos must not depend on a runtime favicon provider");
 assert.match(markets, /\/brands\/\$\{ticker\.toLowerCase\(\)\}\.svg/, "every stock must bind to a committed local SVG");
 assert.equal(stockLogos.length, 15, "all 15 launch stocks must have committed SVG assets");
+assert.equal(otherLogos.length, 16, "commodities, PreStocks and partners must have committed SVG assets");
+otherLogos.forEach((logo, index) => assert.match(logo, /<svg[^>]+viewBox=/, `${additionalLogos[index]} must be a valid local vector asset`));
 stockLogos.forEach((logo, index) => assert.match(logo, /<svg[^>]+viewBox=/, `${stockTickers[index]} must be a valid local vector asset`));
 assert.match(stockLogos[0], /<title>Apple<\/title>/, "AAPL must use the Apple mark rather than a letter tile");
 assert.ok(app.includes("Reference unavailable"), "UI must render an explicit missing-reference state without inventing a quote");
