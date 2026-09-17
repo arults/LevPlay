@@ -1,5 +1,5 @@
 const market = (symbol: string, ticker: string, name: string, category: "Stocks" | "Commodities", tone: string, mint = "") => ({
-  symbol, ticker, name, category, tone, mint, provider: "Ondo" as const,
+  symbol, ticker, name, category, tone, mint, provider: "Ondo" as const,\n  logo: category === "Stocks" ? `/brands/${ticker.toLowerCase()}.svg` : "",
 });
 
 export const CURATED_MARKETS = [
