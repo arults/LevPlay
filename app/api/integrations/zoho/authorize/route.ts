@@ -21,7 +21,10 @@ export async function GET(request: Request) {
     headers.set("location", buildAuthorizationUrl(state).toString());
     headers.set("set-cookie", `${ZOHO_STATE_COOKIE}=${encodeURIComponent(state)}; Path=/api/integrations/zoho; HttpOnly; Secure; SameSite=Lax; Max-Age=600`);
     return new Response(null, { status: 302, headers });
-  } catch {
-    return new Response("Zoho integration is not configured", { status: 503, headers: zohoNoStoreHeaders("text/plain; charset=utf-8") });
+  } catch (error) {
+    const detail = error instanceof Error && /^Missing ZOHO_[A-Z_]+$/.test(error.message)
+      ? `: ${error.message}`
+      : "";
+    return new Response(`Zoho integration is not configured${detail}`, { status: 503, headers: zohoNoStoreHeaders("text/plain; charset=utf-8") });
   }
 }
