@@ -16,17 +16,24 @@ export async function GET(request: Request) {
   const state = url.searchParams.get("state") || "";
   const cookieState = parseCookie(request, ZOHO_STATE_COOKIE);
   const clearCookie = `${ZOHO_STATE_COOKIE}=; Path=/api/integrations/zoho; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+  let stage: "state" | "token_exchange" | "mailbox_verify" = "state";
 
   try {
     if (!state || !cookieState || state !== cookieState || !await validateOAuthState(state)) {
       throw new Error("Invalid or expired OAuth state");
     }
+    stage = "token_exchange";
     const tokens = await exchangeAuthorizationCode(code);
+    stage = "mailbox_verify";
     await verifyLevPlayMailbox(tokens.accessToken);
     const html = successPage(tokens.refreshToken);
     return new Response(html, { status: 200, headers: { ...zohoNoStoreHeaders(), "set-cookie": clearCookie } });
-  } catch {
-    return new Response(errorPage(), { status: 400, headers: { ...zohoNoStoreHeaders(), "set-cookie": clearCookie } });
+  } catch (error) {
+    console.error("[zoho-oauth] callback failed", {
+      stage,
+      reason: error instanceof Error ? error.message : "Unknown OAuth failure",
+    });
+    return new Response(errorPage(stage), { status: 400, headers: { ...zohoNoStoreHeaders(), "set-cookie": clearCookie } });
   }
 }
 
@@ -34,8 +41,8 @@ function successPage(refreshToken: string) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LevPlay Mail connected</title><style>${styles}</style></head><body><main><p class="eyebrow">LEVPLAY MAIL</p><h1>Zoho authorization succeeded</h1><p>The authorized account contains <strong>info@levplay.tech</strong>. Copy the one-time refresh token below into Vercel as <code>ZOHO_REFRESH_TOKEN</code>.</p><textarea readonly spellcheck="false" aria-label="Zoho refresh token">${escapeHtml(refreshToken)}</textarea><p class="warning">Treat this token like a password. Do not paste it into ChatGPT, email, Slack, GitHub, or documentation.</p><p>After saving it in Vercel, close this page and tell Codex only: <strong>Refresh token added</strong>.</p></main></body></html>`;
 }
 
-function errorPage() {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LevPlay Mail connection failed</title><style>${styles}</style></head><body><main><p class="eyebrow">LEVPLAY MAIL</p><h1>Authorization could not be completed</h1><p>The request was invalid, expired, or did not authorize <strong>info@levplay.tech</strong>. Start again from the LevPlay authorization link.</p></main></body></html>`;
+function errorPage(stage: "state" | "token_exchange" | "mailbox_verify") {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LevPlay Mail connection failed</title><style>${styles}</style></head><body><main><p class="eyebrow">LEVPLAY MAIL</p><h1>Authorization could not be completed</h1><p>The request was invalid, expired, or did not authorize <strong>info@levplay.tech</strong>. Start again from the LevPlay authorization link.</p><p>Diagnostic stage: <code>${stage}</code></p></main></body></html>`;
 }
 
 function escapeHtml(value: string) {
