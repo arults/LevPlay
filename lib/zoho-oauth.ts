@@ -81,23 +81,23 @@ export async function exchangeAuthorizationCode(code: string) {
   const { clientId, clientSecret, accountsBase, redirectUri } = getZohoConfig();
   if (!/^[A-Za-z0-9._-]{8,2048}$/.test(code)) throw new Error("Invalid Zoho authorization code");
   const url = new URL("/oauth/v2/token", accountsBase);
-  const body = new URLSearchParams({
-    grant_type: "authorization_code",
-    client_id: clientId,
-    client_secret: clientSecret,
-    redirect_uri: redirectUri,
-    code,
-  });
+  url.searchParams.set("grant_type", "authorization_code");
+  url.searchParams.set("client_id", clientId);
+  url.searchParams.set("client_secret", clientSecret);
+  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("code", code);
   const response = await fetch(url, {
     method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
-    body,
+    headers: { accept: "application/json" },
     signal: AbortSignal.timeout(12_000),
     cache: "no-store",
   });
   const payload = await readJsonResponseBounded(response, 64_000) as TokenPayload;
   if (!response.ok || payload.error || !payload.access_token || !payload.refresh_token) {
-    throw new Error("Zoho token exchange failed");
+    const safeError = typeof payload.error === "string" && /^[a-z_]{3,64}$/.test(payload.error)
+      ? payload.error
+      : `http_${response.status}`;
+    throw new Error(`Zoho token exchange failed (${safeError})`);
   }
   return { accessToken: payload.access_token, refreshToken: payload.refresh_token };
 }
