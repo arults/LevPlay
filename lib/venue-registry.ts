@@ -25,7 +25,7 @@ export const ONDO_SOLANA = {
 export const VENUE_CANDIDATES = [
   { id: ONDO_SOLANA.id, label: "Ondo Stocks", state: "candidate", scope: "public stocks and commodity-linked ETFs" },
   { id: "prestocks-solana", label: "PreStocks", state: "candidate", scope: "2x pre-IPO products; integration evidence required" },
-  { id: "xstocks-solana", label: "xStocks", state: "shelved", scope: "not an active launch dependency" },
+  { id: "xstocks-solana", label: "xStocks", state: "candidate", scope: "public registry integrated; authenticated execution requires issuer approval" },
 ] as const;
 
 const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;

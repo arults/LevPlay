@@ -70,7 +70,7 @@ export const PRESTOCKS_CATALOG_SNAPSHOT = {
 } as const;
 
 export const SOURCE_ASSETS = [...ONDO_STOCKS, ...ONDO_COMMODITIES, ...PRESTOCKS] as const;
-export const XSTOCKS_STATE = "shelved" as const;
+export const XSTOCKS_STATE = "candidate-read-only" as const;
 
 export type ProductCandidate = SourceAsset & {
   id: string;

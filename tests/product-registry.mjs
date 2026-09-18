@@ -4,7 +4,7 @@ import {
   XSTOCKS_STATE, assessProductAdmission, catalogSummary, parseProductManifest, productStatusFromEnvironment,
 } from "../lib/product-registry.ts";
 
-assert.deepEqual(catalogSummary(), { ondoStocks: 15, ondoCommodities: 5, prestocks: 8, products: 136, xStocks: "shelved" });
+assert.deepEqual(catalogSummary(), { ondoStocks: 15, ondoCommodities: 5, prestocks: 8, products: 136, xStocks: "candidate-read-only" });
 assert.equal(ONDO_STOCKS.length, 15);
 assert.equal(ONDO_COMMODITIES.length, 5);
 assert.equal(PRESTOCKS.length, 8);
@@ -15,7 +15,7 @@ assert.equal(new Set(PRESTOCKS.map((asset) => asset.publishedMint)).size, 8);
 assert.equal(PRODUCT_CANDIDATES.filter((p) => p.provider === "ondo").length, 120);
 assert.equal(PRODUCT_CANDIDATES.filter((p) => p.provider === "prestocks").length, 16);
 assert.equal(PRODUCT_CANDIDATES.some((p) => p.provider === "prestocks" && p.leverage !== 2), false);
-assert.equal(XSTOCKS_STATE, "shelved");
+assert.equal(XSTOCKS_STATE, "candidate-read-only");
 
 const addr = (char) => char.repeat(32);
 const hash = "a".repeat(64);

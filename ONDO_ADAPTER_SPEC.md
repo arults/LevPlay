@@ -1,6 +1,6 @@
 # LevPlay Ondo Stocks Solana adapter boundary
 
-Status date: 2026-09-15. Ondo Stocks is the selected source candidate for 15 public stocks and five commodity-linked ETFs. PreStocks is a parallel 2x pre-IPO candidate and xStocks is shelved. AAPL2L remains the first capped pilot. No venue or product is production-admitted until its signed manifests pass every release check.
+Status date: 2026-09-18. Ondo Stocks is the selected source candidate for 15 public stocks and five commodity-linked ETFs. PreStocks is a parallel 2x pre-IPO candidate. xStocks is an additional read-only candidate whose public registry adapter is tracked separately in `XSTOCKS_INTEGRATION_GATE.md`; it is not admitted as a backing route. AAPL2L remains the first capped pilot. No venue or product is production-admitted until its signed manifests pass every release check.
 
 ## Pinned public identifiers
 

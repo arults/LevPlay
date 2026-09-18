@@ -1,6 +1,6 @@
 # LevPlay backing venue decision record
 
-Status date: 2026-09-15. Decision state: **LevPlay Risk Vault v1 is the selected architecture; Ondo and PreStocks are active source candidates; xStocks is shelved. No production backing route is admitted.** The checked Rust core and catalogs are candidates, not onchain capacity or a completed launch gate.
+Status date: 2026-09-18. Decision state: **LevPlay Risk Vault v1 is the selected architecture; Ondo and PreStocks are active source candidates; xStocks is re-opened as a public/read-only integration candidate. No production backing route is admitted.** The checked Rust core and catalogs are candidates, not onchain capacity or a completed launch gate.
 
 ## Verified market boundary
 
@@ -9,7 +9,7 @@ Status date: 2026-09-15. Decision state: **LevPlay Risk Vault v1 is the selected
 | LevPlay Risk Vault v1 | Checked-integer paired exposure, segregated maker escrow, independent-exit capacity, funded reserves, expiry and settlement reconciliation | Selected architecture; implementation is an economic core only until the SBF wrapper, exact accounts, funded escrows, audit and legal evidence pass |
 | Ondo Stocks on Solana | Published AAPLon Token-2022 mint, GM program, solver allowlist, API attestations, direct/JIT liquidity, onboarding and jurisdiction documentation | Selected candidate spot route for AAPL2L; not admitted until Ondo approves the wrapper, the exact transaction graph is audited and the emergency inventory exit is funded |
 | PreStocks on Solana | Publicly describes fully backed, 24/7 pre-IPO economic-exposure tokens and publishes Solana products | Candidate source for isolated 2L/2S markets only; not admitted without exact issuer-signed mints, wrapper permission, independent settlement prices, liquidity and wind-down evidence |
-| xStocks on Solana | Previously researched spot-tokenized equity route | Shelved; no longer an active integration or launch dependency |
+| xStocks on Solana | Public registry, multiplier, corporate-action and oracle metadata | Read-only adapter active; authenticated issuance/RFQ and wrapper use require issuer onboarding, legal review and separately admitted capacity |
 | Jupiter Perps | The official current product route identifies SOL, BTC and ETH perpetuals | Rejected for the Apple pilot: no fixed `AAPL` market or production capacity evidence |
 | Drift | The official site describes leveraged perpetual markets and a liquidation engine; Drift's June 2026 recovery update says the protocol is being rebuilt for relaunch after user losses | Rejected for the Apple pilot: no verified `AAPL` market, fixed adapter terms, isolated non-recourse capacity or deterministic exit evidence; a margin-liquidated backing account would not satisfy this design |
 | Bespoke market maker / OTC route | Could contractually supply prepaid, non-recourse long funding or a capped-loss inverse derivative | Candidate only. It must be implemented onchain with fixed accounts, locked collateral, independent audit, production limits and a second exit route before admission |

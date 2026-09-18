@@ -26,7 +26,8 @@
     "test:release-evidence": "node tests/release-evidence.mjs",
     "release:evidence": "node scripts/generate-release-evidence.mjs",
     "test:oracles": "node --experimental-strip-types tests/oracle-registry.mjs",
-    "test:tessera": "node tests/tessera-integration.mjs"
+    "test:tessera": "node tests/tessera-integration.mjs",
+    "test:xstocks": "node --experimental-strip-types tests/xstocks-integration.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

@@ -3,9 +3,12 @@ import { readFile } from "node:fs/promises";
 
 const marketsSource = await readFile(new URL("../lib/markets.ts", import.meta.url), "utf8");
 const productsSource = await readFile(new URL("../lib/product-registry.ts", import.meta.url), "utf8");
-assert.ok(!marketsSource.includes("XSTOCKS_API") && !marketsSource.includes("xstocks.fi"), "xStocks must remain outside the active integration");
+const xstocksRouteSource = await readFile(new URL("../app/api/integrations/xstocks/route.ts", import.meta.url), "utf8");
+assert.ok(!marketsSource.includes("XSTOCKS_API") && !marketsSource.includes("xstocks.fi"), "xStocks must remain outside active execution markets");
 assert.match(productsSource, /products: PRODUCT_CANDIDATES\.length/);
-assert.match(productsSource, /XSTOCKS_STATE = "shelved"/);
+assert.match(productsSource, /XSTOCKS_STATE = "candidate-read-only"/);
+assert.match(xstocksRouteSource, /mode: "public-read-only"/);
+assert.match(xstocksRouteSource, /executionEnabled: false/);
 
 async function fetchWithRetry(url, options = {}, attempts = 3) {
   let lastError;
