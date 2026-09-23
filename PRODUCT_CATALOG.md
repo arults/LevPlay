@@ -1,43 +1,34 @@
-# LevPlay product-candidate catalog
+# LevPlay active product-candidate catalog
 
-Status date: 2026-09-15. This catalog defines isolated products for audit and paper preview. A listing is not a deployed token or permission to offer it.
+Status date: 2026-09-23. A catalog entry is an isolated audit candidate, not a deployed token or an offer.
 
-## Active source candidates
-
-| Source | Underlyings | Products per underlying | Candidate total |
+| Source | Pinned references | Products per reference | Candidate total |
 |---|---:|---:|---:|
-| Ondo Stocks | 15 US stocks/ETFs | 2L, 2S, 3L, 3S, 5L, 5S | 90 |
-| Ondo commodity-linked ETFs | 5 | 2L, 2S, 3L, 3S, 5L, 5S | 30 |
-| PreStocks | 8 pre-IPO references (xAI excluded) | 2L, 2S | 16 |
-| **Total** | **28** | — | **136** |
+| PreStocks | 8 | 2L, 2S | 16 |
+| Tessera | 2 | 2L, 2S | 4 |
+| **Total** | **10** | — | **20** |
 
-xStocks is shelved and is not an active integration or launch dependency. Hong Kong products are omitted because neither admitted source currently provides a verified HK catalog for this release.
+## PreStocks
 
-## Ondo public stocks
+Anthropic, OpenAI, Anduril, Neuralink, Figure AI, Kalshi, Polymarket and SpaceX. xAI is excluded. PreStocks products provide economic exposure only—not shares, ownership, voting, dividend or information rights—and may suffer total loss or lack secondary liquidity.
 
-Apple, Microsoft, NVIDIA, Alphabet Class A, Amazon, Tesla, AMD, Netflix, SPDR S&P 500 ETF, Disney, Uber, Robinhood Markets, SoFi Technologies, Oracle and Invesco QQQ.
+## Tessera
 
-The source symbols are `AAPLon`, `MSFTon`, `NVDAon`, `GOOGLon`, `AMZNon`, `TSLAon`, `AMDon`, `NFLXon`, `SPYon`, `DISon`, `UBERon`, `HOODon`, `SOFIon`, `ORCLon` and `QQQon`. Only AAPLon has a currently pinned Solana mint in the checked-in public integration. The other exact Solana mints must come from an authenticated, signed Ondo source registry and be independently verified before their product manifests can pass.
+Pinned T-OpenAI and T-Kalshi mints. Tessera T-Tokens are unsecured loan participation rights, not equity. Repayment depends on the issuer structure and a future liquidity-event redemption process. Each product carries issuer, liquidity, authority and jurisdiction risk.
 
-## Ondo commodity-linked products
+## 2× long and short model
 
-Gold (`GLDon`), silver (`SLVon`), platinum (`PPLTon`), oil (`USOon`) and copper miners (`COPXon`). These are tokenized exchange-traded products providing commodity-related economic exposure; LevPlay must not describe them as claims on physical commodities.
+Every candidate has a unique product ID, product mint, market PDA, clearing vault, source-token vault, Standby reserve, two oracle accounts, capacity and audit record.
 
-## PreStocks pre-IPO products
+- A 2L vault needs holder capital plus maker-funded long-risk capital equal to at least the aggregate capital cap.
+- A 2S vault is a prepaid, bounded-payout claim with short-gain collateral of at least 2× the aggregate capital cap.
+- Neither holder product may depend on a liquidatable margin loan or perpetual position.
+- Every product funds its own Standby floor and exit liquidity.
+- New mints stop on stale/disputed prices, issuer halt, source authority change, exhausted capacity, missed rebalance or expired evidence.
+- Closing remains permissionless and becomes close-only pro-rata during source outages.
 
-Anthropic, OpenAI, Anduril, Neuralink, Figure AI, Kalshi, Polymarket and SpaceX. xAI is intentionally excluded from the launch catalog following its combination with SpaceX. Each is limited to 2L and 2S at this stage. PreStocks provide economic exposure only—not shares, ownership, voting, dividend or information rights—and disclose total-loss and secondary-liquidity risk.
+## Admission
 
-PreStocks admission requires an issuer-signed source registry, the exact mint and Token-2022 authority state, written wrapper permission, two manipulation-resistant settlement sources, market-specific liquidity and wind-down evidence, and legal approval. A DEX price alone can never settle a LevPlay mint, rebalance or redemption.
+A candidate becomes executable only when its manifest passes `lib/product-registry.ts` and binds exact source mint, provider and legal approvals, two independent timestamped onchain settlement feeds, collateral, liquidity, audit, economic review, retest and deployment evidence to one frozen release. Approval never carries across provider, direction or source token.
 
-## Isolation and collateral rules
-
-Every one of the 136 candidates has a unique product ID, product mint, market PDA, collateral vault, fee vault, two oracle accounts, exposure cap, wallet cap and audit/deployment record. No product shares capital or bad debt with another.
-
-- An `N×L` vault requires maker-funded long capital of at least `(N − 1) × aggregate capital cap`, in addition to holder capital.
-- An `N×S` vault is a bounded-payout, prepaid claim requiring short-gain collateral of at least `N × aggregate capital cap`; it may not depend on margin borrowing or a liquidatable perpetual position.
-- Each product funds its own Standby NAV floor and independent exit liquidity up to its declared maximum redemption liability.
-- New mints stop on oracle disagreement, stale data, provider halt, source control change, capacity exhaustion, missed rebalance or expired evidence. Closing remains permissionless and switches to close-only pro-rata mode during source outages.
-
-## Promotion rule
-
-A candidate becomes executable only when its machine-readable product manifest passes every invariant in `lib/product-registry.ts` and binds provider/legal approvals, source registry, collateral, two oracles, audit, economic review, retest and deployment to the exact release. Approval of one product never approves another leverage, direction or underlying.
+The first release schema accepts exactly `ANTH2L` and `ANTH2S` as the canary pair. They are still blocked until every evidence gate passes.

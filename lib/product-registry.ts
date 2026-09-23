@@ -1,5 +1,5 @@
-export type SourceProvider = "ondo" | "prestocks";
-export type AssetClass = "stock" | "commodity" | "pre-ipo";
+export type SourceProvider = "prestocks" | "tessera";
+export type AssetClass = "pre-ipo";
 export type Direction = "L" | "S";
 export type Leverage = 2 | 3 | 5;
 
@@ -13,42 +13,10 @@ export type SourceAsset = {
   sourceUrl: string;
 };
 
-const ondo = (symbol: string, ticker: string, name: string, assetClass: "stock" | "commodity", publishedMint?: string): SourceAsset => ({
-  provider: "ondo", symbol, ticker, name, assetClass, publishedMint,
-  sourceUrl: `https://app.ondo.finance/assets/${symbol.toLowerCase()}`,
-});
-
 const prestock = (symbol: string, ticker: string, name: string, publishedMint: string): SourceAsset => ({
   provider: "prestocks", symbol, ticker, name, assetClass: "pre-ipo", publishedMint,
   sourceUrl: "https://prestocks.com/products",
 });
-
-export const ONDO_STOCKS = [
-  ondo("AAPLon", "AAPL", "Apple", "stock", "123mYEnRLM2LLYsJW3K6oyYh8uP1fngj732iG638ondo"),
-  ondo("MSFTon", "MSFT", "Microsoft", "stock"),
-  ondo("NVDAon", "NVDA", "NVIDIA", "stock"),
-  ondo("GOOGLon", "GOOGL", "Alphabet Class A", "stock"),
-  ondo("AMZNon", "AMZN", "Amazon", "stock"),
-  ondo("TSLAon", "TSLA", "Tesla", "stock"),
-  ondo("AMDon", "AMD", "AMD", "stock"),
-  ondo("NFLXon", "NFLX", "Netflix", "stock"),
-  ondo("SPYon", "SPY", "SPDR S&P 500 ETF", "stock"),
-  ondo("DISon", "DIS", "Disney", "stock"),
-  ondo("UBERon", "UBER", "Uber", "stock"),
-  ondo("HOODon", "HOOD", "Robinhood Markets", "stock"),
-  ondo("SOFIon", "SOFI", "SoFi Technologies", "stock"),
-  ondo("ORCLon", "ORCL", "Oracle", "stock"),
-  ondo("QQQon", "QQQ", "Invesco QQQ", "stock"),
-] as const satisfies readonly SourceAsset[];
-
-// These are commodity-linked exchange-traded products, not physical commodities.
-export const ONDO_COMMODITIES = [
-  ondo("GLDon", "GLD", "SPDR Gold Shares", "commodity"),
-  ondo("SLVon", "SLV", "iShares Silver Trust", "commodity"),
-  ondo("PPLTon", "PPLT", "abrdn Physical Platinum Shares ETF", "commodity"),
-  ondo("USOon", "USO", "United States Oil Fund", "commodity"),
-  ondo("COPXon", "COPX", "Global X Copper Miners ETF", "commodity"),
-] as const satisfies readonly SourceAsset[];
 
 export const PRESTOCKS = [
   prestock("ANTHROPIC", "ANTH", "Anthropic", "Pren1FvFX6J3E4kXhJuCiAD5aDmGEb7qJRncwA8Lkhw"),
@@ -61,6 +29,16 @@ export const PRESTOCKS = [
   prestock("SPACEX", "SPACEX", "SpaceX", "PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh"),
 ] as const satisfies readonly SourceAsset[];
 
+const tessera = (symbol: string, ticker: string, name: string, publishedMint: string): SourceAsset => ({
+  provider: "tessera", symbol, ticker, name, assetClass: "pre-ipo", publishedMint,
+  sourceUrl: "https://docs.tessera.pe/overview/how-do-tessera-token-work",
+});
+
+export const TESSERA = [
+  tessera("TESSERA_OPENAI", "tOPENAI", "OpenAI · Tessera", "oPAiAikWTaFj9RYoRFD35ccfwhnMcB3ThgBZRHSkjTZ"),
+  tessera("TESSERA_KALSHI", "tKALSHI", "Kalshi · Tessera", "TKLSidmLVt3cqGaaodG8tyRzoANfQwoh67AccjmubeZ"),
+] as const satisfies readonly SourceAsset[];
+
 export const PRESTOCKS_CATALOG_SNAPSHOT = {
   observedAt: "2026-09-15",
   sourceUrl: "https://prestocks.com/products",
@@ -69,8 +47,7 @@ export const PRESTOCKS_CATALOG_SNAPSHOT = {
   symbols: PRESTOCKS.map((asset) => asset.symbol),
 } as const;
 
-export const SOURCE_ASSETS = [...ONDO_STOCKS, ...ONDO_COMMODITIES, ...PRESTOCKS] as const;
-export const XSTOCKS_STATE = "candidate-read-only" as const;
+export const SOURCE_ASSETS = [...PRESTOCKS, ...TESSERA] as const;
 
 export type ProductCandidate = SourceAsset & {
   id: string;
@@ -80,7 +57,7 @@ export type ProductCandidate = SourceAsset & {
 };
 
 function products(asset: SourceAsset): ProductCandidate[] {
-  const leverages: Leverage[] = asset.provider === "prestocks" ? [2] : [2, 3, 5];
+  const leverages: Leverage[] = [2];
   return leverages.flatMap((leverage) => (["L", "S"] as const).map((direction) => ({
     ...asset, id: `${asset.ticker}${leverage}${direction}`, leverage, direction, state: "candidate" as const,
   })));
@@ -211,11 +188,9 @@ export function assessProductAdmission(manifest: ProductAdmissionManifest, nowUn
 
 export function catalogSummary() {
   return {
-    ondoStocks: ONDO_STOCKS.length,
-    ondoCommodities: ONDO_COMMODITIES.length,
     prestocks: PRESTOCKS.length,
+    tessera: TESSERA.length,
     products: PRODUCT_CANDIDATES.length,
-    xStocks: XSTOCKS_STATE,
   };
 }
 

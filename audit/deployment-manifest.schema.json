@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://levplay.tech/audit/deployment-manifest.schema.json",
-  "title": "LevPlay AAPL 2x pilot deployment manifest v2",
+  "title": "LevPlay Anthropic 2x pre-IPO pilot deployment manifest v2",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -81,10 +81,10 @@
     "markets": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["AAPL2L", "AAPL2S"],
+      "required": ["ANTH2L", "ANTH2S"],
       "properties": {
-        "AAPL2L": { "$ref": "#/$defs/longMarket" },
-        "AAPL2S": { "$ref": "#/$defs/shortMarket" }
+        "ANTH2L": { "$ref": "#/$defs/longMarket" },
+        "ANTH2S": { "$ref": "#/$defs/shortMarket" }
       }
     }
   },
@@ -135,8 +135,8 @@
         "reserveVault": { "$ref": "#/$defs/address" },
         "standbyBps": { "type": "integer", "minimum": 1, "maximum": 500 },
         "productMint": { "$ref": "#/$defs/address" },
-        "sourceProvider": { "const": "ondo" },
-        "sourceAssetSymbol": { "const": "AAPLon" },
+        "sourceProvider": { "const": "prestocks" },
+        "sourceAssetSymbol": { "const": "ANTHROPIC" },
         "sourceMint": { "$ref": "#/$defs/address" },
         "sourceMintAccountSha256": { "$ref": "#/$defs/hash" },
         "sourceRegistryHash": { "$ref": "#/$defs/hash" },
