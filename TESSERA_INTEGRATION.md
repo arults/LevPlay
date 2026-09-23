@@ -1,18 +1,18 @@
 # Tessera integration boundary
 
-LevPlay exposes Tessera as a selectable **Pre-IPO display provider** for two
-paper-only 2x long/short concepts. This is not a production backing adapter and
-does not admit either concept for execution.
+LevPlay exposes Tessera as a selectable **Pre-IPO source provider** for two
+2x long/short product candidates. Catalog inclusion and mint verification do
+not admit either candidate for execution.
 
 ## Pinned identities
 
 | Reference | Official Solana mint | LevPlay availability |
 |---|---|---|
-| T-OpenAI (`tOpenAI`) | `oPAiAikWTaFj9RYoRFD35ccfwhnMcB3ThgBZRHSkjTZ` | 2L/2S paper preview |
-| T-Kalshi (`tKalshi`) | `TKLSidmLVt3cqGaaodG8tyRzoANfQwoh67AccjmubeZ` | 2L/2S paper preview |
+| T-OpenAI (`tOPENAI`) | `oPAiAikWTaFj9RYoRFD35ccfwhnMcB3ThgBZRHSkjTZ` | 2L/2S candidate |
+| T-Kalshi (`tKALSHI`) | `TKLSidmLVt3cqGaaodG8tyRzoANfQwoh67AccjmubeZ` | 2L/2S candidate |
 
 The API response must match both the pinned mint and code. LevPlay also reads
-each mint from Solana and requires initialized Token-2022 mint data. A mismatch
+each mint from Solana and requires an initialized classic-token or Token-2022 mint. A mismatch
 never falls back to a symbol-only match.
 
 ## Price boundary

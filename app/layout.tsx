@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "LevPlay — Leveraged Tokenized Stocks",
-  description: "Explore LevPlay 2x, 3x and 5x leveraged stock and commodity tokens on Solana with no holder margin calls. Token NAV can approach zero.",
+  description: "Explore LevPlay 2x long and short tokenized pre-IPO economic exposure on Solana with no holder margin calls. Token NAV can approach zero.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

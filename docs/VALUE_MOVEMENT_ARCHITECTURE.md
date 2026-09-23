@@ -1,7 +1,7 @@
 # LevPlay value-movement architecture
 
-Status: **audit-facing design; not implemented and not deployment evidence**  
-Scope: isolated `AAPL2L` and `AAPL2S` 2x canary markets on Solana  
+Status: **audit-facing design; not implemented and not deployment evidence**
+Scope: isolated `ANTH2L` and `ANTH2S` 2x pre-IPO canary markets on Solana
 Last updated: 2026-09-17
 
 This document defines the minimum architecture required before LevPlay may replace its
@@ -100,7 +100,7 @@ Every value-moving or exposure-changing instruction must apply the same onchain 
 
 1. Read Solana Clock and reject an expired quote or future-dated observation.
 2. Parse the admitted native Pyth receiver/update account with the pinned owner and exact
-   AAPL feed ID. Enforce full verification where supported, publish-time age, confidence
+   exact Anthropic exposure feed ID. Enforce full verification where supported, publish-time age, confidence
    and integer exponent normalization.
 3. Parse an independently operated onchain secondary account with a distinct owner,
    provider and update authority. An HTTP API, issuer page, DEX quote or a second account
@@ -167,18 +167,18 @@ recipient.
 
 ## Long and short collateral are not interchangeable
 
-`AAPL2L` and `AAPL2S` must have separate product mints, accounting, vaults, nonce domains,
+`ANTH2L` and `ANTH2S` must have separate product mints, accounting, vaults, nonce domains,
 caps, adapter markets and wind-down evidence.
 
-### AAPL2L
+### ANTH2L
 
 A synthetic writer of uncapped 2x long returns has unbounded upside liability. A safe long
-route therefore needs admitted source exposure (for example, program-controlled AAPL-linked
+route therefore needs admitted source exposure (for example, program-controlled Anthropic-linked
 inventory) plus prepaid, non-recallable additional risk capital and deterministic unwind.
 Alternatively, the payoff must disclose and enforce an explicit cap, making it a different
 product. USDC collateral alone does not prove an uncapped long is fully collateralized.
 
-### AAPL2S
+### ANTH2S
 
 For a discrete interval, the holder's 2x inverse gain is bounded by the reference asset's
 maximum 100% fall, while the holder's loss floors at the position NAV. A prepaid synthetic
@@ -262,9 +262,9 @@ Until every critical checklist gate is evidenced for the exact release, LevPlay 
 claim that:
 
 - the current SBF shell moves funds or is ready for a deposit;
-- AAPL2L or AAPL2S is fully collateralized onchain;
+- ANTH2L or ANTH2S is fully collateralized onchain;
 - Pyth or an independent secondary is enforced by a value-moving instruction;
-- Ondo, PreStocks, Tessera or another provider has approved a leveraged wrapper;
+- PreStocks has approved the initial leveraged wrapper and Tessera approval is separately required for Tessera-backed products;
 - a production long or short adapter, market-maker commitment or unwind route exists;
 - the program has passed an independent audit, devnet campaign or real-money canary;
 - “liquidation-free” means no loss, guaranteed recovery, guaranteed liquidity or a token

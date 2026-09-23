@@ -1,6 +1,6 @@
 //! Deterministic economic core for LevPlay's Solana-native clearing vault.
 //!
-//! The vault matches AAPL2L/AAPL2S exposure first and admits only the residual
+//! The vault matches ANTH2L/ANTH2S exposure first and admits only the residual
 //! exposure that is covered by segregated, non-recallable maker collateral.
 //! This module intentionally performs no CPI. A later SBF wrapper must bind its
 //! inputs to fixed PDAs, token accounts and audited adapters.

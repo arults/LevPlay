@@ -22,7 +22,7 @@ Any failed check aborts the whole Solana transaction. The program must never acc
 
 ## Long/short isolation
 
-The audit pilot contains only `AAPL2L` and `AAPL2S`. They use separate market PDAs, product mints, vaults, adapter markets, nonce domains, caps and accounting. The short market must prove borrow/perpetual capacity and its buy-to-cover path before opening; it cannot reuse a long-market spot route or represent missing borrow as synthetic inventory.
+The audit pilot contains only `ANTH2L` and `ANTH2S`. They use separate market PDAs, product mints, vaults, adapter markets, nonce domains, caps and accounting. The short market is a prepaid bounded-payout claim and must prove fully funded downside-gain collateral before opening; it cannot reuse a long-market route or represent unfunded exposure as inventory.
 
 ## `close_position`
 

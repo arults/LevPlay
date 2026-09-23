@@ -1,65 +1,60 @@
 # LevPlay
 
-LevPlay is a Solana-first, fail-closed infrastructure layer for daily-target leveraged tokens using Ondo public-stock and commodity-linked assets plus PreStocks and Tessera pre-IPO references. xStocks is shelved. Tessera's pinned T-OpenAI and T-Kalshi mints are available only as 2x long/short paper concepts. Transaction construction and signing remain disabled until every product's production gates are independently proven.
+LevPlay is a Solana-native infrastructure layer for 2× long and short tokenized pre-IPO economic exposure. The active public catalog is limited to eight pinned PreStocks references and two pinned Tessera references. Ondo and xStocks are not part of the active application.
 
-## Product boundary
+## Current release boundary
 
-- 15 Ondo public stocks and 5 Ondo commodity-linked ETFs with 2x, 3x and 5x long/short candidates, plus 8 catalogued PreStocks references (xAI excluded) with 2x long/short candidates: 136 isolated audit candidates. Two pinned Tessera references add four 2x paper concepts only; none is executable merely because it appears in the catalog.
-- Every product is independently gated. The first external-audit canary remains isolated `AAPL2L`; short, 3x, 5x and PreStocks rollout only after their separate collateral and reviews pass.
-- Wallet-direct entry with no LevPlay deposit balance: position capital moves to the isolated vault and the 0.5% fee is charged on top in one atomic transaction.
-- $100-per-wallet canary cap. A $500 future order means $500 capital + $2.50 fee = $502.50 total wallet debit.
-- Liquidation-free for the holder means no margin call, negative balance or wallet-level liquidation. A funded Standby floor may preserve residual NAV, but principal and recovery are not guaranteed; an unfunded gap is insolvency, never hidden as token dust.
-- Provider/API/DEX display prices are never settlement authority.
+- 20 isolated candidates: one 2× long and one 2× short candidate for each of ten source tokens.
+- PreStocks sources: Anthropic, OpenAI, Anduril, Neuralink, Figure AI, Kalshi, Polymarket and SpaceX.
+- Tessera sources: pinned T-OpenAI and T-Kalshi mints.
+- Direct-wallet design: position capital plus the 0.5% entry fee is paid from the user's Solana wallet; there is no LevPlay deposit balance.
+- Provider and DEX prices are display-only. They never authorize mint, redeem or rebalance.
+- Real-money signing remains hard-locked in source until the exact release has deployed-program, funded-vault, dual-oracle, multisig, legal/provider-approval and independent-audit evidence.
 
-## Implemented
+The first auditable canary pair is `ANTH2L` and `ANTH2S`. This is a release constraint, not a claim that the pair is currently deployed or approved.
 
-- Original product homepage with a focused Enter app flow and a clear explanation of the holder experience.
-- Complete local paper lifecycle: wallet balance, fee-on-top order review, entry, portfolio valuation, profit/loss scenarios, redemption and trade history.
-- Fee-inclusive realized, unrealized and total P/L plus persisted paper cash, positions and history.
-- Responsive desktop and mobile navigation, portfolio cards, history rows and three-second user feedback.
-- Phantom/Backpack connection with live Solana SOL, USDC and allowlisted source-token balance reads.
-- Exact source mint pinning and onchain Token-2022 metadata/extension validation are required by product admission.
-- A 136-product Ondo/PreStocks audit catalog, plus four explicitly paper-only Tessera concepts, with leverage-specific fail-closed collateral and deployment manifests.
-- Pyth-first settlement policy: an exact feed is required per product, plus a separately admitted and independently operated secondary onchain source; issuer APIs and DEX quotes remain display-only and no feed is inferred by ticker.
-- Corporate-action, issuer-halt, Token-2022 pause and unexpected transfer-hook gates.
-- Environment-driven production release lock; absent evidence blocks signing.
-- Protocol-model tests, live integration checks, lint, production build and dependency audit.
+## Why “liquidation-free”
 
-## Not implemented — mainnet blockers
+A holder buys a fully paid token rather than opening a margin account. The holder cannot be margin-called, cannot owe more than the purchase, and other wallet assets cannot be seized by the protocol. Exposure is managed in an isolated vault. A separately funded Standby reserve may remove directional exposure at a small NAV floor. This does not guarantee principal or recovery: gaps, compounding, illiquidity, issuer controls, oracle failures and smart-contract failures can still cause severe or total loss.
 
-- Deployed LevPlay Solana program and verified build.
-- Audited backing/execution adapter with contractually available leverage liquidity.
-- Onchain Pyth plus an independently admitted secondary settlement account validated inside value-moving instructions.
-- Independent security audit, fuzz/local-validator suite and economic stress campaign.
-- Governance and guardian multisigs, a pinned multisig-owned USDC fee account, production RPC quorum and incident monitoring.
-- Confirmed, audited Ondo and PreStocks adapters with sufficient market-specific leverage capital and exit liquidity.
-- A separately proven short borrow/perpetual route and deterministic buy-to-cover path; the short cannot reuse the long vault.
-- Jurisdiction and eligibility controls required for tokenized securities.
-- Counsel-approved jurisdiction rules and authoritative wallet-bound enforcement; the versioned browser acknowledgement in [`ELIGIBILITY_AND_RISK_GATE.md`](./ELIGIBILITY_AND_RISK_GATE.md) is a fail-closed UX gate, not legal approval.
+## Reference providers
 
-The application intentionally cannot be made live with environment values alone unless every required program, market, audit and release identifier is provided. See `COMPETITIVE_POSITIONING.md`, `ORACLE_ARCHITECTURE.md`, `PROTOCOL_SPEC.md`, `SECURITY_AUDIT.md`, `TREASURY_RUNBOOK.md` and `MAINNET_LAUNCH_CHECKLIST.md`.
+PreStocks products provide economic exposure and do not convey shareholder ownership, voting, dividend or information rights. Tessera T-Tokens are unsecured loan participation rights, not equity. Both are external trust boundaries with issuer, liquidity, legal and operational risks. See [REFERENCE_DATA_POLICY.md](REFERENCE_DATA_POLICY.md) and [TESSERA_INTEGRATION.md](TESSERA_INTEGRATION.md).
 
-## Validation
+## Development
 
 ```bash
-pnpm lint
-pnpm test:protocol
-pnpm test:live
-pnpm test:security
-pnpm test:ui
-pnpm test:audit-package
-pnpm audit --prod --audit-level=low
-pnpm build
+bash scripts/sites-env.sh -- bash scripts/install-pnpm.sh
+npm run lint
+npm run build
+npm run test:products
+npm run test:venue
+npm run test:oracles
+npm run test:security
+npm run test:release-manifest
+npm run test:ui
+npm run test:audit-package
+cargo test --workspace --locked
 ```
 
-## Release configuration
+## Production evidence required
 
-Production signing requires all of the following:
+The environment does not accept placeholders:
 
-- `LEVPLAY_SVM_DEPLOYMENT_MANIFEST_JSON` containing the exact schema-v2 release, artifact/evidence hashes, program/config identities, separate USDC clearing, source-token and reserve vaults, and exactly `AAPL2L` plus `AAPL2S`
-- `LEVPLAY_SVM_DEPLOYMENT_MANIFEST_HASH` matching the byte-exact JSON above
-- `LEVPLAY_SVM_VENUE_MANIFEST_JSON` with the exact Ondo programs, AAPLon mint, solver allowlist, eligibility policy, approval/audit hashes, funded collateral and independent exit domains
-- `LEVPLAY_SVM_PRODUCT_MANIFESTS_JSON` with one independently audited, funded and deployed manifest per enabled product
-- `LEVPLAY_SVM_EXECUTION_ENABLED=true`
+- `LEVPLAY_SVM_DEPLOYMENT_MANIFEST_JSON`
+- `LEVPLAY_SVM_DEPLOYMENT_MANIFEST_HASH`
+- `LEVPLAY_SVM_VENUE_MANIFEST_JSON`
+- `LEVPLAY_SVM_PRODUCT_MANIFESTS_JSON`
+- `LEVPLAY_SVM_RPC_URLS_JSON` with independent provider domains
+- `LEVPLAY_SVM_EXECUTION_ENABLED=true` only after a release-bound multisig GO vote
 
-The deployment manifest hashes and cross-binds the venue and product manifests. Two RPCs must independently match the deployed SBF bytes, decoded `LVPCFG01`/`LVPMKT01` state and vault semantics. Execution still remains hard-locked in code until audited value-moving handlers exist.
+Even perfect configuration cannot enable execution in this source revision because the value-moving handler and external-evidence signature verifier are deliberately hard-locked false. Enabling them requires audited code, deployed program identities and independently verifiable evidence.
+
+## Public surfaces
+
+- Homepage and documentation: [levplay.tech](https://levplay.tech)
+- Application: [app.levplay.tech](https://app.levplay.tech)
+- X: [@lev__play](https://x.com/lev__play)
+- Email: [info@levplay.tech](mailto:info@levplay.tech)
+
+Experimental software. Not investment advice. Availability does not establish legal eligibility.

@@ -5,9 +5,9 @@ import { ArrowRight, BarChart3, Boxes, Check, CircleAlert, Coins, ExternalLink, 
 function LogoMark() { return <span className="logo-mark" aria-hidden="true"><i/><b/></span>; }
 
 const products = [
-  { token: "AAPL2L", name: "Apple 2×", tone: "#ff8a3d", move: "+2× daily", logo: "/brands/aapl.svg" },
-  { token: "AAPL2S", name: "Apple inverse 2×", tone: "#9b4c1c", move: "−2× daily", logo: "/brands/aapl.svg" },
-  { token: "OPENAI2L", name: "OpenAI pre-IPO model", tone: "#10a37f", move: "+2× paper", logo: "/brands/openai.svg" },
+  { token: "ANTH2L", name: "Anthropic 2× long", tone: "#ff8a3d", move: "+2× daily", logo: "/brands/anth.svg" },
+  { token: "ANTH2S", name: "Anthropic 2× short", tone: "#9b4c1c", move: "−2× daily", logo: "/brands/anth.svg" },
+  { token: "tOPENAI2L", name: "Tessera OpenAI 2×", tone: "#10a37f", move: "+2× candidate", logo: "/brands/openai.svg" },
 ];
 
 function BrandIcon({ name, logo, size = 26 }: { name: string; logo: string; size?: number }) { return <Image src={logo} alt={`${name} logo`} width={size} height={size}/>; }
@@ -24,10 +24,10 @@ export default function LandingPage() {
 
     <section className="landing-hero">
       <div className="landing-copy">
-        <span className="landing-kicker"><Sparkles size={14}/> Solana-native · Ondo + PreStocks + Tessera</span>
+        <span className="landing-kicker"><Sparkles size={14}/> Solana-native · PreStocks + Tessera</span>
         <h1>Defined risk.<br/><em>Leveraged stocks.</em></h1>
         <p className="hero-boundary">No holder margin account.</p>
-        <p>Direct-wallet Solana tokens targeting daily long or short exposure to public stocks, commodity-linked ETFs and selected pre-IPO references—with isolated backing and visible risk controls.</p>
+        <p>Direct-wallet Solana tokens targeting daily 2× long or short exposure to selected pre-IPO references—with isolated backing and visible risk controls.</p>
         <div className="landing-actions"><Link className="enter-app" href={APP_URL}>Enter app <ArrowRight size={18}/></Link><a className="learn-link" href="#mechanics">See how it works</a></div>
         <div className="hero-disclosure"><CircleAlert size={16}/><span>No margin liquidation. Funded Standby is designed to preserve residual NAV, but principal and recovery are never guaranteed.</span></div>
       </div>
@@ -38,7 +38,7 @@ export default function LandingPage() {
       </div>
     </section>
 
-    <section className="ticker-band" aria-label="Product facts"><span>15 Ondo public stocks</span><i/><span>5 commodity ETFs</span><i/><span>8 PreStocks + 2 Tessera references</span><i/><span>2×, 3× and 5× · Long and short</span><i/><span>0.5% disclosed entry fee</span></section>
+    <section className="ticker-band" aria-label="Product facts"><span>8 PreStocks references</span><i/><span>2 Tessera references</span><i/><span>20 isolated candidates</span><i/><span>2× long and short</span><i/><span>0.5% disclosed entry fee</span></section>
 
     <section className="landing-section" id="why">
       <div className="section-heading"><span className="eyebrow">Why LevPlay</span><h2>Proof, not promises.</h2><p>A simpler way to take leveraged stock exposure—without hiding how the product is priced, backed or stopped.</p></div>
@@ -50,7 +50,7 @@ export default function LandingPage() {
     </section>
 
     <section className="landing-section">
-      <div className="section-heading"><span className="eyebrow">Built for the gap</span><h2>Stocks meet onchain leverage.</h2><p>Existing products typically offer tokenized stocks without managed leverage, or leveraged trading through margin accounts and liquidations. LevPlay is designed for the space between them.</p></div>
+      <div className="section-heading"><span className="eyebrow">Built for the gap</span><h2>Pre-IPO exposure meets onchain leverage.</h2><p>Existing products offer tokenized private-market economic exposure without managed leverage, while leveraged trading usually requires margin and liquidations. LevPlay is designed for the space between them.</p></div>
       <div className="benefit-grid">
         <article><Boxes/><span>01</span><h3>One position token</h3><p>Fixed daily-target long or short exposure in an asset held directly in your wallet.</p></article>
         <article><Layers3/><span>02</span><h3>Isolated by market</h3><p>Each product has separate accounting, collateral, capacity and wind-down rules.</p></article>
@@ -79,12 +79,12 @@ export default function LandingPage() {
     </section>
 
     <section className="landing-section preipo-section">
-      <div><span className="eyebrow">Private markets, explicit limits</span><h2>Pre-IPO leverage—researched, not presumed.</h2><p>LevPlay includes paper models for currently priced Anthropic, OpenAI, Anduril, Neuralink, Figure AI, Kalshi, Polymarket and SpaceX PreStocks references. Unavailable references remain visibly blocked instead of displaying a misleading price.</p></div>
-      <div className="preipo-proof"><strong>Why execution is locked</strong><p>PreStocks provide bearer tokens tracking private-company economic exposure, not company shares or ownership rights. They may have no guaranteed secondary liquidity and retain administrative controls. A LevPlay market remains blocked until two independent settlement feeds, an audited 2× long route, a separately funded short route, capacity and deterministic unwind are proven.</p><span><LockKeyhole size={15}/>Paper preview available · real-money signing disabled</span></div>
+      <div><span className="eyebrow">Private markets, explicit limits</span><h2>Pre-IPO leverage—verified product by product.</h2><p>LevPlay catalogs eight pinned PreStocks references and two pinned Tessera references. Missing or unverifiable references remain visibly blocked instead of displaying a misleading price.</p></div>
+      <div className="preipo-proof"><strong>Why execution is gated</strong><p>PreStocks provide economic exposure without company ownership rights. Tessera T-Tokens are unsecured loan participation rights, not equity. Each LevPlay market remains blocked until two independent settlement feeds, funded 2× long and short routes, capacity and deterministic unwind are proven.</p><span><LockKeyhole size={15}/>Paper flow live · real-money signing evidence-gated</span></div>
     </section>
 
     <section className="risk-banner" id="risk"><div><span className="eyebrow">The honest boundary</span><h2>No margin call.<br/><em>Not no risk.</em></h2></div><p>The holder cannot owe more than the amount paid, but token NAV can fall toward zero. Daily compounding, overnight gaps, volatility drag, backing liquidity, issuer controls, oracle failures and smart-contract risk remain material. Real-money signing stays locked until every release gate is independently proven.</p><Link className="enter-app light" href={APP_URL}>Try the paper flow <ArrowRight size={17}/></Link></section>
 
-    <footer className="landing-footer"><div><span className="footer-logo"><LogoMark/>LevPlay</span><p>Solana’s proof-first, defined-risk leveraged stock-token layer.</p></div><nav><strong>Product</strong><a href="#why">Why LevPlay</a><a href="#mechanics">How it works</a><a href="#risk">Risks</a><Link href={APP_URL}>Enter app</Link></nav><nav><strong>Protocol</strong><Link href="/proof">Public proof</Link><Link href="/docs">Documentation</Link><Link href="/docs#oracles">Oracle policy</Link><Link href="/docs#security">Security gates</Link><Link href="/docs#treasury">Fee treasury</Link></nav><nav className="brand-links"><strong>Resources</strong><a href="https://docs.ondo.finance/ondo-stocks" target="_blank" rel="noreferrer"><BrandIcon name="Ondo" logo="/brands/ondo.svg" size={18}/>Ondo docs <ExternalLink size={11}/></a><a href="https://prestocks.com/products" target="_blank" rel="noreferrer"><BrandIcon name="PreStocks" logo="/brands/prestocks.svg" size={18}/>PreStocks products <ExternalLink size={11}/></a><a href="https://solana.com/docs" target="_blank" rel="noreferrer"><BrandIcon name="Solana" logo="/brands/solana.svg" size={18}/>Solana docs <ExternalLink size={11}/></a><a href="https://hackathons.solana.com/hackathons/stocklana" target="_blank" rel="noreferrer">Stocklana <ExternalLink size={11}/></a><a href="https://x.com/lev__play" target="_blank" rel="noreferrer">X / @lev__play <ExternalLink size={11}/></a><a href="mailto:info@levplay.tech">info@levplay.tech</a></nav><div className="landing-legal"><span>© 2026 LevPlay</span><p>Experimental software. Not investment advice. Tokenized securities are subject to issuer terms and jurisdiction restrictions.</p></div></footer>
+    <footer className="landing-footer"><div><span className="footer-logo"><LogoMark/>LevPlay</span><p>Solana’s proof-first, defined-risk leveraged pre-IPO token layer.</p></div><nav><strong>Product</strong><a href="#why">Why LevPlay</a><a href="#mechanics">How it works</a><a href="#risk">Risks</a><Link href={APP_URL}>Enter app</Link></nav><nav><strong>Protocol</strong><Link href="/proof">Public proof</Link><Link href="/docs">Documentation</Link><Link href="/docs#oracles">Oracle policy</Link><Link href="/docs#security">Security gates</Link><Link href="/docs#treasury">Fee treasury</Link></nav><nav className="brand-links"><strong>Resources</strong><a href="https://prestocks.com/products" target="_blank" rel="noreferrer"><BrandIcon name="PreStocks" logo="/brands/prestocks.svg" size={18}/>PreStocks products <ExternalLink size={11}/></a><a href="https://docs.tessera.pe/overview/how-do-tessera-token-work" target="_blank" rel="noreferrer">Tessera docs <ExternalLink size={11}/></a><a href="https://solana.com/docs" target="_blank" rel="noreferrer"><BrandIcon name="Solana" logo="/brands/solana.svg" size={18}/>Solana docs <ExternalLink size={11}/></a><a href="https://hackathons.solana.com/hackathons/stocklana" target="_blank" rel="noreferrer">Stocklana <ExternalLink size={11}/></a><a href="https://x.com/lev__play" target="_blank" rel="noreferrer">X / @lev__play <ExternalLink size={11}/></a><a href="mailto:info@levplay.tech">info@levplay.tech</a></nav><div className="landing-legal"><span>© 2026 LevPlay</span><p>Experimental software. Not investment advice. Tokenized economic-exposure products are subject to issuer terms and jurisdiction restrictions.</p></div></footer>
   </main>;
 }

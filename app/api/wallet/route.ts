@@ -1,4 +1,4 @@
-import { CURATED_MARKETS, SOLANA_USDC_MINT, TOKEN_2022_PROGRAM, TOKEN_PROGRAM } from "@/lib/markets";
+import { PREIPO_MARKETS, SOLANA_USDC_MINT, TESSERA_MARKETS, TOKEN_2022_PROGRAM, TOKEN_PROGRAM } from "@/lib/markets";
 import { isSafeRpcUrl, isSolanaAddress } from "@/lib/protocol";
 import { BodyTooLargeError, InstanceRateLimiter, readJsonBodyBounded, readJsonResponseBounded } from "@/lib/http-safety";
 
@@ -51,7 +51,7 @@ async function readWallet(address: string) {
       ]);
       if (genesis !== "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp") throw new Error("Not Solana mainnet");
       const lamports = Number((balance as { value?: number }).value || 0);
-      const knownMints = new Set([SOLANA_USDC_MINT, ...CURATED_MARKETS.map((market) => market.mint)]);
+      const knownMints = new Set([SOLANA_USDC_MINT, ...PREIPO_MARKETS.map((market) => market.mint), ...TESSERA_MARKETS.map((market) => market.mint)]);
       const accounts = [...((classic as { value?: unknown[] }).value || []), ...((token2022 as { value?: unknown[] }).value || [])];
       const tokens = accounts.flatMap((entry) => {
         const account = entry as { account?: { data?: { parsed?: { info?: { mint?: string; tokenAmount?: { uiAmountString?: string; amount?: string; decimals?: number } } } } } };

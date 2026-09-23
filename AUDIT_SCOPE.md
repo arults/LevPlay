@@ -8,12 +8,12 @@ The first audit covers exactly two isolated Apple-referenced products:
 
 | Product | Daily target | Side | Maximum loss to holder | Pilot limit |
 |---|---:|---|---:|---:|
-| `AAPL2L` | +2× | Long | Position capital plus disclosed entry fee | $100 per wallet |
-| `AAPL2S` | −2× | Short | Position capital plus disclosed entry fee | $100 per wallet |
+| `ANTH2L` | +2× | Long | Position capital plus disclosed entry fee | $100 per wallet |
+| `ANTH2S` | −2× | Short | Position capital plus disclosed entry fee | $100 per wallet |
 
 The aggregate mainnet canary ceiling is $1,000 across both products. `3×`, `5×`, commodities and every other ticker are out of scope and must remain unavailable in the signed deployment manifest.
 
-`AAPL2L` and `AAPL2S` must use separate market state, product mint, backing vault, USDC Standby reserve, adapter market and risk caps. A failure, insolvency or halt in one market must not expose the other market's backing.
+`ANTH2L` and `ANTH2S` must use separate market state, product mint, backing vault, USDC Standby reserve, adapter market and risk caps. A failure, insolvency or halt in one market must not expose the other market's backing.
 
 ## In scope
 
