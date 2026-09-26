@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./preipo-layout.css";
 
 export const metadata: Metadata = {
   title: "LevPlay — Leveraged Tokenized Stocks",

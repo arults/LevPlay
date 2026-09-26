@@ -9,6 +9,7 @@ import { Activity, ArrowUpRight, BookOpen, BriefcaseBusiness, Check, ChevronRigh
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { ALL_MARKETS, SOLANA_USDC_MINT } from "@/lib/markets";
+import { MarketChart } from "@/components/market-chart";
 
 type Oracle = { provider: string; feedId: string; minPublishers: number };
 type ReferenceStatus = "live" | "stale" | "provider_unconfigured" | "provider_offline" | "not_admitted" | "timestamp_unavailable";
@@ -80,7 +81,7 @@ function ExposureCurve({ leverage, direction }: { leverage: number; direction: D
 export default function TradingApp() {
   const [preIpoProvider, setPreIpoProvider] = useState<"PreStocks" | "Tessera">("PreStocks");
   const [query, setQuery] = useState("");
-  const [selectedSymbol, setSelectedSymbol] = useState("ANTHROPIC");
+  const [selectedSymbol, setSelectedSymbol] = useState("OPENAI");
   const [markets, setMarkets] = useState<LiveMarket[]>(ALL_MARKETS.map((market) => ({ ...market, verified: false })));
   const [loadingMarkets, setLoadingMarkets] = useState(true);
   const [checkedAt, setCheckedAt] = useState<string | null>(null);
@@ -315,21 +316,21 @@ export default function TradingApp() {
     {notice && <div className="notice" role="status" aria-live="polite"><CircleAlert size={17}/><span>{notice}</span><button onClick={() => setNotice(null)} aria-label="Dismiss message">×</button></div>}
 
     {view === "trade" && <><section className="market-hero">
-      <div><span className="eyebrow">Pre-IPO references via PreStocks + Tessera · Pyth-first · Solana</span><h1>Trade leveraged tokenized stocks.<br/><em>Not margin accounts.</em></h1></div>
-      <div className="hero-metrics"><span><small>Holder liquidation</small><strong>None</strong></span><span><small>Pilot cap</small><strong>$100</strong></span><span><small>Protocol fee</small><strong>0.5%</strong></span></div>
+      <div><span className="eyebrow">LevPlay markets · Solana</span><h1>Pre-IPO stocks. <em>2× long or short.</em></h1><p>Choose a stock, inspect its price history, then review the position. Market prices are display-only while mainnet execution is gated.</p></div>
+      <div className="hero-metrics"><span><small>Markets</small><strong>10 sources</strong></span><span><small>Target</small><strong>2× L / S</strong></span><span><small>Entry fee</small><strong>0.5%</strong></span></div>
     </section>
 
     <section className="trading-grid">
       <div className="market-panel">
         <div className="panel-tools">
-          <div className="category-tabs"><span><Sparkles size={15}/>Pre-IPO <b>{markets.length}</b></span></div>
+          <div className="category-tabs"><span><Sparkles size={15}/>Stocks <b>{markets.length}</b></span></div>
           <label className="search"><Search size={16}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search" aria-label="Search markets"/></label>
           <button className="refresh" onClick={() => void refresh()} aria-label="Refresh verified market data"><RefreshCw className={loadingMarkets ? "spin" : ""} size={16}/></button>
         </div>
         <div className="provider-switch" aria-label="Pre-IPO source"><button className={preIpoProvider === "PreStocks" ? "active" : ""} onClick={() => { setPreIpoProvider("PreStocks"); const first = markets.find((market) => market.provider === "PreStocks"); if (first) setSelectedSymbol(first.symbol); }}>PreStocks <span>8</span></button><button className={preIpoProvider === "Tessera" ? "active" : ""} onClick={() => { setPreIpoProvider("Tessera"); const first = markets.find((market) => market.provider === "Tessera"); if (first) setSelectedSymbol(first.symbol); }}>Tessera <span>2</span></button></div>
-        <div className="table-head"><span>Market</span><span>Reference</span><span>Status</span><span>Feeds</span></div>
+        <div className="table-head"><span>Stock</span><span>Price · display</span></div>
         <div className="market-list">
-          {visible.map((market) => <button key={market.symbol} className={market.symbol === selectedSymbol ? "market-row selected" : "market-row"} onClick={() => { setSelectedSymbol(market.symbol); setLeverage(2); }}><span className="asset"><AssetLogo market={market}/><span><strong>{market.ticker}</strong><small>{market.name}</small></span></span><strong className="price">{market.price ? formatUsd(market.price) : loadingMarkets ? "Checking…" : market.referenceLabel || "Reference unavailable"}</strong><span className={market.marketOpen ? "session open" : "session"}>{market.referenceStatus === "timestamp_unavailable" ? "Display" : "Blocked"}</span><span className={market.verified ? "feed verified" : market.price ? "feed display" : "feed blocked"}>{market.verified ? <><Check size={13}/>2/2</> : market.price ? <><Eye size={13}/>Display</> : <><LockKeyhole size={13}/>Block</>}</span></button>)}
+          {visible.map((market) => <button key={market.symbol} aria-pressed={market.symbol === selectedSymbol} className={market.symbol === selectedSymbol ? "market-row selected" : "market-row"} onClick={() => { setSelectedSymbol(market.symbol); setLeverage(2); }}><span className="asset"><AssetLogo market={market}/><span><strong>{market.ticker}</strong><small>{market.name}</small></span></span><span className="market-quote"><strong className="price">{market.price ? formatUsd(market.price) : loadingMarkets ? "Checking…" : "Unavailable"}</strong><small>{market.price ? "DEX / issuer display" : "No price"}</small></span></button>)}
           {visible.length === 0 && <div className="empty">No matching markets.</div>}
         </div>
         <div className="source-line"><span>{checkedAt ? `Checked ${new Date(checkedAt).toLocaleTimeString()}` : "Checking reference providers"}</span><span><a href="https://prestocks.com/products" target="_blank" rel="noreferrer"><PartnerLogo name="PreStocks" domain="prestocks.com"/>PreStocks</a><a href="https://docs.tessera.pe/overview/how-do-tessera-token-work" target="_blank" rel="noreferrer"><PartnerLogo name="Tessera" domain="tessera.pe"/>Tessera <ExternalLink size={12}/></a></span></div>
@@ -337,6 +338,7 @@ export default function TradingApp() {
 
       <div className="detail-panel">
         <div className="detail-top"><div className="selected-asset"><AssetLogo market={selected} size={58}/><div><small>LevPlay · Pre-IPO</small><h2>{selected.ticker}<em>{leverage}{direction === "Long" ? "L" : "S"}</em></h2><p>Liquidation-free holder structure</p></div></div><div className="selected-price"><small>{selected.provider} market reference</small><strong>{selected.price ? formatUsd(selected.price) : selected.referenceLabel || "Reference unavailable"}</strong><span>{selected.referenceLabel || "Checking reference provider"} · settlement {selected.verified ? "ready" : "locked"}</span></div></div>
+        <MarketChart key={selected.symbol} symbol={selected.symbol} ticker={selected.ticker}/>
         <div className="oracle-strip"><span><ShieldCheck size={18}/><span><small>Settlement guard</small><strong>{selected.verified ? "Dual-source ready" : "Fail-closed"}</strong></span></span><span><Eye size={18}/><span><small>Display source</small><strong>{selected.referenceLabel || "Checking provider"}</strong></span></span></div>
         <div className="truth-panel" aria-label="Market truth"><span><small>Market state</small><strong className={marketState.toLowerCase()}>{marketState}</strong></span><span><small>Reference use</small><strong>{selected.verified ? "Settlement admitted" : "Display only"}</strong></span><span><small>Source mint</small><strong>{selected.sourceMintVerified ? "Verified onchain" : "Not admitted"}</strong></span><span><small>Backing + hedge</small><strong>{marketConfigured ? "Manifest supplied" : "Not admitted"}</strong></span></div>
         <div className="curve-card"><div><span className="eyebrow">Outcome preview</span><h3>{leverage}× {direction.toLowerCase()} daily target</h3><p>The vault rebalances exposure; returns compound and will not equal {leverage}× over longer periods.</p></div><ExposureCurve leverage={leverage} direction={direction}/></div>

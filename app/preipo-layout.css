@@ -1,0 +1,69 @@
+/* Pre-IPO product first: compact market board, readable prices and a real chart. */
+:root{--line:#dccbb6;--brown:#251b14;--orange:#ff7214;--muted:#806e60;--font-display:"Times New Roman"}
+.landing-hero{min-height:610px;grid-template-columns:1.08fr .92fr;gap:46px}
+.landing-copy h1{font-style:normal;font-size:clamp(4rem,6.7vw,7.3rem);line-height:.9;max-width:820px}
+.landing-copy h1 em{font-style:italic}
+.landing-copy>.hero-boundary{margin:-7px 0 16px;font-size:1.5rem}
+.token-stage{height:auto;min-height:480px;border-radius:26px;padding:25px;display:flex;flex-direction:column;gap:11px;background:linear-gradient(150deg,#312319,#49301f);box-shadow:0 30px 70px #4b271d2b;color:#fff3e4}
+.token-stage .orbit{display:none}
+.stage-heading{display:flex;flex-direction:column;gap:5px;margin-bottom:9px}
+.stage-heading span{letter-spacing:.17em;color:#ff9a57;font-size:.6rem}
+.stage-heading strong{font-family:"Times New Roman",serif;font-size:2rem;font-style:italic}
+.stage-heading small{font-size:.68rem;color:#cdb5a0}
+.token-stage .token-card{position:static;transform:none;width:100%;min-height:84px;background:#fff7e9;color:#251b14;box-shadow:none;grid-template-columns:46px 1fr auto}
+.token-stage .token-card>b{grid-column:3;margin:0;padding:7px 9px;border-radius:999px;background:#f6e0c9;white-space:nowrap}
+.token-stage .token-card:nth-of-type(3)>b{background:#e3efe7;color:#225f43}
+.token-stage .stage-core{position:static;transform:none;margin-top:auto;justify-content:center;padding-top:15px;border-top:1px solid #71533e;color:#fff3e4}
+.token-stage .stage-core strong{color:#ff9a57}
+.market-hero{padding-top:26px;padding-bottom:22px;align-items:center}
+.market-hero h1{font-size:clamp(2.3rem,3.3vw,3.7rem);line-height:1.02;margin:7px 0}
+.market-hero p{font-size:.78rem;color:#79695b;max-width:670px;line-height:1.5;margin:8px 0 0}
+.hero-metrics span{padding:10px 14px;min-width:100px}
+.trading-grid{grid-template-columns:minmax(270px,300px) minmax(470px,1fr) minmax(285px,320px);align-items:start}
+.market-panel,.detail-panel,.trade-ticket{min-height:650px}
+.table-head,.market-row{grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.table-head{padding:10px 13px}
+.market-row{padding:11px 13px;min-height:70px}
+.market-row .asset{gap:9px}
+.market-row .asset strong{font-size:.84rem}
+.market-row .asset small{font-size:.67rem}
+.market-quote{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:0}
+.market-quote .price{font-size:.81rem;white-space:nowrap}
+.market-quote small{font-size:.57rem;color:#827264;white-space:nowrap}
+.market-list{height:625px}
+.detail-panel{padding:17px}
+.detail-panel .decision-chart{margin:16px 0;border-radius:14px;padding:15px}
+.detail-panel .chart-heading h3{font-size:1.5rem}
+.detail-panel .chart-state{min-height:310px;text-align:center;padding:20px;font-size:.78rem}
+.detail-panel .oracle-strip{margin-top:14px}
+.detail-panel .curve-card{margin-top:15px}
+@media(max-width:1180px){
+  .trading-grid{grid-template-columns:minmax(240px,290px) minmax(380px,1fr)}
+  .market-panel{grid-column:1;grid-row:1/3}
+  .detail-panel{grid-column:2;grid-row:1}
+  .trade-ticket{grid-column:2;grid-row:2;min-height:0;position:static}
+  .market-hero{align-items:start}
+}
+@media(max-width:800px){
+  .landing-hero{grid-template-columns:1fr;min-height:0}
+  .landing-copy h1{font-size:clamp(3.5rem,14vw,5.2rem)}
+  .token-stage{min-height:0;max-width:660px;width:100%;border-radius:20px}
+  .stage-heading strong{font-size:1.65rem}
+  .token-stage .token-card{width:100%;grid-template-columns:42px 1fr auto}
+  .market-hero{padding:24px 14px 16px}
+  .market-hero h1{font-size:2.3rem}
+  .trading-grid{display:flex;flex-direction:column}
+  .market-panel,.detail-panel,.trade-ticket{width:100%;min-height:0}
+  .market-panel{order:1}.detail-panel{order:2}.trade-ticket{order:3}
+  .market-list{height:280px}
+  .table-head,.market-row{grid-template-columns:minmax(0,1fr) auto}
+  .detail-panel .chart-state{min-height:240px}
+}
+@media(max-width:430px){
+  .token-stage{padding:15px}
+  .token-stage .token-card{grid-template-columns:38px 1fr;gap:7px}
+  .token-stage .token-card>b{grid-column:2;justify-self:start;margin-top:-5px;font-size:.58rem}
+  .market-hero h1{font-size:2.1rem}
+  .hero-metrics span{min-width:0;padding:8px}
+  .market-quote small{display:none}
+}
