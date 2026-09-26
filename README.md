@@ -13,6 +13,12 @@ LevPlay is a Solana-native infrastructure layer for 2× long and short tokenized
 
 The first auditable canary pair is `ANTH2L` and `ANTH2S`. This is a release constraint, not a claim that the pair is currently deployed or approved.
 
+An isolated [OpenAI 2X Long/Short reference](docs/OPENAI_2X_REFERENCE.md) now models
+both PreStocks OpenAI and Tessera T-OpenAI with separate source identities. Its
+tests do not authorize execution. The existing Anthropic-bound release manifest
+cannot certify OpenAI, and the remaining pre-IPO candidates have not been
+scaled from this pilot.
+
 ## Why “liquidation-free”
 
 A holder buys a fully paid token rather than opening a margin account. The holder cannot be margin-called, cannot owe more than the purchase, and other wallet assets cannot be seized by the protocol. Exposure is managed in an isolated vault. A separately funded Standby reserve may remove directional exposure at a small NAV floor. This does not guarantee principal or recovery: gaps, compounding, illiquidity, issuer controls, oracle failures and smart-contract failures can still cause severe or total loss.
@@ -35,6 +41,7 @@ npm run test:release-manifest
 npm run test:ui
 npm run test:audit-package
 cargo test --workspace --locked
+node --test tests/openai-reference.mjs
 ```
 
 ## Production evidence required
