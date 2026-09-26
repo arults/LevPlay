@@ -35,6 +35,7 @@ jobs:
       - run: pnpm test:security
       - run: pnpm test:http-safety
       - run: pnpm test:release-manifest
+      - run: pnpm test:openai-reference
       - run: pnpm test:ui
       - run: pnpm test:audit-package
       - run: pnpm test:release-evidence

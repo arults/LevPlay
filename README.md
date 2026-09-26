@@ -42,7 +42,7 @@ npm run test:release-manifest
 npm run test:ui
 npm run test:audit-package
 cargo test --workspace --locked
-node --test tests/openai-reference.mjs
+pnpm test:openai-reference
 ```
 
 ## Production evidence required
