@@ -77,18 +77,23 @@ export async function GET() {
   const prestocks = PREIPO_MARKETS.map((item) => {
     const issuer = issuerResult.references[item.mint];
     const dex = dexResult.references[item.mint];
-    const issuerPrice = Number(issuer?.tokenPrice || issuer?.markPrice);
-    const price = Number(dex?.price) > 0 ? Number(dex?.price) : issuerPrice;
+    // The PreStocks Products table labels tokenPrice as its Token Price.
+    // A DEX pool trade can diverge materially, so it must never replace it.
+    const price = Number(issuer?.tokenPrice);
+    const dexPrice = Number(dex?.price);
+    const markPrice = Number(issuer?.markPrice);
     const identityMatches = issuer?.contract_address === item.mint;
     const available = identityMatches && Number.isFinite(price) && price > 0;
     const mintVerified = Boolean(mintChecks[item.symbol]?.valid);
     return {
-      ...item, price: available ? price : undefined, logo: dex?.logo || item.logo, liquidityUsd: dex?.liquidityUsd, pairAddress: dex?.pairAddress,
+      ...item, price: available ? price : undefined, dexPrice: Number.isFinite(dexPrice) && dexPrice > 0 ? dexPrice : undefined,
+      issuerMarkPrice: Number.isFinite(markPrice) && markPrice > 0 ? markPrice : undefined,
+      logo: dex?.logo || item.logo, liquidityUsd: dex?.liquidityUsd, pairAddress: dex?.pairAddress,
       period: "24/7 display reference", marketOpen: available, verified: false, unavailable: !available,
       referenceStatus: available ? "timestamp_unavailable" : (issuerResult.reachable ? "not_admitted" : "provider_offline"),
-      referenceLabel: available ? (dex ? "DEX display · issuer identity pinned" : "Issuer display · timestamp unavailable") : (issuerResult.reachable ? "Reference identity unavailable" : "Provider temporarily offline"),
+      referenceLabel: available ? "PreStocks token price · issuer display" : (issuerResult.reachable ? "PreStocks token price unavailable" : "Provider temporarily offline"),
       sourceMintVerified: mintVerified, tokenProgram: mintChecks[item.symbol]?.tokenProgram,
-      verificationNote: available ? `PreStocks identity is pinned and the source mint is ${mintVerified ? "verified" : "not verified"} on Solana; issuer and DEX prices are display-only and cannot settle a trade` : "PreStocks reference unavailable; execution remains blocked",
+      verificationNote: available ? `PreStocks token price and pinned identity received; source mint is ${mintVerified ? "verified" : "not verified"} on Solana. DEX history is separate; neither price can settle a trade` : "PreStocks token price unavailable; execution remains blocked",
     };
   });
 
@@ -109,7 +114,7 @@ export async function GET() {
 
   return Response.json({
     markets: [...prestocks, ...tessera], checkedAt: new Date().toISOString(),
-    source: "Pinned PreStocks issuer + DEX display references and pinned Tessera issuer references",
+    source: "Pinned PreStocks token prices with separate DEX display references and pinned Tessera issuer references",
     providers: {
       prestocks: { configured: true, reachable: issuerResult.reachable, purpose: "identity-and-display-only", timestamped: false },
       prestocksDex: { configured: true, reachable: dexResult.reachable, purpose: "display-and-liquidity-only" },
