@@ -5,9 +5,9 @@ import { ArrowRight, BarChart3, Boxes, Check, CircleAlert, Coins, ExternalLink, 
 function LogoMark() { return <span className="logo-mark" aria-hidden="true"><i/><b/></span>; }
 
 const products = [
-  { token: "ANTH2L", name: "Anthropic 2× long", tone: "#ff8a3d", move: "+2× daily", logo: "/brands/anth.svg" },
-  { token: "ANTH2S", name: "Anthropic 2× short", tone: "#9b4c1c", move: "−2× daily", logo: "/brands/anth.svg" },
-  { token: "tOPENAI2L", name: "Tessera OpenAI 2×", tone: "#10a37f", move: "+2× candidate", logo: "/brands/openai.svg" },
+  { token: "OPENAI2L", name: "OpenAI · PreStocks", tone: "#10a37f", move: "2× long candidate", logo: "/brands/openai.svg" },
+  { token: "OPENAI2S", name: "OpenAI · PreStocks", tone: "#10a37f", move: "2× short candidate", logo: "/brands/openai.svg" },
+  { token: "tOPENAI2L", name: "OpenAI · Tessera", tone: "#10a37f", move: "2× long candidate", logo: "/brands/openai.svg" },
 ];
 
 function BrandIcon({ name, logo, size = 26 }: { name: string; logo: string; size?: number }) { return <Image src={logo} alt={`${name} logo`} width={size} height={size}/>; }
@@ -18,27 +18,28 @@ export default function LandingPage() {
   return <main className="landing-shell">
     <header className="landing-nav">
       <Link className="brand" href="/"><LogoMark/><span>LevPlay</span></Link>
-      <nav aria-label="Homepage"><a href="#why">Why LevPlay</a><a href="#mechanics">How it works</a><Link href="/proof">Proof</Link><a href="#risk">Risk</a></nav>
-      <Link className="enter-app compact" href={APP_URL}>Enter app <ArrowRight size={16}/></Link>
+      <nav aria-label="Homepage"><a href="#markets">Markets</a><a href="#mechanics">How 2× works</a><Link href="/proof">Launch proof</Link><a href="#risk">Risk</a></nav>
+      <Link className="enter-app compact" href={APP_URL}>Explore markets <ArrowRight size={16}/></Link>
     </header>
 
     <section className="landing-hero">
       <div className="landing-copy">
-        <span className="landing-kicker"><Sparkles size={14}/> Solana-native · PreStocks + Tessera</span>
-        <h1>Defined risk.<br/><em>Leveraged stocks.</em></h1>
-        <p className="hero-boundary">No holder margin account.</p>
-        <p>Direct-wallet Solana tokens targeting daily 2× long or short exposure to selected pre-IPO references—with isolated backing and visible risk controls.</p>
-        <div className="landing-actions"><Link className="enter-app" href={APP_URL}>Enter app <ArrowRight size={18}/></Link><a className="learn-link" href="#mechanics">See how it works</a></div>
-        <div className="hero-disclosure"><CircleAlert size={16}/><span>No margin liquidation. Funded Standby is designed to preserve residual NAV, but principal and recovery are never guaranteed.</span></div>
+        <span className="landing-kicker"><Sparkles size={14}/> Pre-IPO leverage · built on Solana</span>
+        <h1>Pre-IPO stocks.<br/><em>2× your direction.</em></h1>
+        <p className="hero-boundary">Long the opportunity. Short the risk.</p>
+        <p>Explore 2× long and short token candidates linked to PreStocks and Tessera private-market instruments. Pick a source, inspect the price, and see the exact collateral and settlement gates before a trade can open.</p>
+        <div className="landing-actions"><Link className="enter-app" href={APP_URL}>Explore pre-IPO markets <ArrowRight size={18}/></Link><a className="learn-link" href="#mechanics">Understand the 2× target</a></div>
+        <div className="hero-disclosure"><CircleAlert size={16}/><span>Paper preview is available. Real-money execution remains locked pending audited, funded mainnet evidence. Leveraged tokens can lose nearly all value.</span></div>
       </div>
-      <div className="token-stage" aria-label="Example LevPlay tokens">
+      <div className="token-stage" id="markets" aria-label="Example pre-IPO LevPlay token candidates">
+        <div className="stage-heading"><span>THE PRE-IPO BOARD</span><strong>One stock. Two directions.</strong><small>Candidate markets · live execution gated</small></div>
         <div className="orbit orbit-one"/><div className="orbit orbit-two"/>
         {products.map((product, index) => <article key={product.token} className={`token-card token-${index + 1}`}><i style={{ background: product.tone }}><BrandIcon name={product.name} logo={product.logo}/></i><span><small>LevPlay token</small><strong>{product.token}</strong><em>{product.name}</em></span><b>{product.move}</b></article>)}
-        <div className="stage-core"><LogoMark/><span>One token.<br/><strong>Managed leverage.</strong></span></div>
+        <div className="stage-core"><LogoMark/><span>2× daily target.<br/><strong>No holder margin debt.</strong></span></div>
       </div>
     </section>
 
-    <section className="ticker-band" aria-label="Product facts"><span>8 PreStocks references</span><i/><span>2 Tessera references</span><i/><span>20 isolated candidates</span><i/><span>2× long and short</span><i/><span>0.5% disclosed entry fee</span></section>
+    <section className="ticker-band" aria-label="Product facts"><span>8 PreStocks references</span><i/><span>2 Tessera references</span><i/><span>2× long / short candidates</span><i/><span>0.5% entry fee</span><i/><span>Execution evidence gated</span></section>
 
     <section className="landing-section" id="why">
       <div className="section-heading"><span className="eyebrow">Why LevPlay</span><h2>Proof, not promises.</h2><p>A simpler way to take leveraged stock exposure—without hiding how the product is priced, backed or stopped.</p></div>
