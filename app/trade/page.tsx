@@ -81,7 +81,7 @@ function ExposureCurve({ leverage, direction }: { leverage: number; direction: D
 export default function TradingApp() {
   const [preIpoProvider, setPreIpoProvider] = useState<"PreStocks" | "Tessera">("PreStocks");
   const [query, setQuery] = useState("");
-  const [selectedSymbol, setSelectedSymbol] = useState("ANTHROPIC");
+  const [selectedSymbol, setSelectedSymbol] = useState("OPENAI");
   const [markets, setMarkets] = useState<LiveMarket[]>(ALL_MARKETS.map((market) => ({ ...market, verified: false })));
   const [loadingMarkets, setLoadingMarkets] = useState(true);
   const [checkedAt, setCheckedAt] = useState<string | null>(null);

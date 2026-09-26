@@ -5,8 +5,8 @@ import { BarChart3, CircleAlert, LoaderCircle } from "lucide-react";
 
 type Candle = { time: number; open: number; high: number; low: number; close: number; volume: number };
 type ChartResponse = { status: "display" | "unavailable"; candles: Candle[]; reason?: string; pool?: string; checkedAt?: string };
-type Range = "24H" | "7D" | "30D" | "MAX";
-const ranges: Range[] = ["24H", "7D", "30D", "MAX"];
+type Range = "24H" | "7D" | "30D" | "120D";
+const ranges: Range[] = ["24H", "7D", "30D", "120D"];
 const money = (value: number) => `$${value.toLocaleString("en-US", { maximumFractionDigits: value >= 1 ? 2 : 6 })}`;
 
 export function MarketChart({ symbol, ticker }: { symbol: string; ticker: string }) {
@@ -43,7 +43,7 @@ export function MarketChart({ symbol, ticker }: { symbol: string; ticker: string
   const change = candles.length > 1 ? (candles[candles.length - 1].close / candles[0].open - 1) * 100 : 0;
 
   return <section className="decision-chart" aria-label={`${ticker} historical price chart`}>
-    <div className="chart-heading"><div><span className="eyebrow">Price history · DEX display</span><h3>{ticker} candlesticks</h3><p>Source-token trades in USD. These prices cannot settle a LevPlay position.</p></div><div className="range-tabs" aria-label="Chart range">{ranges.map((item) => <button key={item} aria-pressed={range === item} className={range === item ? "active" : ""} onClick={() => { setHover(null); setRange(item); }}>{item === "MAX" ? "Max" : item}</button>)}</div></div>
+    <div className="chart-heading"><div><span className="eyebrow">Price history · DEX display</span><h3>{ticker} candlesticks</h3><p>Source-token trades in USD. These prices cannot settle a LevPlay position.</p></div><div className="range-tabs" aria-label="Chart range">{ranges.map((item) => <button key={item} aria-pressed={range === item} className={range === item ? "active" : ""} onClick={() => { setHover(null); setRange(item); }}>{item}</button>)}</div></div>
     {loading ? <div className="chart-state"><LoaderCircle className="spin" size={19}/>Loading price history…</div>
       : !chart || !selected ? <div className="chart-state error"><CircleAlert size={20}/>{response?.reason || "No historical candles available for this market."}</div>
       : <>
@@ -53,7 +53,7 @@ export function MarketChart({ symbol, ticker }: { symbol: string; ticker: string
           {candles.map((item, index) => { const x = 25 + (index + .5) * chart.step; const up = item.close >= item.open; const top = Math.min(chart.y(item.open), chart.y(item.close)); const body = Math.max(1.5, Math.abs(chart.y(item.open) - chart.y(item.close))); return <g key={item.time} className={up ? "candle up" : "candle down"} onMouseEnter={() => setHover(index)}><line x1={x} x2={x} y1={chart.y(item.high)} y2={chart.y(item.low)}/><rect x={x - chart.width / 2} y={top} width={chart.width} height={body}/><rect className="volume" x={x - chart.width / 2} y={252 - item.volume / chart.maxVolume * 35} width={chart.width} height={item.volume / chart.maxVolume * 35}/><rect x={x - chart.step / 2} y="0" width={chart.step} height="260" opacity="0"/></g>; })}
         </svg>
         <div className="candle-readout"><span><small>Open</small><strong>{money(selected.open)}</strong></span><span><small>High</small><strong>{money(selected.high)}</strong></span><span><small>Low</small><strong>{money(selected.low)}</strong></span><span><small>Close</small><strong>{money(selected.close)}</strong></span><span><small>Volume</small><strong>{money(selected.volume)}</strong></span><span><small>Data</small><strong>{candles.length} bars</strong></span></div>
-        <p className="chart-boundary"><BarChart3 size={14}/>GeckoTerminal pool history is a secondary-market display reference. Max shows up to 1,000 daily candles available from the source; gaps and thin liquidity can distort a chart.</p>
+        <p className="chart-boundary"><BarChart3 size={14}/>GeckoTerminal pool history is a secondary-market display reference. 120D shows up to 120 daily candles; gaps and thin liquidity can distort a chart.</p>
       </>}
   </section>;
 }

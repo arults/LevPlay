@@ -7,7 +7,7 @@ const RANGES = {
   "24H": { timeframe: "minute", aggregate: 15, limit: 96 },
   "7D": { timeframe: "hour", aggregate: 1, limit: 168 },
   "30D": { timeframe: "hour", aggregate: 4, limit: 180 },
-  MAX: { timeframe: "day", aggregate: 1, limit: 1000 },
+  "120D": { timeframe: "day", aggregate: 1, limit: 120 },
 } as const;
 
 type Pool = { attributes?: { address?: string; reserve_in_usd?: string }; relationships?: { base_token?: { data?: { id?: string } }; quote_token?: { data?: { id?: string } } } };
