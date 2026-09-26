@@ -43,7 +43,7 @@ export function MarketChart({ symbol, ticker }: { symbol: string; ticker: string
   const change = candles.length > 1 ? (candles[candles.length - 1].close / candles[0].open - 1) * 100 : 0;
 
   return <section className="decision-chart" aria-label={`${ticker} historical price chart`}>
-    <div className="chart-heading"><div><span className="eyebrow">Price history · DEX display</span><h3>{ticker} candlesticks</h3><p>Source-token trades in USD. These prices cannot settle a LevPlay position.</p></div><div className="range-tabs" aria-label="Chart range">{ranges.map((item) => <button key={item} aria-pressed={range === item} className={range === item ? "active" : ""} onClick={() => { setHover(null); setRange(item); }}>{item}</button>)}</div></div>
+    <div className="chart-heading"><div><span className="eyebrow">DEX pool history · display only</span><h3>{ticker} candlesticks</h3><p>Secondary-market trades in USD can differ from the issuer token price above. Neither can settle a LevPlay position.</p></div><div className="range-tabs" aria-label="Chart range">{ranges.map((item) => <button key={item} aria-pressed={range === item} className={range === item ? "active" : ""} onClick={() => { setHover(null); setRange(item); }}>{item}</button>)}</div></div>
     {loading ? <div className="chart-state"><LoaderCircle className="spin" size={19}/>Loading price history…</div>
       : !chart || !selected ? <div className="chart-state error"><CircleAlert size={20}/>{response?.reason || "No historical candles available for this market."}</div>
       : <>
