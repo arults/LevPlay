@@ -34,7 +34,7 @@ assert.ok(!wallet.includes("Access-Control-Allow-Origin"));
 assert.match(wallet, /InstanceRateLimiter/);
 for (const gate of ["LEVPLAY_SVM_DEPLOYMENT_MANIFEST_JSON","LEVPLAY_SVM_DEPLOYMENT_MANIFEST_HASH","LEVPLAY_SVM_PRODUCT_MANIFESTS_JSON","LEVPLAY_SVM_EXECUTION_ENABLED"]) assert.ok(`${protocol}\n${products}`.includes(gate));
 assert.match(protocol, /VALUE_MOVING_HANDLERS_IMPLEMENTED = false/);
-assert.match(protocol, /ids\.join\(","\) !== "ANTH2L,ANTH2S"/);
+assert.match(protocol, /ids\.join\(","\) !== "OPENAI2L,OPENAI2S"/);
 assert.match(protocol, /observations\.length >= 2/);
 assert.match(protocol, /bytes\[12\] === 0/);
 for (const header of ["Content-Security-Policy","Cross-Origin-Opener-Policy","Permissions-Policy","Referrer-Policy","Strict-Transport-Security","X-Content-Type-Options","X-Frame-Options"]) assert.ok(config.includes(header));

@@ -11,7 +11,14 @@ LevPlay is a Solana-native infrastructure layer for 2× long and short tokenized
 - Provider and DEX prices are display-only. They never authorize mint, redeem or rebalance.
 - Real-money signing remains hard-locked in source until the exact release has deployed-program, funded-vault, dual-oracle, multisig, legal/provider-approval and independent-audit evidence.
 
-The first auditable canary pair is `ANTH2L` and `ANTH2S`. This is a release constraint, not a claim that the pair is currently deployed or approved.
+The proposed OpenAI pilot pair is `OPENAI2L` and `OPENAI2S` on the PreStocks source. This is a release constraint, not a claim that the pair is deployed or approved.
+
+An isolated [OpenAI 2X Long/Short reference](docs/OPENAI_2X_REFERENCE.md) now models
+both PreStocks OpenAI and Tessera T-OpenAI with separate source identities. Its
+tests do not authorize execution. The release manifest now requires the exact
+PreStocks OpenAI mint and isolated long and short accounts, while execution
+remains hard locked. The remaining pre-IPO candidates have not been
+scaled from this pilot.
 
 ## Why “liquidation-free”
 
@@ -35,6 +42,7 @@ npm run test:release-manifest
 npm run test:ui
 npm run test:audit-package
 cargo test --workspace --locked
+pnpm test:openai-reference
 ```
 
 ## Production evidence required

@@ -1,4 +1,7 @@
+import { PRESTOCKS } from "./product-registry.ts";
+
 export const RELEASE_MANIFEST_VERSION = 2 as const;
+const OPENAI_SOURCE_MINT = PRESTOCKS.find((asset) => asset.symbol === "OPENAI")?.publishedMint;
 
 const ADDRESS = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const HASH = /^[a-fA-F0-9]{64}$/;
@@ -30,7 +33,7 @@ export type ReleaseMarket = {
   reserveVault: string;
   productMint: string;
   sourceProvider: "prestocks";
-  sourceAssetSymbol: "ANTHROPIC";
+  sourceAssetSymbol: "OPENAI";
   sourceMint: string;
   sourceMintAccountSha256: string;
   sourceRegistryHash: string;
@@ -90,7 +93,7 @@ export type ReleaseManifestV2 = {
   governance: string;
   guardian: string;
   multisigProgram: string;
-  markets: { ANTH2L: ReleaseMarket; ANTH2S: ReleaseMarket };
+  markets: { OPENAI2L: ReleaseMarket; OPENAI2S: ReleaseMarket };
 };
 
 function record(value: unknown, label: string): Record<string, unknown> {
@@ -121,7 +124,7 @@ const MARKET_KEYS = [
   "transactionCap", "walletCap", "tvlCap", "dailyMintCap", "dailyRedeemCap",
 ] as const;
 
-function market(value: unknown, productId: "ANTH2L" | "ANTH2S"): ReleaseMarket {
+function market(value: unknown, productId: "OPENAI2L" | "OPENAI2S"): ReleaseMarket {
   const item = record(value, productId);
   exactKeys(item, MARKET_KEYS, productId);
   for (const field of [
@@ -132,8 +135,9 @@ function market(value: unknown, productId: "ANTH2L" | "ANTH2S"): ReleaseMarket {
   for (const field of [
     "sourceMintAccountSha256", "sourceRegistryHash", "primaryOracleFeedId", "secondaryOracleFeedId", "adapterBinaryHash",
   ] as const) text(item[field], HASH, `${productId}.${field}`);
-  if (item.sourceProvider !== "prestocks" || item.sourceAssetSymbol !== "ANTHROPIC" || item.leverage !== 2 ||
-      item.side !== (productId === "ANTH2L" ? "long" : "short") ||
+  if (!OPENAI_SOURCE_MINT || item.sourceProvider !== "prestocks" || item.sourceAssetSymbol !== "OPENAI" ||
+      item.sourceMint !== OPENAI_SOURCE_MINT || item.leverage !== 2 ||
+      item.side !== (productId === "OPENAI2L" ? "long" : "short") ||
       !Number.isInteger(item.standbyBps) || Number(item.standbyBps) < 1 || Number(item.standbyBps) > 500) {
     throw new Error(`${productId} product identity is invalid`);
   }
@@ -184,19 +188,22 @@ export function parseReleaseManifestV2(source: string): ReleaseManifestV2 {
   for (const field of evidenceKeys) text(evidence[field], HASH, field);
 
   const markets = record(root.markets, "markets");
-  exactKeys(markets, ["ANTH2L", "ANTH2S"], "markets");
+  exactKeys(markets, ["OPENAI2L", "OPENAI2S"], "markets");
   const parsed = {
     ...root,
     releaseArtifacts: artifacts,
     evidence,
-    markets: { ANTH2L: market(markets.ANTH2L, "ANTH2L"), ANTH2S: market(markets.ANTH2S, "ANTH2S") },
+    markets: { OPENAI2L: market(markets.OPENAI2L, "OPENAI2L"), OPENAI2S: market(markets.OPENAI2S, "OPENAI2S") },
   } as ReleaseManifestV2;
-  if (parsed.markets.ANTH2L.marketState === parsed.markets.ANTH2S.marketState ||
-      parsed.markets.ANTH2L.productMint === parsed.markets.ANTH2S.productMint ||
-      parsed.markets.ANTH2L.clearingVault === parsed.markets.ANTH2S.clearingVault ||
-      parsed.markets.ANTH2L.sourceVault === parsed.markets.ANTH2S.sourceVault ||
-      parsed.markets.ANTH2L.reserveVault === parsed.markets.ANTH2S.reserveVault ||
-      parsed.markets.ANTH2L.adapterMarket === parsed.markets.ANTH2S.adapterMarket) {
+  if (parsed.markets.OPENAI2L.sourceMint !== parsed.markets.OPENAI2S.sourceMint) {
+    throw new Error("long and short source mints disagree");
+  }
+  if (parsed.markets.OPENAI2L.marketState === parsed.markets.OPENAI2S.marketState ||
+      parsed.markets.OPENAI2L.productMint === parsed.markets.OPENAI2S.productMint ||
+      parsed.markets.OPENAI2L.clearingVault === parsed.markets.OPENAI2S.clearingVault ||
+      parsed.markets.OPENAI2L.sourceVault === parsed.markets.OPENAI2S.sourceVault ||
+      parsed.markets.OPENAI2L.reserveVault === parsed.markets.OPENAI2S.reserveVault ||
+      parsed.markets.OPENAI2L.adapterMarket === parsed.markets.OPENAI2S.adapterMarket) {
     throw new Error("long and short markets are not isolated");
   }
   return parsed;
