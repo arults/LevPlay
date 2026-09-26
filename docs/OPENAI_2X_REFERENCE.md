@@ -12,8 +12,10 @@ Amounts are integer USDC base units. A user opening with capital `C` pays
 `C + floor(C × 0.005)` from their wallet. Entry exposure is `2C`; the fee is
 separate from collateral. The isolated counterparty commitment is `2C`, and
 the segregated standby reserve is at least `ceil(C × 0.01)` in the reference
-scenario. The latter two amounts must be funded by independent parties before
-an onchain handler admits a position; a quote never creates funds.
+scenario. The reference requires separate available maker escrow and reserve
+vault amounts before quoting. The onchain handler must prove actual token
+balances, reserve them atomically and prevent concurrent reuse; caller-supplied
+amounts are not funding evidence and a quote never creates funds.
 
 For each accepted observation, interval P/L is
 `floor(2 × current NAV × signed price change / previous price)` using integer
@@ -46,8 +48,8 @@ fee plan. An RPC/issuer API price is display-only. Vercel is an interface host,
 not the settlement authority.
 
 The current repository contains an economic core and account validators, but
-no wired value-moving SBF entrypoint. Its release manifest v2 pins a separate
-Anthropic canary, and the execution switch is hard locked. There is no
+no wired value-moving SBF entrypoint. Its release manifest v2 now pins the
+PreStocks OpenAI pair, and the execution switch is hard locked. There is no
 OpenAI-specific audited program binary, deployed account manifest, funded
 escrow proof, production oracle pair, signed provider approvals, legal
 eligibility decision, independent security and quantitative audits, retests,

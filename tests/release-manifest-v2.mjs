@@ -21,7 +21,7 @@ const guardianBytes = Uint8Array.from([11, 13, 17, 19]);
 
 const market = (side, seed) => ({
   marketState: address(seed), clearingVault: address(seed + 1), sourceVault: address(seed + 2), reserveVault: address(seed + 3), productMint: address(seed + 4),
-  sourceProvider: "prestocks", sourceAssetSymbol: "ANTHROPIC", sourceMint: PRESTOCKS[0].publishedMint, sourceMintAccountSha256: hash(sourceMintBytes), sourceRegistryHash: h,
+  sourceProvider: "prestocks", sourceAssetSymbol: "OPENAI", sourceMint: PRESTOCKS.find((asset) => asset.symbol === "OPENAI").publishedMint, sourceMintAccountSha256: hash(sourceMintBytes), sourceRegistryHash: h,
   primaryOracleAccount: address(seed + 5), primaryOracleOwner: address(seed + 6), primaryOracleFeedId: h, primaryOracleProviderId: "pyth",
   secondaryOracleAccount: address(seed + 7), secondaryOracleOwner: address(seed + 8), secondaryOracleFeedId: "b".repeat(64), secondaryOracleProviderId: "independent",
   adapterProgram: address(seed + 9), adapterMarket: address(seed + 10), adapterBinaryHash: h, leverage: 2, side, standbyBps: 100,
@@ -30,7 +30,7 @@ const market = (side, seed) => ({
 const long = market("long", 20), short = market("short", 40);
 
 const product = (productId, item) => ({
-  productId, provider: "prestocks", sourceSymbol: "ANTHROPIC", sourceMint: item.sourceMint, productMint: item.productMint, marketPda: item.marketState,
+  productId, provider: "prestocks", sourceSymbol: "OPENAI", sourceMint: item.sourceMint, productMint: item.productMint, marketPda: item.marketState,
   collateralVault: item.clearingVault, feeVault: feeRecipient, primaryOracle: item.primaryOracleAccount, secondaryOracle: item.secondaryOracleAccount,
   primaryOracleProviderId: item.primaryOracleProviderId, secondaryOracleProviderId: item.secondaryOracleProviderId,
   sourceRegistryHash: h, providerApprovalHash: h, legalApprovalHash: h, productAuditHash: h, economicAuditHash: h, auditorRetestHash: h, deploymentHash: h, eligibilityPolicyHash: h,
@@ -40,7 +40,7 @@ const product = (productId, item) => ({
   governanceMultisig: governance, guardianMultisig: guardian, governanceSigners: [address(73), address(74), address(75)], guardianSigners: [address(76), address(77), address(78)], governanceThreshold: 2, guardianThreshold: 2,
   primaryExitOperator: address(79), emergencyExitOperator: address(80), primaryExitOperatorId: "primary", emergencyExitOperatorId: "emergency", upgradeDelaySeconds: 172800, expiresAtUnix: 2000000000,
 });
-const productsSource = JSON.stringify([product("ANTH2L", long), product("ANTH2S", short)]);
+const productsSource = JSON.stringify([product("OPENAI2L", long), product("OPENAI2S", short)]);
 const venueSource = JSON.stringify({
   venueId: PREIPO_VAULT.id, chainId: PREIPO_VAULT.chainId, providerIds: [...PREIPO_VAULT.providers], providerApiOrigins: [...PREIPO_VAULT.providerApiOrigins],
   sourceMints: [...PREIPO_VAULT.sourceMints], collateralMint: PREIPO_VAULT.collateralMint, tokenProgramIds: [...PREIPO_VAULT.tokenProgramIds],
@@ -53,13 +53,15 @@ const release = {
   schemaVersion: 2, releaseCommit: "f".repeat(40), releaseArtifacts: { sourceSha256: h, sbfSha256: hash(sbf), idlSha256: h, sbomSha256: h, toolchainImageDigest: `sha256:${h}` },
   evidence: { independentAuditSha256: h, economicAuditSha256: h, auditorRetestSha256: h, backingAttestationSha256: h, reserveAttestationSha256: h, venueManifestSha256: hash(venueSource), productManifestsSha256: hash(productsSource), governanceAccountSha256: hash(governanceBytes), guardianAccountSha256: hash(guardianBytes), legalApprovalSha256: h, goLiveVoteSha256: h },
   programId, configState, programDataAddress, programLoader, upgradePolicy: "frozen", upgradeAuthority: null, upgradeTimelockSeconds: 0,
-  feeRecipient, treasuryAuthority: treasury, governance, guardian, multisigProgram, markets: { ANTH2L: long, ANTH2S: short },
+  feeRecipient, treasuryAuthority: treasury, governance, guardian, multisigProgram, markets: { OPENAI2L: long, OPENAI2S: short },
 };
 const releaseSource = JSON.stringify(release);
-assert.equal(parseReleaseManifestV2(releaseSource).markets.ANTH2S.side, "short");
+assert.equal(parseReleaseManifestV2(releaseSource).markets.OPENAI2S.side, "short");
 assert.throws(() => parseReleaseManifestV2(JSON.stringify({ ...release, surprise: true })), /missing or extra/);
-assert.throws(() => parseReleaseManifestV2(JSON.stringify({ ...release, markets: { ANTH2L: long } })), /missing or extra/);
-assert.throws(() => parseReleaseManifestV2(JSON.stringify({ ...release, markets: { ANTH2L: long, ANTH2S: { ...short, sourceVault: short.clearingVault } } })), /aliased/);
+assert.throws(() => parseReleaseManifestV2(JSON.stringify({ ...release, markets: { OPENAI2L: long } })), /missing or extra/);
+assert.throws(() => parseReleaseManifestV2(JSON.stringify({ ...release, markets: { OPENAI2L: long, OPENAI2S: { ...short, sourceVault: short.clearingVault } } })), /aliased/);
+assert.throws(() => parseReleaseManifestV2(JSON.stringify({ ...release, markets: { OPENAI2L: { ...long, sourceMint: PRESTOCKS[0].publishedMint }, OPENAI2S: short } })), /product identity/);
+assert.throws(() => parseReleaseManifestV2(JSON.stringify({ ...release, markets: { OPENAI2L: { ...long, side: "short" }, OPENAI2S: short } })), /product identity/);
 
 function writeAddress(bytes, offset, value) { bytes.set(decode(value), offset); }
 function stateBytes(item) { const bytes = new Uint8Array(392); bytes.set(new TextEncoder().encode("LVPMKT01")); bytes[8] = 1; bytes[9] = 1; bytes[11] = item.side === "long" ? 0 : 1; const view = new DataView(bytes.buffer); view.setBigUint64(24, BigInt(item.transactionCap), true); view.setBigUint64(32, BigInt(item.walletCap), true); view.setBigUint64(40, BigInt(item.tvlCap), true); view.setBigUint64(48, BigInt(item.dailyMintCap), true); view.setBigUint64(56, BigInt(item.dailyRedeemCap), true); view.setUint16(64, item.standbyBps, true); view.setUint16(66, 20000, true); view.setUint16(68, 50, true); writeAddress(bytes, 72, item.productMint); writeAddress(bytes, 104, TOKEN_2022_PROGRAM); writeAddress(bytes, 136, item.clearingVault); writeAddress(bytes, 168, item.reserveVault); writeAddress(bytes, 200, item.adapterProgram); writeAddress(bytes, 232, item.adapterMarket); writeAddress(bytes, 264, item.primaryOracleAccount); writeAddress(bytes, 296, item.secondaryOracleAccount); writeAddress(bytes, 328, item.primaryOracleOwner); writeAddress(bytes, 360, item.secondaryOracleOwner); return bytes; }
@@ -97,7 +99,7 @@ try {
   assert.equal(status.rpcQuorum, 2, "two mocked RPC domains must reproduce the exact deployment");
   assert.equal(status.checks.find((item) => item.id === "onchain").passed, true);
   assert.equal(status.executionEnabled, false, "missing value-moving handlers must keep execution locked even with perfect evidence");
-  const extra = JSON.stringify([...JSON.parse(productsSource), product("ANTH2L", long)]); process.env.LEVPLAY_SVM_PRODUCT_MANIFESTS_JSON = extra;
+  const extra = JSON.stringify([...JSON.parse(productsSource), product("OPENAI2L", long)]); process.env.LEVPLAY_SVM_PRODUCT_MANIFESTS_JSON = extra;
   const rejected = await protocolStatus(1900000000); assert.equal(rejected.checks.find((item) => item.id === "manifest").passed, false, "extra product manifests must fail closed");
 } finally { globalThis.fetch = previousFetch; for (const key of ["LEVPLAY_SVM_RPC_URLS_JSON", "LEVPLAY_SVM_DEPLOYMENT_MANIFEST_JSON", "LEVPLAY_SVM_DEPLOYMENT_MANIFEST_HASH", "LEVPLAY_SVM_VENUE_MANIFEST_JSON", "LEVPLAY_SVM_PRODUCT_MANIFESTS_JSON", "LEVPLAY_SVM_EXECUTION_ENABLED"]) delete process.env[key]; }
 

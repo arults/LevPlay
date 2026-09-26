@@ -5,7 +5,8 @@ import { OPENAI_SOURCES, quoteOpen, openPosition, settlePosition, closePosition 
 const mark = (price, slot) => ({ price, slot, primary: true, secondary: true });
 const base = (provider, side) => ({ provider, mint: OPENAI_SOURCES[provider], side,
   owner: "wallet-1", nonce: "unique-1", capital: 100_000_000n,
-  capacity: 200_000_000n, expirySlot: 11n, observation: mark(100_000_000n, 10n) });
+  makerEscrowAvailable: 200_000_000n, reserveVaultAvailable: 1_000_000n,
+  expirySlot: 11n, observation: mark(100_000_000n, 10n) });
 
 for (const provider of ["prestocks", "tessera"]) {
   for (const side of ["long", "short"]) {
@@ -40,7 +41,10 @@ for (const provider of ["prestocks", "tessera"]) {
 
 test("OpenAI source identity and collateral are mandatory", () => {
   assert.throws(() => quoteOpen({ ...base("prestocks", "long"), mint: OPENAI_SOURCES.tessera }), /identity/);
-  assert.throws(() => quoteOpen({ ...base("tessera", "short"), capacity: 199_999_999n }), /collateral/);
+  assert.throws(() => quoteOpen({ ...base("tessera", "short"), makerEscrowAvailable: 199_999_999n }), /collateral/);
+  assert.throws(() => quoteOpen({ ...base("prestocks", "long"), reserveVaultAvailable: 999_999n }), /floor reserve/);
+  assert.throws(() => quoteOpen({ ...base("tessera", "short"), reserveVaultAvailable: 0n }), /floor reserve/);
+  assert.throws(() => quoteOpen({ ...base("prestocks", "long"), reserveVaultAvailable: undefined }), /reserve vault/);
   assert.throws(() => openPosition({ ...base("prestocks", "long"), expirySlot: 9n }), /expired/);
   assert.throws(() => openPosition({ ...base("prestocks", "long"), capital: 2n ** 64n }), /capital/);
 });
